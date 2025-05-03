@@ -1,0 +1,169 @@
+"use client"
+
+import Link from "next/link"
+import { useState, useEffect } from "react"
+import { Menu, X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+
+export default function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const [socialHandle, setSocialHandle] = useState("@REALLYGREATSITE")
+
+  // Handle scroll effect for header
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen)
+    // Prevent scrolling when menu is open
+    if (!mobileMenuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+  }
+
+  // Close mobile menu when clicking on a link
+  const handleLinkClick = () => {
+    setMobileMenuOpen(false)
+    document.body.style.overflow = ""
+  }
+
+  const navLinks = [
+    { href: "#", label: "Home" },
+    { href: "#introduction", label: "Introduction" },
+    { href: "#education", label: "Education" },
+    { href: "#skills", label: "Skills" },
+    { href: "#experience", label: "Experience" },
+    { href: "#projects", label: "Projects" },
+  ]
+
+  return (
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? "bg-gray-100/95 shadow-md backdrop-blur-sm py-2" : "bg-gray-100 py-3"
+      }`}
+    >
+      <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-sm font-medium"
+        >
+          CREATIVE PORTFOLIO
+        </motion.div>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex gap-6">
+          {navLinks.map((link, index) => (
+            <motion.div
+              key={link.href}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+            >
+              <Link href={link.href} className="text-xs uppercase hover:text-red-600 transition-colors relative group">
+                {link.label}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-red-600 transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+            </motion.div>
+          ))}
+        </nav>
+
+        {/* Social Handle */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-sm font-medium hidden md:block"
+        >
+          {socialHandle}
+        </motion.div>
+
+        {/* Mobile Menu Button */}
+        <motion.button
+          className="md:hidden p-2 z-50 relative"
+          onClick={toggleMobileMenu}
+          aria-label="Toggle mobile menu"
+          whileTap={{ scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <AnimatePresence mode="wait">
+            {mobileMenuOpen ? (
+              <motion.div
+                key="close"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X size={24} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="menu"
+                initial={{ rotate: 90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Menu size={24} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.button>
+      </div>
+
+      {/* Mobile Navigation */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            className="fixed inset-0 bg-gray-100 z-40 md:hidden flex flex-col"
+            initial={{ opacity: 0, y: "-100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "-100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          >
+            <div className="h-16"></div> {/* Spacer for header */}
+            <nav className="flex flex-col p-4 items-center justify-center flex-grow">
+              {navLinks.map((link, index) => (
+                <motion.div
+                  key={link.href}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1, duration: 0.3 }}
+                  className="w-full"
+                >
+                  <Link
+                    href={link.href}
+                    className="py-4 px-4 text-lg uppercase border-b border-gray-200 hover:bg-gray-50 flex items-center justify-center font-medium"
+                    onClick={handleLinkClick}
+                  >
+                    {link.label}
+                  </Link>
+                </motion.div>
+              ))}
+            </nav>
+            <motion.div
+              className="p-6 text-center text-sm text-gray-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              {socialHandle}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  )
+}
