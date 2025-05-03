@@ -6,11 +6,14 @@ import Footer from "@/components/footer"
 import HeroSection from "@/components/sections/hero"
 import IntroductionSection from "@/components/sections/introduction"
 import EducationSection from "@/components/sections/education"
-import SkillsSection from "@/components/sections/skill"
+import SkillsSection from "@/components/sections/skills"
 import ExperienceSection from "@/components/sections/experience"
-import ProjectsSection from "@/components/sections/project"
-import ContactSection from "@/components/sections/contact"
+import ProjectsSection from "@/components/sections/projects"
 import { motion, AnimatePresence } from "framer-motion"
+import { AdminIndicator } from "@/components/admin-indicator"
+import SectionTransition from "@/components/ui/section-transition"
+import ScrollProgress from "@/components/ui/scroll-progress"
+import ScrollToTop from "@/components/ui/scroll-to-top"
 
 export default function PortfolioPage() {
   // Smooth scroll for anchor links
@@ -47,41 +50,29 @@ export default function PortfolioPage() {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.5 }}
       >
+        <ScrollProgress />
         <Header />
         <main className="flex-1 pt-16">
           <HeroSection />
 
-          {/* Section Divider */}
-          <div className="w-full h-px bg-black/20 max-w-6xl mx-auto my-4"></div>
-
+          <SectionTransition id="introduction-transition" color="black" />
           <IntroductionSection />
 
-          {/* Section Divider */}
-          <div className="w-full h-px bg-black/20 max-w-6xl mx-auto my-4"></div>
-
+          <SectionTransition id="education-transition" color="black" />
           <EducationSection />
 
-          {/* Section Divider */}
-          <div className="w-full h-px bg-black/20 max-w-6xl mx-auto my-4"></div>
-
+          <SectionTransition id="skills-transition" color="black" />
           <SkillsSection />
 
-          {/* Section Divider */}
-          <div className="w-full h-px bg-black/20 max-w-6xl mx-auto my-4"></div>
-
+          <SectionTransition id="experience-transition" color="white" />
           <ExperienceSection />
 
-          {/* Section Divider */}
-          <div className="w-full h-px bg-black/20 max-w-6xl mx-auto my-4"></div>
-
+          <SectionTransition id="projects-transition" color="red" />
           <ProjectsSection />
-
-          {/* Section Divider */}
-          <div className="w-full h-px bg-black/20 max-w-6xl mx-auto my-4"></div>
-
-          <ContactSection />
         </main>
         <Footer />
+        <AdminIndicator />
+        <ScrollToTop />
       </motion.div>
     </AnimatePresence>
   )

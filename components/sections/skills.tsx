@@ -80,7 +80,7 @@ function SortableSkillItem({
       ></motion.div>
       <div className="flex-grow">
         <div className="flex justify-between items-start">
-          <EditableText initialText={skill.title} as="h3" className="font-bold uppercase mb-2 text-sm sm:text-base" />
+          <EditableText initialText={skill.title} as="h3" className="font-bold uppercase mb-2" initialFontSize={16} />
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
             <Button
               variant="ghost"
@@ -93,7 +93,7 @@ function SortableSkillItem({
             </Button>
           </motion.div>
         </div>
-        <EditableText initialText={skill.description} className="text-sm" />
+        <EditableText initialText={skill.description} initialFontSize={14} />
       </div>
     </motion.div>
   )
@@ -213,14 +213,14 @@ export default function SkillsSection() {
   }
 
   return (
-    <section id="skills" className="py-16 md:py-20 lg:py-24">
+    <section id="skills" className="py-16 md:py-20 lg:py-24 bg-white">
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           {/* Title Column */}
           <div className="lg:col-span-4">
             <AnimatedSection delay={0.1}>
-              <h2 className="text-red-600 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-none mb-6">
-                MY SKILLS
+              <h2 className="text-red-600 font-bold tracking-tighter leading-none mb-6 overflow-hidden">
+                <EditableText initialText="MY SKILLS" as="span" initialFontSize={72} className="text-red-600" />
               </h2>
               <div className="flex mt-4">
                 <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
@@ -234,7 +234,7 @@ export default function SkillsSection() {
           <div className="lg:col-span-8">
             <div className="space-y-8">
               {/* Skills List */}
-              <AnimatedSection delay={0.3} direction="left">
+              <AnimatedSection delay={0.3} variant="fadeInLeft">
                 <div className="bg-gray-50 rounded-lg shadow-sm p-6">
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={skills.map((skill) => skill.id)} strategy={verticalListSortingStrategy}>
@@ -242,7 +242,7 @@ export default function SkillsSection() {
                         {skills.map((skill, index) => (
                           <SortableSkillItem key={skill.id} skill={skill} confirmDelete={confirmDelete} index={index} />
                         ))}
-                      </AnimatePresence>
+                      </AnimatePresence>  
                     </SortableContext>
                   </DndContext>
 
@@ -268,7 +268,7 @@ export default function SkillsSection() {
               </AnimatedSection>
 
               {/* Skill Images */}
-              <AnimatedSection delay={0.5} direction="left">
+              <AnimatedSection delay={0.5} variant="fadeInLeft">
                 <div className="bg-gray-50 rounded-lg shadow-sm p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold text-lg">Skill Images</h3>

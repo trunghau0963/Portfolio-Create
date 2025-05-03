@@ -11,6 +11,7 @@ import { Slider } from "@/components/ui/slider"
 import { ImageIcon, Upload, MoveHorizontal } from "lucide-react"
 import ReactCrop, { type Crop } from "react-image-crop"
 import "react-image-crop/dist/ReactCrop.css"
+import { useAuth } from "@/context/auth-context"
 
 interface EditablePortraitProps {
   initialSrc: string
@@ -19,6 +20,8 @@ interface EditablePortraitProps {
   height: number
   onPositionChange: (position: "left" | "center" | "right") => void
   currentPosition: "left" | "center" | "right"
+  onVisibilityChange?: (visible: boolean) => void
+  isVisible?: boolean
 }
 
 export default function EditablePortrait({
@@ -28,7 +31,12 @@ export default function EditablePortrait({
   height,
   onPositionChange,
   currentPosition,
+  onVisibilityChange,
+  isVisible = true,
 }: EditablePortraitProps) {
+  const { user } = useAuth()
+  const isAdmin = user?.isAdmin
+
   // Use picsum.photos as the default image if src is empty or placeholder
   const defaultImage = `https://picsum.photos/${width}/${height}`
   const [imageSrc, setImageSrc] = useState(
@@ -120,17 +128,19 @@ export default function EditablePortrait({
           className="object-cover"
           onError={handleError}
         />
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            onClick={() => setIsOpen(true)}
-            variant="secondary"
-            size="icon"
-            className="bg-white/80 hover:bg-white text-gray-600 hover:text-gray-800 rounded-full"
-            aria-label="Edit portrait"
-          >
-            <ImageIcon className="h-4 w-4" />
-          </Button>
-        </div>
+        {isAdmin && (
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              onClick={() => setIsOpen(true)}
+              variant="secondary"
+              size="icon"
+              className="bg-white/80 hover:bg-white text-gray-600 hover:text-gray-800 rounded-full"
+              aria-label="Edit portrait"
+            >
+              <ImageIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

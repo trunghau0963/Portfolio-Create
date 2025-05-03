@@ -2,13 +2,28 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User, LogOut } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { ThemeToggle } from "./ui/theme-toggle"
+import { useAuth } from "@/context/auth-context"
+import { LoginModal } from "./ui/login-modal"
+import { Button } from "./ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import HeaderResumeButton from "./ui/header-resume-button"
 
 export default function Header() {
+  const { user, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [socialHandle, setSocialHandle] = useState("@REALLYGREATSITE")
+  // const [socialHandle, setSocialHandle] = useState("@REALLYGREATSITE")
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
 
   // Handle scroll effect for header
   useEffect(() => {
@@ -47,7 +62,9 @@ export default function Header() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-gray-100/95 shadow-md backdrop-blur-sm py-2" : "bg-gray-100 py-3"
+        scrolled
+          ? "bg-gray-100/95 dark:bg-gray-900/95 shadow-md backdrop-blur-sm py-2"
+          : "bg-gray-100 dark:bg-gray-900 py-3"
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
@@ -77,14 +94,55 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Social Handle */}
+        {/* Social Handle, Theme Toggle, and User Account */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-sm font-medium hidden md:block"
+          className="flex items-center gap-4"
         >
-          {socialHandle}
+          {/*   <span className="text-sm font-medium hidden md:block">{socialHandle}</span> */}
+
+          {/* Resume Download Button */}
+          <div className="hidden md:block">
+            <HeaderResumeButton />
+          </div>
+
+          <ThemeToggle />
+
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full bg-primary/10 hover:bg-primary/20">
+                  <User className="h-[1.2rem] w-[1.2rem]" />
+                  <span className="sr-only">User menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span>{user.name}</span>
+                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-red-500" onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full bg-primary/10 hover:bg-primary/20"
+              onClick={() => setLoginModalOpen(true)}
+            >
+              <User className="h-[1.2rem] w-[1.2rem]" />
+              <span className="sr-only">Login</span>
+            </Button>
+          )}
         </motion.div>
 
         {/* Mobile Menu Button */}
@@ -127,7 +185,7 @@ export default function Header() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            className="fixed inset-0 bg-gray-100 z-40 md:hidden flex flex-col"
+            className="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-40 md:hidden flex flex-col"
             initial={{ opacity: 0, y: "-100%" }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "-100%" }}
@@ -145,7 +203,7 @@ export default function Header() {
                 >
                   <Link
                     href={link.href}
-                    className="py-4 px-4 text-lg uppercase border-b border-gray-200 hover:bg-gray-50 flex items-center justify-center font-medium"
+                    className="py-4 px-4 text-lg uppercase border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center font-medium"
                     onClick={handleLinkClick}
                   >
                     {link.label}
@@ -153,17 +211,41 @@ export default function Header() {
                 </motion.div>
               ))}
             </nav>
-            <motion.div
-              className="p-6 text-center text-sm text-gray-500"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              {socialHandle}
-            </motion.div>
+            <div className="p-6 flex items-center justify-center gap-4">
+              {/* <motion.div
+                className="text-sm text-gray-500 dark:text-gray-400"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                {socialHandle}
+              </motion.div> */}
+              <ThemeToggle />
+              {user ? (
+                <Button variant="outline" size="sm" onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setLoginModalOpen(true)
+                    setMobileMenuOpen(false)
+                  }}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Login
+                </Button>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Login Modal */}
+      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
     </header>
   )
 }

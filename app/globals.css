@@ -175,3 +175,39 @@
 .dark .border-red-600 {
   @apply border-red-500;
 }
+
+/* Add these classes to the end of your globals.css file */
+
+.text-wrap-balance {
+  text-wrap: balance;
+}
+
+.text-wrap-pretty {
+  text-wrap: pretty;
+}
+
+.break-words-safe {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.text-container {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive font size classes */
+.text-responsive {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+}
+
+.heading-responsive {
+  font-size: clamp(2rem, 5vw, 5rem);
+}
+
+/* Prevent text from overlapping */
+.no-overlap {
+  position: relative;
+  z-index: 1;
+}
