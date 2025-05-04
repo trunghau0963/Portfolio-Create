@@ -9,6 +9,7 @@ import EducationSection from "@/components/sections/education"
 import SkillsSection from "@/components/sections/skills"
 import ExperienceSection from "@/components/sections/experience"
 import ProjectsSection from "@/components/sections/projects"
+import TestimonialsSection from "@/components/sections/testimonials"
 import { motion, AnimatePresence } from "framer-motion"
 import { AdminIndicator } from "@/components/admin-indicator"
 import SectionTransition from "@/components/ui/section-transition"
@@ -69,6 +70,9 @@ export default function PortfolioPage() {
 
           <SectionTransition id="projects-transition" color="red" />
           <ProjectsSection />
+
+          <SectionTransition id="testimonials-transition" color="black" />
+          <TestimonialsSection />
         </main>
         <Footer />
         <AdminIndicator />

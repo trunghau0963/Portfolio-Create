@@ -83,7 +83,7 @@ export default function HeroSection() {
                 initialText="PORTFOLIO"
                 as="h1"
                 className="text-red-600 font-bold leading-none tracking-tighter"
-                initialFontSize={120}
+                initialFontSize={100}
               />
             </div>
           </AnimatedSection>

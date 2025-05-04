@@ -13,7 +13,7 @@ export default function IntroductionSection() {
         <div className="mb-12">
           <AnimatedSection variant="fadeInLeft" delay={0.1}>
             <h2 className="text-red-600 font-bold tracking-tighter leading-none mb-6">
-              <EditableText initialText="INTRODUCTION" as="span" initialFontSize={120} />
+              <EditableText initialText="INTRODUCTION" as="span" initialFontSize={100} />
             </h2>
             <div className="flex mt-4">
               <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>

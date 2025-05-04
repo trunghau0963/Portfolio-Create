@@ -206,8 +206,48 @@
   font-size: clamp(2rem, 5vw, 5rem);
 }
 
+/* Responsive heading classes */
+.heading-xl {
+  font-size: clamp(2.5rem, 5vw + 1rem, 6rem);
+}
+
+.heading-lg {
+  font-size: clamp(2rem, 4vw + 0.5rem, 4.5rem);
+}
+
+.heading-md {
+  font-size: clamp(1.5rem, 3vw + 0.5rem, 3rem);
+}
+
+.heading-sm {
+  font-size: clamp(1.25rem, 2vw + 0.5rem, 2rem);
+}
+
+/* Responsive text classes */
+.text-lg {
+  font-size: clamp(1.125rem, 1.5vw + 0.5rem, 1.25rem);
+}
+
+.text-md {
+  font-size: clamp(1rem, 1.25vw + 0.5rem, 1.125rem);
+}
+
+.text-sm {
+  font-size: clamp(0.875rem, 1vw + 0.5rem, 1rem);
+}
+
+.text-xs {
+  font-size: clamp(0.75rem, 0.75vw + 0.5rem, 0.875rem);
+}
+
 /* Prevent text from overlapping */
 .no-overlap {
   position: relative;
   z-index: 1;
 }
+
+.text-balance {
+  text-wrap: balance;
+}
+
+

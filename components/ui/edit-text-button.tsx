@@ -30,6 +30,20 @@ export default function EditTextButton({
     setIsOpen(false)
   }
 
+  // Calculate responsive preview size
+  const getResponsivePreviewSize = (size: number) => {
+    // This is a simplified calculation for preview purposes
+    const minSize = Math.max(size * 0.6, 12)
+    const maxSize = size
+    const currentViewportWidth = typeof window !== "undefined" ? window.innerWidth : 1024
+    const baseWidth = 1024 // Base width for calculation
+
+    // Simple responsive calculation for preview
+    const scaleFactor = currentViewportWidth < baseWidth ? Math.max(0.6, currentViewportWidth / baseWidth) : 1
+
+    return Math.round(size * scaleFactor)
+  }
+
   return (
     <>
       <button
@@ -57,7 +71,11 @@ export default function EditTextButton({
               <div className="flex justify-between items-center">
                 <Label htmlFor="font-size">Font Size: {fontSize}px</Label>
                 <div className="text-xs text-gray-500">
-                  Preview: <span style={{ fontSize: `${fontSize}px` }}>Aa</span>
+                  <span className="font-medium">Preview: </span>
+                  <span style={{ fontSize: `${fontSize}px` }}>Aa</span>
+                  <span className="ml-2 text-xs text-gray-400">
+                    (Responsive: ~{getResponsivePreviewSize(fontSize)}px on mobile)
+                  </span>
                 </div>
               </div>
               <Slider
@@ -69,9 +87,15 @@ export default function EditTextButton({
                 onValueChange={(value) => setFontSize(value[0])}
               />
               <div className="flex justify-between text-xs text-gray-500">
-                <span>Small</span>
-                <span>Medium</span>
-                <span>Large</span>
+                <span>Small (8px)</span>
+                <span>Medium (64px)</span>
+                <span>Large (128px)</span>
+              </div>
+              <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                <p>
+                  Font size will automatically scale down on smaller screens while maintaining your selected size on
+                  larger screens.
+                </p>
               </div>
             </div>
           </div>
