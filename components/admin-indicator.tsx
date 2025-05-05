@@ -3,7 +3,7 @@
 import { useAuth } from "@/context/auth-context"
 import { Shield } from "lucide-react"
 
-export function AdminIndicator() {
+export default function AdminIndicator() {
   const { user } = useAuth()
 
   if (!user?.isAdmin) return null

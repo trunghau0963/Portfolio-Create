@@ -125,7 +125,7 @@
 /* Dark mode adjustments for sections */
 
 .dark .bg-gray-200 {
-  @apply bg-black/50;
+  @apply bg-gray-950/50;
 }
 
 .dark .bg-gray-100 {

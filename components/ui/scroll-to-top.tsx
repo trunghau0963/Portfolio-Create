@@ -43,7 +43,7 @@ export default function ScrollToTop() {
             onClick={scrollToTop}
             variant="default"
             size="icon"
-            className="rounded-full shadow-lg bg-red-600 hover:bg-red-700"
+            className="rounded-full h-12 w-12 shadow-lg bg-red-600 hover:bg-red-700"
             aria-label="Scroll to top"
           >
             <ChevronUp className="h-5 w-5" />

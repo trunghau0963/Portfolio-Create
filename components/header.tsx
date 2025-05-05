@@ -17,12 +17,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import HeaderResumeButton from "./ui/header-resume-button"
+import type { Section } from "@/components/ui/section-manager"
 
-export default function Header() {
+interface HeaderProps {
+  sections: Section[]
+}
+
+export default function Header({ sections }: HeaderProps) {
   const { user, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  // const [socialHandle, setSocialHandle] = useState("@REALLYGREATSITE")
+  const [socialHandle, setSocialHandle] = useState("@REALLYGREATSITE")
   const [loginModalOpen, setLoginModalOpen] = useState(false)
 
   // Handle scroll effect for header
@@ -50,15 +55,11 @@ export default function Header() {
     document.body.style.overflow = ""
   }
 
-  const navLinks = [
-    { href: "#", label: "Home" },
-    { href: "#introduction", label: "Introduction" },
-    { href: "#education", label: "Education" },
-    { href: "#skills", label: "Skills" },
-    { href: "#experience", label: "Experience" },
-    { href: "#projects", label: "Projects" },
-    { href: "#testimonials", label: "Testimonials" },
-  ]
+  // Generate navigation links based on visible sections
+  const navLinks = sections.map((section) => ({
+    href: section.type === "custom" ? `#custom-${section.id}` : `#${section.type}`,
+    label: section.title,
+  }))
 
   return (
     <header
@@ -204,7 +205,7 @@ export default function Header() {
                 >
                   <Link
                     href={link.href}
-                    className="py-4 px-4 text-lg uppercase border-b border-gray-300 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center font-medium"
+                    className="py-4 px-4 text-lg uppercase border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center font-medium"
                     onClick={handleLinkClick}
                   >
                     {link.label}
@@ -212,15 +213,15 @@ export default function Header() {
                 </motion.div>
               ))}
             </nav>
-            <div className="bg-gray-100 p-6 flex items-center justify-center gap-4">
-              {/* <motion.div
+            <div className="bg-gray-100 shadow-lg p-6 flex items-center justify-center gap-4">
+              <motion.div
                 className="text-sm text-gray-500 dark:text-gray-400"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
               >
                 {socialHandle}
-              </motion.div> */}
+              </motion.div>
               <ThemeToggle />
               {user ? (
                 <Button variant="outline" size="sm" onClick={logout}>

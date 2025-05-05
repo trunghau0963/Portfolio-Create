@@ -53,7 +53,7 @@ interface ContactItem {
   label?: string;
 }
 
-export default function Footer() {
+export default function ContactSection() {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
 
