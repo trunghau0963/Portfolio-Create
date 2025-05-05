@@ -23,7 +23,7 @@ export default function SectionTransition({ id, className = "", color = "red" }:
       case "white":
         return "bg-white"
       case "black":
-        return "bg-black/20"
+        return "bg-gray-400"
       default:
         return "bg-red-600"
     }

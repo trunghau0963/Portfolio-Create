@@ -31,7 +31,7 @@ export default function TestimonialCard({ testimonial, onEdit, onDelete }: Testi
   }
 
   return (
-    <div className="bg-gray-50 rounded-lg p-6 md:p-8 shadow-sm relative group">
+    <div className="bg-gray-50 rounded-lg p-6 md:p-8 shadow-sm relative group opacity-90">
       {/* Admin Controls */}
       {(onEdit || onDelete) && (
         <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">

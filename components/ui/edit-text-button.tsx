@@ -1,109 +1,127 @@
 "use client"
 
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import { Pencil } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Slider } from "@/components/ui/slider"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
+import { motion } from "framer-motion"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface EditTextButtonProps {
   initialText: string
   initialFontSize?: number
-  onSave: (text: string, fontSize?: number) => void
-  className?: string
+  initialFontFamily?: string
+  onSave: (text: string, fontSize?: number, fontFamily?: string) => void
 }
+
+const fontFamilies = [
+  { value: "font-sans", label: "Sans Serif" },
+  { value: "font-serif", label: "Serif" },
+  { value: "font-mono", label: "Monospace" },
+  { value: "font-display", label: "Display" },
+  { value: "font-handwriting", label: "Handwriting" },
+  { value: "font-condensed", label: "Condensed" },
+  { value: "font-rounded", label: "Rounded" },
+  { value: "font-slab", label: "Slab Serif" },
+]
 
 export default function EditTextButton({
   initialText,
   initialFontSize = 16,
+  initialFontFamily = "font-sans",
   onSave,
-  className = "",
 }: EditTextButtonProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [open, setOpen] = useState(false)
   const [text, setText] = useState(initialText)
   const [fontSize, setFontSize] = useState(initialFontSize)
+  const [fontFamily, setFontFamily] = useState(initialFontFamily)
+
+  // Calculate responsive font sizes for preview
+  const tabletFontSize = Math.max(fontSize * 0.85, 12)
+  const mobileFontSize = Math.max(fontSize * 0.7, 10)
 
   const handleSave = () => {
-    onSave(text, fontSize)
-    setIsOpen(false)
-  }
-
-  // Calculate responsive preview size
-  const getResponsivePreviewSize = (size: number) => {
-    // This is a simplified calculation for preview purposes
-    const minSize = Math.max(size * 0.6, 12)
-    const maxSize = size
-    const currentViewportWidth = typeof window !== "undefined" ? window.innerWidth : 1024
-    const baseWidth = 1024 // Base width for calculation
-
-    // Simple responsive calculation for preview
-    const scaleFactor = currentViewportWidth < baseWidth ? Math.max(0.6, currentViewportWidth / baseWidth) : 1
-
-    return Math.round(size * scaleFactor)
+    onSave(text, fontSize, fontFamily)
+    setOpen(false)
   }
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`p-1 rounded-full bg-white/80 hover:bg-white text-gray-600 hover:text-gray-800 transition-colors ${className}`}
-        aria-label="Edit text"
-      >
-        <Pencil className="h-4 w-4" />
-      </button>
+      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-gray-400 hover:text-gray-600 bg-white/80 hover:bg-white/90 backdrop-blur-sm rounded-full p-1"
+          onClick={() => setOpen(true)}
+        >
+          <Pencil size={16} />
+          <span className="sr-only">Edit text</span>
+        </Button>
+      </motion.div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Edit Content</DialogTitle>
+            <DialogTitle>Edit Text</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4">
-            <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="min-h-[150px]"
-              placeholder="Enter your content here..."
-            />
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="text">Text Content</Label>
+              <Input id="text" value={text} onChange={(e) => setText(e.target.value)} className="col-span-3" />
+            </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
+            <div className="grid gap-2">
+              <Label htmlFor="font-family">Font Family</Label>
+              <Select value={fontFamily} onValueChange={setFontFamily}>
+                <SelectTrigger id="font-family">
+                  <SelectValue placeholder="Select font family" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontFamilies.map((font) => (
+                    <SelectItem key={font.value} value={font.value} className={font.value}>
+                      {font.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <div className="flex justify-between">
                 <Label htmlFor="font-size">Font Size: {fontSize}px</Label>
-                <div className="text-xs text-gray-500">
-                  <span className="font-medium">Preview: </span>
-                  <span style={{ fontSize: `${fontSize}px` }}>Aa</span>
-                  <span className="ml-2 text-xs text-gray-400">
-                    (Responsive: ~{getResponsivePreviewSize(fontSize)}px on mobile)
-                  </span>
-                </div>
+                <span className="text-xs text-gray-500">
+                  Responsive: ~{tabletFontSize.toFixed(0)}px (tablet), ~{mobileFontSize.toFixed(0)}px (mobile)
+                </span>
               </div>
               <Slider
                 id="font-size"
-                min={8}
-                max={128}
+                min={10}
+                max={120}
                 step={1}
                 value={[fontSize]}
                 onValueChange={(value) => setFontSize(value[0])}
               />
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Small (8px)</span>
-                <span>Medium (64px)</span>
-                <span>Large (128px)</span>
-              </div>
-              <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                <p>
-                  Font size will automatically scale down on smaller screens while maintaining your selected size on
-                  larger screens.
-                </p>
-              </div>
             </div>
+
+            {/* <div className="mt-2 p-4 border rounded-md">
+              <p className="text-sm text-gray-500 mb-2">Preview:</p>
+              <div className={`${fontFamily} break-words-safe`} style={{ fontSize: `${fontSize}px` }}>
+                {text || "Preview text"}
+              </div>
+            </div> */}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave}>Save Changes</Button>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button onClick={handleSave}>Save Changes</Button>
+            </motion.div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -69,14 +69,14 @@ export default function Header() {
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
           className="text-sm font-medium"
         >
           CREATIVE PORTFOLIO
-        </motion.div>
+        </motion.div> */}
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex gap-6">
@@ -102,7 +102,7 @@ export default function Header() {
           transition={{ duration: 0.5 }}
           className="flex items-center gap-4"
         >
-          {/*   <span className="text-sm font-medium hidden md:block">{socialHandle}</span> */}
+          {/* <span className="text-sm font-medium hidden md:block">{socialHandle}</span> */}
 
           {/* Resume Download Button */}
           <div className="hidden md:block">
@@ -193,7 +193,7 @@ export default function Header() {
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
             <div className="h-16"></div> {/* Spacer for header */}
-            <nav className="flex flex-col p-4 items-center justify-center flex-grow">
+            <nav className="bg-gray-100 flex flex-col p-4 items-center justify-center flex-grow">
               {navLinks.map((link, index) => (
                 <motion.div
                   key={link.href}
@@ -204,7 +204,7 @@ export default function Header() {
                 >
                   <Link
                     href={link.href}
-                    className="py-4 px-4 text-lg uppercase border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center font-medium"
+                    className="py-4 px-4 text-lg uppercase border-b border-gray-300 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center font-medium"
                     onClick={handleLinkClick}
                   >
                     {link.label}
@@ -212,7 +212,7 @@ export default function Header() {
                 </motion.div>
               ))}
             </nav>
-            <div className="p-6 flex items-center justify-center gap-4">
+            <div className="bg-gray-100 p-6 flex items-center justify-center gap-4">
               {/* <motion.div
                 className="text-sm text-gray-500 dark:text-gray-400"
                 initial={{ opacity: 0 }}

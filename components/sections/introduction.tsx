@@ -1,25 +1,23 @@
-"use client"
+"use client";
 
-import EditableText from "../ui/editable-text"
-import EditableImage from "../ui/editable-image"
-import AnimatedSection from "../ui/animated-section"
-import ResumeManager from "../ui/resume-manager"
+import EditableText from "../ui/editable-text";
+import EditableImage from "../ui/editable-image";
+import AnimatedSection from "../ui/animated-section";
+import ResumeManager from "../ui/resume-manager";
+import EditableTextAutoResize from "../ui/editable-text-auto-resize";
 
 export default function IntroductionSection() {
   return (
-    <section id="introduction" className="py-16 md:py-20 lg:py-24 bg-gray-100">
+    <section id="introduction" className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-gray-100">
       <div className="max-w-6xl mx-auto px-4">
         {/* Title Row */}
         <div className="mb-12">
-          <AnimatedSection variant="fadeInLeft" delay={0.1}>
-            <h2 className="text-red-600 font-bold tracking-tighter leading-none mb-6">
-              <EditableText initialText="INTRODUCTION" as="span" initialFontSize={100} />
-            </h2>
-            <div className="flex mt-4">
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-              <div className="w-2 h-2 rounded-full bg-red-600"></div>
-            </div>
+          <AnimatedSection variant="fadeInDown" delay={0.1}>
+          <EditableTextAutoResize
+            initialText="INTRODUCTION"
+            as="h1"
+            className="text-red-600 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter"
+          />
           </AnimatedSection>
         </div>
 
@@ -74,5 +72,5 @@ export default function IntroductionSection() {
         </AnimatedSection>
       </div>
     </section>
-  )
+  );
 }

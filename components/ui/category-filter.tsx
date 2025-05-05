@@ -13,12 +13,12 @@ export default function CategoryFilter({ categories, selectedCategory, onChange 
   return (
     <div className="flex flex-wrap gap-2 mb-6">
       <Button
-        variant={selectedCategory === null ? "default" : "outline"}
+        variant={selectedCategory === null ? "destructive" : "ghost"} 
         size="sm"
         onClick={() => onChange(null)}
         className={`rounded-full ${
           selectedCategory === null
-            ? "bg-white text-red-600 hover:bg-gray-100"
+            ? " hover:bg-gray-100"
             : "border-white/50 text-white hover:bg-white/10"
         }`}
       >
@@ -35,12 +35,12 @@ export default function CategoryFilter({ categories, selectedCategory, onChange 
           whileTap={{ scale: 0.95 }}
         >
           <Button
-            variant={selectedCategory === category ? "default" : "outline"}
+            variant={selectedCategory === category ? "destructive" : "ghost"}
             size="sm"
             onClick={() => onChange(category)}
             className={`rounded-full flex items-center gap-1 ${
               selectedCategory === category
-                ? "bg-white text-red-600 hover:bg-gray-100"
+                ? " hover:bg-red-600"
                 : "border-white/50 text-white hover:bg-white/10"
             }`}
           >

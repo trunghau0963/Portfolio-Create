@@ -182,8 +182,8 @@ export default function ResumeManager({ className = "" }: { className?: string }
           <Button
             onClick={handleDownload}
             disabled={downloadState !== "idle" || !resumeFile}
-            variant="outline"
-            className="border-white text-white hover:bg-white/20 min-w-[160px] justify-center relative overflow-hidden"
+            variant="secondary"
+            className="border-white  hover:bg-gray-100/80 min-w-[160px] justify-center relative overflow-hidden"
           >
             <AnimatePresence mode="wait">
               <motion.div

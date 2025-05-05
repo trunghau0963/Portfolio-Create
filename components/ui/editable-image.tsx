@@ -1,5 +1,5 @@
 "use client"
-
+import { CldUploadWidget } from "next-cloudinary";
 import { useState } from "react"
 import Image from "next/image"
 import EditImageButton from "./edit-image-button"

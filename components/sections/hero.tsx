@@ -1,93 +1,98 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import EditableText from "../ui/editable-text"
-import EditablePortrait from "../ui/editable-portrait"
-import AnimatedSection from "../ui/animated-section"
-import { Button } from "@/components/ui/button"
-import { Download, Eye, EyeOff } from "lucide-react"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { useAuth } from "@/context/auth-context"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import EditableText from "../ui/editable-text";
+import EditablePortrait from "../ui/editable-portrait";
+import AnimatedSection from "../ui/animated-section";
+import { Button } from "@/components/ui/button";
+import { Download, Eye, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/auth-context";
+import EditableTextAutoResize from "../ui/editable-text-auto-resize";
 
 export default function HeroSection() {
-  const { user } = useAuth()
-  const isAdmin = user?.isAdmin
-  const [portraitPosition, setPortraitPosition] = useState<"left" | "center" | "right">("center")
-  const [resumeFile, setResumeFile] = useState<{ url: string; name: string } | null>(null)
-  const [isDownloading, setIsDownloading] = useState(false)
-  const [showPortrait, setShowPortrait] = useState(true)
-
+  const { user } = useAuth();
+  const isAdmin = user?.isAdmin;
+  const [portraitPosition, setPortraitPosition] = useState<
+    "left" | "center" | "right"
+  >("center");
+  const [resumeFile, setResumeFile] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [showPortrait, setShowPortrait] = useState(true);
   // Get resume info from localStorage
   useEffect(() => {
-    const storedResume = localStorage.getItem("portfolio-resume")
+    const storedResume = localStorage.getItem("portfolio-resume");
     if (storedResume) {
-      const parsed = JSON.parse(storedResume)
+      const parsed = JSON.parse(storedResume);
       setResumeFile({
         url: parsed.url,
         name: parsed.name,
-      })
+      });
     } else {
       // Default resume
       setResumeFile({
         url: "/resume.pdf",
         name: "Your_Name_Resume.pdf",
-      })
+      });
     }
 
     // Get portrait visibility from localStorage
-    const storedPortraitVisibility = localStorage.getItem("portfolio-portrait-visibility")
+    const storedPortraitVisibility = localStorage.getItem(
+      "portfolio-portrait-visibility"
+    );
     if (storedPortraitVisibility !== null) {
-      setShowPortrait(storedPortraitVisibility === "true")
+      setShowPortrait(storedPortraitVisibility === "true");
     }
-  }, [])
+  }, []);
 
   // Save portrait visibility to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem("portfolio-portrait-visibility", showPortrait.toString())
-  }, [showPortrait])
+    localStorage.setItem(
+      "portfolio-portrait-visibility",
+      showPortrait.toString()
+    );
+  }, [showPortrait]);
 
   const handleDownload = () => {
-    if (!resumeFile) return
+    if (!resumeFile) return;
 
-    setIsDownloading(true)
+    setIsDownloading(true);
 
     // Simulate download process
     setTimeout(() => {
       try {
         // Create an anchor element and trigger download
-        const link = document.createElement("a")
-        link.href = resumeFile.url
-        link.download = resumeFile.name
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        const link = document.createElement("a");
+        link.href = resumeFile.url;
+        link.download = resumeFile.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-        setIsDownloading(false)
+        setIsDownloading(false);
       } catch (error) {
-        console.error("Download failed:", error)
-        setIsDownloading(false)
+        console.error("Download failed:", error);
+        setIsDownloading(false);
       }
-    }, 800)
-  }
+    }, 800);
+  };
 
   return (
-    <section className="relative bg-gray-100 text-gray-900 pt-24 pb-12 md:pt-32 md:pb-16 lg:pt-36 lg:pb-20 overflow-hidden">
+    <section className="shadow-sm dark:shadow-gray-900 dark:shadow-sm relative bg-gray-100 text-gray-900 pt-24 pb-12 md:pt-32 md:pb-16 lg:pt-36 lg:pb-20 overflow-hidden">
       <div className="max-w-6xl mx-auto px-4">
         {/* Title Row */}
-        <div className="mb-16">
-          <AnimatedSection variant="fadeInDown" duration={0.8}>
-            <div className="relative z-10">
-              <EditableText
-                initialText="PORTFOLIO"
-                as="h1"
-                className="text-red-600 font-bold leading-none tracking-tighter"
-                initialFontSize={100}
-              />
-            </div>
-          </AnimatedSection>
-        </div>
+        <AnimatedSection variant="fadeInDown" duration={0.8}>
+          <EditableTextAutoResize
+            initialText="PORTFOLIO"
+            as="h1"
+            className="text-red-600 text-7xl sm:text-8xl md:text-9xl lg:text-[180px] font-bold leading-none tracking-tighter"
+          />
+        </AnimatedSection>
 
         {/* Content Row */}
         <div className="relative">
@@ -98,8 +103,8 @@ export default function HeroSection() {
                 portraitPosition === "left"
                   ? "left-1/4 -translate-x-1/2"
                   : portraitPosition === "right"
-                    ? "right-1/4 translate-x-1/2"
-                    : "left-1/2 -translate-x-1/2"
+                  ? "right-1/4 translate-x-1/2"
+                  : "left-1/2 -translate-x-1/2"
               }`}
             >
               <AnimatedSection variant="zoomIn" delay={0.3} duration={0.8}>
@@ -118,7 +123,7 @@ export default function HeroSection() {
           {/* Text Content */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
             <AnimatedSection variant="fadeInLeft" delay={0.5} duration={0.8}>
-              <div className="min-h-[100px]">
+              <div className="lg:col-span-6">
                 <EditableText
                   initialText="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi egestas mollis sem nec consectetur. Etiam pellentesque turpis lorem, nec dapibus libero viverra vel. Nulla facilisi. Proin ut dictum justo. Curabitur ut gravida libero."
                   className="max-w-md"
@@ -127,16 +132,20 @@ export default function HeroSection() {
               </div>
             </AnimatedSection>
             <AnimatedSection variant="fadeInRight" delay={0.7} duration={0.8}>
-              <div className="flex items-start justify-end min-h-[100px]">
+              <div className="flex lg:col-span-6">
                 <EditableText
                   initialText="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi egestas mollis sem nec consectetur. Etiam pellentesque turpis lorem, nec dapibus libero viverra vel. Nulla facilisi. Proin ut dictum justo. Curabitur ut gravida libero."
                   className="max-w-md"
                   initialFontSize={14}
                 />
                 <motion.div
-                  className="ml-4 mt-1"
+                  className="ml-4 mt-16"
                   animate={{ x: [0, 10, 0] }}
-                  transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  }}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -193,7 +202,9 @@ export default function HeroSection() {
                 ) : (
                   <Download className="h-4 w-4" />
                 )}
-                <span>{isDownloading ? "Downloading..." : "Download Resume"}</span>
+                <span>
+                  {isDownloading ? "Downloading..." : "Download Resume"}
+                </span>
               </Button>
             </AnimatedSection>
           )}
@@ -202,8 +213,15 @@ export default function HeroSection() {
           {isAdmin && (
             <AnimatedSection variant="fadeIn" delay={1} duration={0.8}>
               <div className="flex items-center space-x-2">
-                <Switch id="portrait-toggle" checked={showPortrait} onCheckedChange={setShowPortrait} />
-                <Label htmlFor="portrait-toggle" className="flex items-center gap-2">
+                <Switch
+                  id="portrait-toggle"
+                  checked={showPortrait}
+                  onCheckedChange={setShowPortrait}
+                />
+                <Label
+                  htmlFor="portrait-toggle"
+                  className="flex items-center gap-2"
+                >
                   {showPortrait ? (
                     <>
                       <Eye className="h-4 w-4" />
@@ -231,5 +249,5 @@ export default function HeroSection() {
         </AnimatedSection>
       </div>
     </section>
-  )
+  );
 }

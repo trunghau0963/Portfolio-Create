@@ -123,12 +123,17 @@
 
 
 /* Dark mode adjustments for sections */
+
+.dark .bg-gray-200 {
+  @apply bg-black/50;
+}
+
 .dark .bg-gray-100 {
-  @apply bg-gray-900;
+  @apply bg-gray-950;
 }
 
 .dark .bg-white {
-  @apply bg-gray-800;
+  @apply bg-gray-900;
 }
 
 .dark .bg-gray-50 {
@@ -246,8 +251,123 @@
   z-index: 1;
 }
 
-.text-balance {
-  text-wrap: balance;
+/* Responsive font sizing for editable text with transitions */
+[style*="--base-font-size"] {
+  font-size: var(--base-font-size);
+  transition: font-size 0.3s ease, color 0.3s ease, font-family 0.3s ease;
 }
 
+/* Media queries for responsive font sizing */
+@media (max-width: 1280px) {
+  [style*="--base-font-size"] {
+    font-size: calc(var(--base-font-size) * 0.9);
+  }
+}
 
+@media (max-width: 1024px) {
+  [style*="--base-font-size"] {
+    font-size: calc(var(--base-font-size) * 0.85);
+  }
+}
+
+@media (max-width: 768px) {
+  [style*="--base-font-size"] {
+    font-size: calc(var(--base-font-size) * 0.8);
+  }
+}
+
+@media (max-width: 640px) {
+  [style*="--base-font-size"] {
+    font-size: calc(var(--base-font-size) * 0.7);
+  }
+}
+
+/* Enhanced drag and drop styling */
+.sortable-item {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.sortable-item.dragging {
+  z-index: 10;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.08);
+  outline: 2px dashed rgba(255, 255, 255, 0.3);
+  transform: scale(1.03);
+  opacity: 0.9;
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+}
+
+.sortable-handle {
+  cursor: grab;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.sortable-handle:hover {
+  transform: scale(1.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sortable-handle:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+/* Drag and drop area styling */
+.drag-drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.drag-drop-area:hover,
+.drag-drop-area.dragging-over {
+  border-color: #888;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.drag-drop-area.dragging-over {
+  transform: scale(1.02);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Font family classes */
+.font-sans {
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.font-serif {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.font-display {
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+.font-handwriting {
+  font-family: "Dancing Script", cursive;
+}
+
+.font-condensed {
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
+}
+
+.font-rounded {
+  font-family: "Varela Round", "Nunito", sans-serif;
+}
+
+.font-slab {
+  font-family: "Roboto Slab", "Rockwell", serif;
+}

@@ -10,6 +10,7 @@ import SkillsSection from "@/components/sections/skills"
 import ExperienceSection from "@/components/sections/experience"
 import ProjectsSection from "@/components/sections/projects"
 import TestimonialsSection from "@/components/sections/testimonials"
+import ContactSection from "@/components/sections/contact"
 import { motion, AnimatePresence } from "framer-motion"
 import { AdminIndicator } from "@/components/admin-indicator"
 import SectionTransition from "@/components/ui/section-transition"
@@ -45,7 +46,7 @@ export default function PortfolioPage() {
   return (
     <AnimatePresence>
       <motion.div
-        className="bg-gray-100 min-h-screen"
+        className="bg-gray-200 min-h-screen"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -65,7 +66,7 @@ export default function PortfolioPage() {
           <SectionTransition id="skills-transition" color="black" />
           <SkillsSection />
 
-          <SectionTransition id="experience-transition" color="white" />
+          <SectionTransition id="experience-transition" color="black" />
           <ExperienceSection />
 
           <SectionTransition id="projects-transition" color="red" />
@@ -73,6 +74,9 @@ export default function PortfolioPage() {
 
           <SectionTransition id="testimonials-transition" color="black" />
           <TestimonialsSection />
+
+          <SectionTransition id="contact-transition" color="black" />
+          <ContactSection />
         </main>
         <Footer />
         <AdminIndicator />

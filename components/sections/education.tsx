@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { useState } from "react";
 import EditableText from "../ui/editable-text";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,9 @@ import {
   Trash2,
   AlertCircle,
   GripVertical,
-  Pencil,
   ImagePlus,
   X,
+  Upload,
 } from "lucide-react";
 import {
   Dialog,
@@ -38,9 +39,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion, AnimatePresence } from "framer-motion";
-import AnimatedSection from "@/components/ui/animated-section";
+import AnimatedSection from "../ui/animated-section";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import Image from "next/image";
+import { useAuth } from "@/context/auth-context";
+import EditableTextAutoResize from "../ui/editable-text-auto-resize";
 
 // Define an education item type
 interface EducationItem {
@@ -58,12 +63,14 @@ function SortableEducationItem({
   items,
   confirmDelete,
   onView,
+  isAdmin,
 }: {
   item: EducationItem;
   index: number;
   items: EducationItem[];
   confirmDelete: (id: number) => void;
   onView: (id: number) => void;
+  isAdmin: boolean | undefined;
 }) {
   const {
     attributes,
@@ -90,61 +97,128 @@ function SortableEducationItem({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
       onClick={() => onView(item.id)}
-      className="cursor-pointer hover:bg-gray-50 transition-colors"
+      className={`cursor-pointer hover:bg-gray-50 transition-colors sortable-item ${
+        isDragging ? "dragging" : ""
+      }`}
     >
       <div className="grid grid-cols-12 gap-2 items-center py-3 border-b border-gray-200">
-        <div
-          className="col-span-1 cursor-grab active:cursor-grabbing touch-manipulation"
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()} // Prevent opening dialog when grabbing
-        >
-          <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-        </div>
+        {isAdmin && (
+          <div
+            className="col-span-1 sortable-handle"
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()} // Prevent opening dialog when grabbing
+          >
+            <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+          </div>
+        )}
 
-        <div className="col-span-7 md:col-span-8">
-          <EditableText
-            initialText={item.institution}
-            as="div"
-            className="font-bold uppercase text-sm sm:text-base"
-            // onClick={(e) => e.stopPropagation()} // Prevent opening dialog when editing
-          />
+        <div
+          className={
+            isAdmin ? "col-span-7 md:col-span-8" : "col-span-8 md:col-span-9"
+          }
+        >
+          <div className="font-bold uppercase">{item.institution}</div>
         </div>
 
         <div className="col-span-3 md:col-span-2 text-right">
-          <EditableText
-            initialText={item.period}
-            as="div"
-            className="text-sm italic"
-            // onClick={(e) => e.stopPropagation()} // Prevent opening dialog when editing
-          />
+          <div className="text-sm italic">{item.period}</div>
         </div>
 
-        <div className="col-span-1">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent opening dialog when deleting
-              confirmDelete(item.id);
-            }}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-400 hover:text-red-600 hover:bg-transparent"
+        {isAdmin && (
+          <div className="col-span-1">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent opening dialog when deleting
+                confirmDelete(item.id);
+              }}
             >
-              <Trash2 size={16} />
-              <span className="sr-only">Delete education</span>
-            </Button>
-          </motion.div>
-        </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-red-600 hover:bg-transparent"
+              >
+                <Trash2 size={16} />
+                <span className="sr-only">Delete education</span>
+              </Button>
+            </motion.div>
+          </div>
+        )}
       </div>
     </motion.div>
   );
 }
 
+// Image Upload Component
+function ImageUploadArea({
+  onImageSelected,
+}: {
+  onImageSelected: (file: File) => void;
+}) {
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDraggingOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith("image/")) {
+        onImageSelected(file);
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      onImageSelected(e.target.files[0]);
+    }
+  };
+
+  return (
+    <div
+      className={`drag-drop-area ${isDraggingOver ? "dragging-over" : ""}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <input
+        type="file"
+        id="image-upload"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <label htmlFor="image-upload" className="cursor-pointer">
+        <div className="flex flex-col items-center">
+          <Upload className="h-10 w-10 text-gray-400 mb-2" />
+          <p className="text-sm text-gray-500">
+            Click to select an image or drag and drop
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            (For this demo, we'll use a random image if no file is selected)
+          </p>
+        </div>
+      </label>
+    </div>
+  );
+}
+
 export default function EducationSection() {
+  const { user } = useAuth();
+  const isAdmin = user?.isAdmin;
+
   // Initialize with the existing education items
   const [educationItems, setEducationItems] = useState<EducationItem[]>([
     {
@@ -193,8 +267,10 @@ export default function EducationSection() {
   const [currentEducation, setCurrentEducation] =
     useState<EducationItem | null>(null);
 
-  // State for editing education description
+  // State for editing education fields
   const [isEditing, setIsEditing] = useState(false);
+  const [editedInstitution, setEditedInstitution] = useState("");
+  const [editedPeriod, setEditedPeriod] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
 
   // Set up sensors for drag and drop
@@ -263,36 +339,47 @@ export default function EducationSection() {
     const education = educationItems.find((item) => item.id === educationId);
     if (education) {
       setCurrentEducation(education);
+      setEditedInstitution(education.institution);
+      setEditedPeriod(education.period);
       setEditedDescription(education.description);
       setDetailDialogOpen(true);
     }
   };
 
-  // Function to save edited description
-  const saveDescription = () => {
+  // Function to save edited education details
+  const saveEducationDetails = () => {
     if (currentEducation) {
+      const updatedEducation = {
+        ...currentEducation,
+        institution: editedInstitution,
+        period: editedPeriod,
+        description: editedDescription,
+      };
+
       setEducationItems(
         educationItems.map((item) =>
-          item.id === currentEducation.id
-            ? { ...item, description: editedDescription }
-            : item
+          item.id === currentEducation.id ? updatedEducation : item
         )
       );
-      setCurrentEducation({
-        ...currentEducation,
-        description: editedDescription,
-      });
+      setCurrentEducation(updatedEducation);
       setIsEditing(false);
     }
   };
 
   // Function to add an image to education
-  const addEducationImage = () => {
+  const addEducationImage = (file?: File) => {
     if (currentEducation) {
-      // In a real implementation, you would handle file upload here
-      // For now, we'll just add a random picsum image
-      const randomId = Math.floor(Math.random() * 1000);
-      const newImageUrl = `https://picsum.photos/600/400?random=${randomId}`;
+      let newImageUrl: string;
+
+      if (file) {
+        // In a real implementation, you would upload the file to storage
+        // For now, we'll just create a temporary URL
+        newImageUrl = URL.createObjectURL(file);
+      } else {
+        // Use a random image if no file is provided
+        const randomId = Math.floor(Math.random() * 1000);
+        newImageUrl = `https://picsum.photos/600/400?random=${randomId}`;
+      }
 
       const updatedEducation = {
         ...currentEducation,
@@ -329,78 +416,80 @@ export default function EducationSection() {
   };
 
   return (
-    <section id="education" className="py-16 md:py-20 lg:py-24 bg-gray-100">
+    <section id="education" className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-gray-100">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-          {/* Title Column */}
-          <div className="lg:col-span-4">
-            <AnimatedSection delay={0.1}>
-              <h2 className="text-red-600 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-none mb-6">
-                EDU&shy;CATION
-              </h2>
-              <div className="flex mt-4">
-                <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-                <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-                <div className="w-2 h-2 rounded-full bg-red-600"></div>
-              </div>
-            </AnimatedSection>
-          </div>
-
-          {/* Content Column */}
-          <div className="lg:col-span-8">
-            <div className="space-y-8">
-              {/* Education List */}
-              <AnimatedSection delay={0.3} direction="left">
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={educationItems.map((item) => item.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <AnimatePresence>
-                        {educationItems.map((item, index) => (
-                          <SortableEducationItem
-                            key={item.id}
-                            item={item}
-                            index={index}
-                            items={educationItems}
-                            confirmDelete={confirmDelete}
-                            onView={viewEducationDetails}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    </SortableContext>
-                  </DndContext>
-
-                  {/* Add New Education Item Button */}
-                  <motion.div
-                    className="mt-6"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, duration: 0.3 }}
-                  >
-                    <motion.div
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      <Button
-                        onClick={addNewEducationItem}
-                        variant="outline"
-                        className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
-                      >
-                        <PlusCircle size={16} />
-                        Add Education
-                      </Button>
-                    </motion.div>
-                  </motion.div>
-                </div>
-              </AnimatedSection>
+        {/* Title Row - Now at the top */}
+        <div className="mb-12">
+          <AnimatedSection variant="fadeInLeft" delay={0.1}>
+            <EditableTextAutoResize
+              initialText="EDUCATION"
+              as="h1"
+              className="text-red-600 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter"
+            />
+            <div className="flex mt-4">
+              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
+              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
+              <div className="w-2 h-2 rounded-full bg-red-600"></div>
             </div>
-          </div>
+          </AnimatedSection>
+        </div>
+
+        {/* Content Row - Now below the title */}
+        <div className="space-y-8">
+          {/* Education List */}
+          <AnimatedSection delay={0.3} variant="fadeInLeft">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                modifiers={[]}
+              >
+                <SortableContext
+                  items={educationItems.map((item) => item.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <AnimatePresence>
+                    {educationItems.map((item, index) => (
+                      <SortableEducationItem
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        items={educationItems}
+                        confirmDelete={confirmDelete}
+                        onView={viewEducationDetails}
+                        isAdmin={isAdmin}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </SortableContext>
+              </DndContext>
+
+              {/* Add New Education Item Button - Only visible to admin */}
+              {isAdmin && (
+                <motion.div
+                  className="mt-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.3 }}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <Button
+                      onClick={addNewEducationItem}
+                      variant="secondary"
+                      className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    >
+                      <PlusCircle size={16} />
+                      Add Education
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </div>
+          </AnimatedSection>
         </div>
       </div>
 
@@ -465,94 +554,104 @@ export default function EducationSection() {
               >
                 <DialogHeader>
                   <DialogTitle className="text-lg sm:text-xl font-bold">
-                    {currentEducation.institution}
+                    Education Details
                   </DialogTitle>
-                  <DialogDescription className="text-sm sm:text-base font-medium">
-                    {currentEducation.period}
-                  </DialogDescription>
                 </DialogHeader>
 
                 <div className="py-4 space-y-6">
+                  {/* Institution and Period Fields */}
+                  {isAdmin ? (
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="institution">Institution</Label>
+                        <Input
+                          id="institution"
+                          value={editedInstitution}
+                          onChange={(e) => setEditedInstitution(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="period">Period</Label>
+                        <Input
+                          id="period"
+                          value={editedPeriod}
+                          onChange={(e) => setEditedPeriod(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-bold">
+                        {currentEducation.institution}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {currentEducation.period}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Description */}
                   <div className="relative">
-                    {isEditing ? (
-                      <motion.div
-                        className="space-y-2"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Textarea
-                          value={editedDescription}
-                          onChange={(e) => setEditedDescription(e.target.value)}
-                          className="min-h-[150px]"
-                        />
-                        <div className="flex justify-end gap-2">
-                          <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setIsEditing(false)}
-                            >
-                              Cancel
-                            </Button>
-                          </motion.div>
-                          <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <Button size="sm" onClick={saveDescription}>
-                              Save
-                            </Button>
-                          </motion.div>
-                        </div>
-                      </motion.div>
+                    <Label htmlFor="description">Description</Label>
+                    {isAdmin ? (
+                      <Textarea
+                        id="description"
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        className="min-h-[150px] mt-1"
+                      />
                     ) : (
-                      <div>
-                        <p className="text-sm text-gray-700 whitespace-pre-line">
-                          {currentEducation.description}
-                        </p>
-                        <motion.div
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="absolute top-0 right-0"
-                        >
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-gray-400 hover:text-gray-600"
-                            onClick={() => setIsEditing(true)}
-                          >
-                            <Pencil size={16} />
-                            <span className="sr-only">Edit description</span>
-                          </Button>
-                        </motion.div>
-                      </div>
+                      <p className="text-sm text-gray-700 whitespace-pre-line mt-1">
+                        {currentEducation.description}
+                      </p>
                     )}
                   </div>
+
+                  {/* Save Button for Admin */}
+                  {isAdmin && (
+                    <div className="flex justify-end">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button onClick={saveEducationDetails}>
+                          Save Details
+                        </Button>
+                      </motion.div>
+                    </div>
+                  )}
 
                   {/* Education Images */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="font-semibold">Education Images</h3>
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-1"
-                          onClick={addEducationImage}
+                      {isAdmin && (
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          <ImagePlus size={14} />
-                          Add Image
-                        </Button>
-                      </motion.div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1"
+                            onClick={() => addEducationImage()}
+                          >
+                            <ImagePlus size={14} />
+                            Add Random Image
+                          </Button>
+                        </motion.div>
+                      )}
                     </div>
+
+                    {isAdmin && (
+                      <div className="mb-4">
+                        <ImageUploadArea
+                          onImageSelected={(file) => addEducationImage(file)}
+                        />
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <AnimatePresence>
@@ -575,21 +674,23 @@ export default function EducationSection() {
                               height={400}
                               className="w-full h-auto rounded-md shadow-md"
                             />
-                            <motion.div
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
-                                onClick={() => deleteEducationImage(index)}
+                            {isAdmin && (
+                              <motion.div
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                               >
-                                <X size={14} />
-                                <span className="sr-only">Remove image</span>
-                              </Button>
-                            </motion.div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
+                                  onClick={() => deleteEducationImage(index)}
+                                >
+                                  <X size={14} />
+                                  <span className="sr-only">Remove image</span>
+                                </Button>
+                              </motion.div>
+                            )}
                           </motion.div>
                         ))}
                       </AnimatePresence>

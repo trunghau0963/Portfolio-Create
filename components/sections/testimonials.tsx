@@ -21,6 +21,7 @@ import AnimatedSection from "../ui/animated-section"
 import { useAuth } from "@/context/auth-context"
 import TestimonialCard from "../ui/testimonial-card"
 import EditableText from "../ui/editable-text"
+import EditableTextAutoResize from "../ui/editable-text-auto-resize"
 
 // Define testimonial type
 export interface Testimonial {
@@ -239,15 +240,17 @@ export default function TestimonialsSection() {
   }
 
   return (
-    <section id="testimonials" className="py-16 md:py-20 lg:py-24 bg-white">
+    <section id="testimonials" className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-gray-100">
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           {/* Title Column */}
           <div className="lg:col-span-4">
             <AnimatedSection delay={0.1}>
-              <h2 className="text-red-600 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-none mb-6">
-                TESTI&shy;MONIALS
-              </h2>
+            <EditableTextAutoResize
+              initialText="TESTIMONIALS"
+              as="h1"
+              className="text-red-600 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter"
+            />
               <div className="flex mt-4">
                 <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
                 <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>

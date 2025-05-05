@@ -1,9 +1,11 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import EditableText from "../ui/editable-text"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, Trash2, AlertCircle, GripVertical, ImagePlus, X } from "lucide-react"
+import { PlusCircle, Trash2, AlertCircle, GripVertical, ImagePlus, X, Upload } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -32,6 +34,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { motion, AnimatePresence } from "framer-motion"
 import AnimatedSection from "../ui/animated-section"
 import Image from "next/image"
+import { useAuth } from "@/context/auth-context"
 
 // Define a skill type
 interface Skill {
@@ -40,15 +43,67 @@ interface Skill {
   description: string
 }
 
+// Image Upload Component
+function ImageUploadArea({ onImageSelected }: { onImageSelected: (file: File) => void }) {
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDraggingOver(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDraggingOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDraggingOver(false)
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0]
+      if (file.type.startsWith("image/")) {
+        onImageSelected(file)
+      }
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      onImageSelected(e.target.files[0])
+    }
+  }
+
+  return (
+    <div
+      className={`drag-drop-area ${isDraggingOver ? "dragging-over" : ""}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <input type="file" id="skill-image-upload" accept="image/*" className="hidden" onChange={handleFileChange} />
+      <label htmlFor="skill-image-upload" className="cursor-pointer">
+        <div className="flex flex-col items-center">
+          <Upload className="h-10 w-10 text-gray-400 mb-2" />
+          <p className="text-sm text-gray-500">Click to select an image or drag and drop</p>
+          <p className="text-xs text-gray-400 mt-2">(For this demo, we'll use a random image if no file is selected)</p>
+        </div>
+      </label>
+    </div>
+  )
+}
+
 // Sortable Skill Item Component
 function SortableSkillItem({
   skill,
   confirmDelete,
   index,
+  isAdmin,
 }: {
   skill: Skill
   confirmDelete: (id: number) => void
   index: number
+  isAdmin: boolean | undefined
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: skill.id })
 
@@ -64,14 +119,16 @@ function SortableSkillItem({
     <motion.div
       ref={setNodeRef}
       style={style}
-      className="flex items-start mb-6"
+      className={`flex items-start mb-6 sortable-item ${isDragging ? "dragging" : ""}`}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
     >
-      <div className="mr-2 cursor-grab active:cursor-grabbing mt-1 touch-manipulation" {...attributes} {...listeners}>
-        <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-      </div>
+      {isAdmin && (
+        <div className="mr-2 sortable-handle mt-1" {...attributes} {...listeners}>
+          <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+        </div>
+      )}
       <motion.div
         className="w-3 h-3 rounded-full bg-red-600 mt-1 mr-3 flex-shrink-0"
         initial={{ scale: 0 }}
@@ -81,17 +138,19 @@ function SortableSkillItem({
       <div className="flex-grow">
         <div className="flex justify-between items-start">
           <EditableText initialText={skill.title} as="h3" className="font-bold uppercase mb-2" initialFontSize={16} />
-          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-2 text-gray-400 hover:text-red-600 hover:bg-transparent"
-              onClick={() => confirmDelete(skill.id)}
-            >
-              <Trash2 size={16} />
-              <span className="sr-only">Delete skill</span>
-            </Button>
-          </motion.div>
+          {isAdmin && (
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="ml-2 text-gray-400 hover:text-red-600 hover:bg-transparent"
+                onClick={() => confirmDelete(skill.id)}
+              >
+                <Trash2 size={16} />
+                <span className="sr-only">Delete skill</span>
+              </Button>
+            </motion.div>
+          )}
         </div>
         <EditableText initialText={skill.description} initialFontSize={14} />
       </div>
@@ -100,6 +159,9 @@ function SortableSkillItem({
 }
 
 export default function SkillsSection() {
+  const { user } = useAuth()
+  const isAdmin = user?.isAdmin
+
   // Initialize with existing skills
   const [skills, setSkills] = useState<Skill[]>([
     {
@@ -186,11 +248,19 @@ export default function SkillsSection() {
   }
 
   // Function to add a new skill image
-  const addSkillImage = () => {
-    // In a real implementation, you would handle file upload here
-    // For now, we'll just add a random picsum image
-    const randomId = Math.floor(Math.random() * 1000)
-    const newImageUrl = `https://picsum.photos/400/300?random=${randomId}`
+  const addSkillImage = (file?: File) => {
+    let newImageUrl: string
+
+    if (file) {
+      // In a real implementation, you would upload the file to storage
+      // For now, we'll just create a temporary URL
+      newImageUrl = URL.createObjectURL(file)
+    } else {
+      // Use a random image if no file is provided
+      const randomId = Math.floor(Math.random() * 1000)
+      newImageUrl = `https://picsum.photos/400/300?random=${randomId}`
+    }
+
     setSkillImages([...skillImages, newImageUrl])
     setImageDialogOpen(false)
   }
@@ -213,68 +283,76 @@ export default function SkillsSection() {
   }
 
   return (
-    <section id="skills" className="py-16 md:py-20 lg:py-24 bg-white">
+    <section id="skills" className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-gray-100">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-          {/* Title Column */}
-          <div className="lg:col-span-4">
-            <AnimatedSection delay={0.1}>
-              <h2 className="text-red-600 font-bold tracking-tighter leading-none mb-6 overflow-hidden">
-                <EditableText initialText="MY SKILLS" as="span" initialFontSize={72} className="text-red-600" />
-              </h2>
-              <div className="flex mt-4">
-                <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-                <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-                <div className="w-2 h-2 rounded-full bg-red-600"></div>
-              </div>
-            </AnimatedSection>
-          </div>
+        {/* Title Row - Now at the top */}
+        <div className="mb-12">
+          <AnimatedSection delay={0.1}>
+            <h2 className="text-red-600 font-bold tracking-tighter leading-none mb-6 overflow-hidden">
+              <EditableText initialText="MY SKILLS" as="span" initialFontSize={72} className="text-red-600" />
+            </h2>
+            <div className="flex mt-4">
+              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
+              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
+              <div className="w-2 h-2 rounded-full bg-red-600"></div>
+            </div>
+          </AnimatedSection>
+        </div>
 
-          {/* Content Column */}
-          <div className="lg:col-span-8">
-            <div className="space-y-8">
-              {/* Skills List */}
-              <AnimatedSection delay={0.3} variant="fadeInLeft">
-                <div className="bg-gray-50 rounded-lg shadow-sm p-6">
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                    <SortableContext items={skills.map((skill) => skill.id)} strategy={verticalListSortingStrategy}>
-                      <AnimatePresence>
-                        {skills.map((skill, index) => (
-                          <SortableSkillItem key={skill.id} skill={skill} confirmDelete={confirmDelete} index={index} />
-                        ))}
-                      </AnimatePresence>  
-                    </SortableContext>
-                  </DndContext>
+        {/* Content Row - Now below the title */}
+        <div className="space-y-8">
+          {/* Skills List */}
+          <AnimatedSection delay={0.3} variant="fadeInLeft">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={skills.map((skill) => skill.id)} strategy={verticalListSortingStrategy}>
+                  <AnimatePresence>
+                    {skills.map((skill, index) => (
+                      <SortableSkillItem
+                        key={skill.id}
+                        skill={skill}
+                        confirmDelete={confirmDelete}
+                        index={index}
+                        isAdmin={isAdmin}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </SortableContext>
+              </DndContext>
 
-                  {/* Add New Skill Button */}
-                  <motion.div
-                    className="mt-6"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, duration: 0.3 }}
-                  >
-                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                      <Button
-                        onClick={addNewSkill}
-                        variant="outline"
-                        className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
-                      >
-                        <PlusCircle size={16} />
-                        Add Skill
-                      </Button>
-                    </motion.div>
+              {/* Add New Skill Button - Only visible to admin */}
+              {isAdmin && (
+                <motion.div
+                  className="mt-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.3 }}
+                >
+                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                    <Button
+                      onClick={addNewSkill}
+                      variant="secondary"
+                      className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    >
+                      <PlusCircle size={16} />
+                      Add Skill
+                    </Button>
                   </motion.div>
-                </div>
-              </AnimatedSection>
+                </motion.div>
+              )}
+            </div>
+          </AnimatedSection>
 
-              {/* Skill Images */}
-              <AnimatedSection delay={0.5} variant="fadeInLeft">
-                <div className="bg-gray-50 rounded-lg shadow-sm p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-lg">Skill Images</h3>
+          {/* Skill Images */}
+          <AnimatedSection delay={0.5} variant="fadeInLeft">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg">Skill Images</h3>
+                {isAdmin && (
+                  <div className="flex gap-2">
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
                         onClick={() => setImageDialogOpen(true)}
@@ -283,56 +361,75 @@ export default function SkillsSection() {
                         Add Image
                       </Button>
                     </motion.div>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        onClick={() => addSkillImage()}
+                      >
+                        <PlusCircle size={16} />
+                        Add Random Image
+                      </Button>
+                    </motion.div>
                   </div>
+                )}
+              </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <AnimatePresence>
-                      {skillImages.map((image, index) => (
-                        <motion.div
-                          key={`${image}-${index}`}
-                          className="relative group"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          transition={{ duration: 0.3 }}
-                          whileHover={{ scale: 1.03 }}
-                        >
-                          <Image
-                            src={image || "/placeholder.svg"}
-                            alt={`Skill image ${index + 1}`}
-                            width={400}
-                            height={300}
-                            className="w-full h-auto object-cover rounded-md shadow-md"
-                          />
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
-                              onClick={() => confirmDeleteImage(index)}
-                            >
-                              <X size={14} />
-                              <span className="sr-only">Remove image</span>
-                            </Button>
-                          </motion.div>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-
-                    {skillImages.length === 0 && (
-                      <div className="col-span-2 text-center py-8 border border-dashed rounded-md text-gray-400">
-                        No skill images available
-                      </div>
-                    )}
-                  </div>
+              {isAdmin && imageDialogOpen && (
+                <div className="mb-6">
+                  <ImageUploadArea onImageSelected={(file) => addSkillImage(file)} />
                 </div>
-              </AnimatedSection>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AnimatePresence>
+                  {skillImages.map((image, index) => (
+                    <motion.div
+                      key={`${image}-${index}`}
+                      className="relative group"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.3 }}
+                      whileHover={{ scale: 1.03 }}
+                    >
+                      <Image
+                        src={image || "/placeholder.svg"}
+                        alt={`Skill image ${index + 1}`}
+                        width={400}
+                        height={300}
+                        className="w-full h-auto object-cover rounded-md shadow-md"
+                      />
+                      {isAdmin && (
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
+                            onClick={() => confirmDeleteImage(index)}
+                          >
+                            <X size={14} />
+                            <span className="sr-only">Remove image</span>
+                          </Button>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {skillImages.length === 0 && (
+                  <div className="col-span-2 text-center py-8 border border-dashed rounded-md text-gray-400">
+                    No skill images available
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </AnimatedSection>
         </div>
       </div>
 
@@ -363,49 +460,9 @@ export default function SkillsSection() {
                     </Button>
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                    <Button variant="default" onClick={() => setDeleteDialogOpen(false)}>
                       Cancel
                     </Button>
-                  </motion.div>
-                </DialogFooter>
-              </motion.div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </AnimatePresence>
-
-      {/* Add Image Dialog */}
-      <AnimatePresence>
-        {imageDialogOpen && (
-          <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
-            <DialogContent>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <DialogHeader>
-                  <DialogTitle>Add Skill Image</DialogTitle>
-                  <DialogDescription>Add a new image to showcase your skills.</DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
-                    <ImagePlus className="h-10 w-10 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-500">Click to select an image or drag and drop</p>
-                    <p className="text-xs text-gray-400 mt-2">
-                      (For this demo, we'll use a random image from Picsum Photos)
-                    </p>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button variant="outline" onClick={() => setImageDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button onClick={addSkillImage}>Add Image</Button>
                   </motion.div>
                 </DialogFooter>
               </motion.div>
@@ -441,7 +498,7 @@ export default function SkillsSection() {
                     </Button>
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button variant="outline" onClick={() => setImageDeleteDialogOpen(false)}>
+                    <Button variant="default" onClick={() => setImageDeleteDialogOpen(false)}>
                       Cancel
                     </Button>
                   </motion.div>
