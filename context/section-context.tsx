@@ -1,239 +1,169 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
-import { useAuth } from "./auth-context"
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { type Section, apiService } from "@/services/api-service";
 
-// Define section types
-export type SectionType = "hero" | "introduction" | "education" | "skills" | "experience" | "projects" | "custom"
-
-// Define section interface
-export interface Section {
-  id: number
-  type: SectionType
-  title: string
-  visible: boolean
-  position: number
-  customContent?: any // For custom sections
-  bgColor?: string
-}
+// Define connection status type
+type ConnectionStatus = "unknown" | "checking" | "connected" | "error";
 
 interface SectionContextType {
-  sections: Section[]
-  isLoading: boolean
-  error: string | null
-  toggleSectionVisibility: (id: number) => Promise<void>
-  reorderSection: (id: number, newPosition: number) => Promise<void>
-  addSection: (sectionType: SectionType, title: string) => Promise<void>
-  deleteSection: (id: number) => Promise<void>
-  updateSectionTitle: (id: number, title: string) => Promise<void>
-  updateSectionBgColor: (id: number, bgColor: string) => Promise<void>
+  sections: Section[];
+  addSection: (section: Section) => Promise<Section>;
+  updateSection: (section: Section) => Promise<Section>;
+  deleteSection: (id: string) => Promise<boolean>;
+  reorderSections: (sections: Section[]) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+  connectionStatus: ConnectionStatus;
+  retryConnection: () => Promise<void>;
 }
 
-const SectionContext = createContext<SectionContextType | undefined>(undefined)
+const SectionContext = createContext<SectionContextType | undefined>(undefined);
 
-export const SectionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [sections, setSections] = useState<Section[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { user } = useAuth()
-  const isAdmin = user?.isAdmin
+export function SectionProvider({ children }: { children: ReactNode }) {
+  const [sections, setSections] = useState<Section[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] =
+    useState<ConnectionStatus>("unknown");
 
-  // Initialize with default sections if none exist
-  const defaultSections: Omit<Section, "id">[] = [
-    { type: "hero", title: "PORTFOLIO", visible: true, position: 1 },
-    { type: "introduction", title: "INTRODUCTION", visible: true, position: 2 },
-    { type: "education", title: "EDUCATION", visible: true, position: 3 },
-    { type: "skills", title: "MY SKILLS", visible: true, position: 4 },
-    { type: "experience", title: "EXPERIENCE", visible: true, position: 5 },
-    { type: "projects", title: "PROJECTS", visible: true, position: 6 },
-  ]
-
-  // Load sections from localStorage or initialize with defaults
+  // Fetch sections on mount
   useEffect(() => {
-    const loadSections = async () => {
-      try {
-        // First try to load from localStorage
-        const storedSections = localStorage.getItem("portfolio-sections")
+    fetchSections();
+  }, []);
 
-        if (storedSections) {
-          setSections(JSON.parse(storedSections))
-        } else {
-          // If no stored sections, initialize with defaults
-          setSections(defaultSections.map((section, index) => ({ ...section, id: index + 1 })))
-        }
-      } catch (err) {
-        setError("Failed to load sections")
-        console.error(err)
-      } finally {
-        setIsLoading(false)
+  // Function to fetch sections (extracted for reuse)
+  const fetchSections = async () => {
+    setIsLoading(true);
+    setError(null);
+    setConnectionStatus("checking");
+
+    try {
+      // Fetch sections from API
+      const data = await apiService.getSections();
+      setSections(data);
+      setConnectionStatus("connected");
+    } catch (err: any) {
+      console.error("Error fetching sections:", err);
+      setError(err.message || "Failed to load sections");
+      setConnectionStatus("error");
+
+      // Optional: Fall back to localStorage if API fails
+      const storedSections = localStorage.getItem("portfolio-sections");
+      if (storedSections) {
+        setSections(JSON.parse(storedSections));
+        // Keep status as error to indicate API failure
+      } else {
+        // Optional: Set default sections if nothing is available
+        // setSections([...defaultSections])
       }
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    loadSections()
-  }, [])
-
-  // Save sections to localStorage whenever they change
+  // Save sections to localStorage as backup
   useEffect(() => {
-    if (sections.length > 0) {
-      localStorage.setItem("portfolio-sections", JSON.stringify(sections))
+    if (sections.length > 0 && connectionStatus !== "error") {
+      localStorage.setItem("portfolio-sections", JSON.stringify(sections));
     }
-  }, [sections])
+  }, [sections, connectionStatus]);
 
-  // Toggle section visibility
-  const toggleSectionVisibility = async (id: number) => {
-    if (!isAdmin) return
-
+  const addSection = async (section: Section): Promise<Section> => {
     try {
-      setSections((prevSections) =>
-        prevSections.map((section) => (section.id === id ? { ...section, visible: !section.visible } : section)),
-      )
+      // Try API
+      const savedSection = await apiService.saveSection(section);
+      setSections((prev) => [...prev, savedSection]);
+      return savedSection;
     } catch (err) {
-      setError("Failed to toggle section visibility")
-      console.error(err)
+      console.error("Error adding section:", err);
+      setError("Failed to add section");
+      throw err;
     }
-  }
+  };
 
-  // Reorder section
-  const reorderSection = async (id: number, newPosition: number) => {
-    if (!isAdmin) return
-
+  const updateSection = async (section: Section): Promise<Section> => {
     try {
-      // Find the section to move
-      const sectionToMove = sections.find((s) => s.id === id)
-      if (!sectionToMove) return
-
-      const oldPosition = sectionToMove.position
-
-      // Update all affected sections
-      setSections((prevSections) => {
-        const updatedSections = prevSections.map((section) => {
-          if (section.id === id) {
-            return { ...section, position: newPosition }
-          } else if (oldPosition < newPosition && section.position > oldPosition && section.position <= newPosition) {
-            // Move sections up (decrease position)
-            return { ...section, position: section.position - 1 }
-          } else if (oldPosition > newPosition && section.position < oldPosition && section.position >= newPosition) {
-            // Move sections down (increase position)
-            return { ...section, position: section.position + 1 }
-          }
-          return section
-        })
-
-        // Sort by position
-        return updatedSections.sort((a, b) => a.position - b.position)
-      })
+      // Try API
+      const updatedSection = await apiService.saveSection(section);
+      setSections((prev) =>
+        prev.map((s) => (s.id === section.id ? updatedSection : s))
+      );
+      return updatedSection;
     } catch (err) {
-      setError("Failed to reorder section")
-      console.error(err)
+      console.error("Error updating section:", err);
+      setError("Failed to update section");
+      throw err;
     }
-  }
+  };
 
-  // Add new section
-  const addSection = async (sectionType: SectionType, title: string) => {
-    if (!isAdmin) return
-
+  const deleteSection = async (id: string): Promise<boolean> => {
     try {
-      const newPosition = sections.length + 1
-      const newId = Math.max(...sections.map((s) => s.id), 0) + 1
-
-      const newSection: Section = {
-        id: newId,
-        type: sectionType,
-        title: title,
-        visible: true,
-        position: newPosition,
-        bgColor: sectionType === "custom" ? "#f3f4f6" : undefined, // Default bg color for custom sections
+      // Try API
+      const result = await apiService.deleteSection(id);
+      if (result.success) {
+        setSections((prev) => prev.filter((s) => s.id !== id));
       }
-
-      setSections((prevSections) => [...prevSections, newSection].sort((a, b) => a.position - b.position))
+      return result.success;
     } catch (err) {
-      setError("Failed to add section")
-      console.error(err)
+      console.error("Error deleting section:", err);
+      setError("Failed to delete section");
+      throw err;
     }
-  }
+  };
 
-  // Delete section
-  const deleteSection = async (id: number) => {
-    if (!isAdmin) return
-
+  const reorderSections = async (
+    reorderedSections: Section[]
+  ): Promise<void> => {
     try {
-      const sectionToDelete = sections.find((s) => s.id === id)
-      if (!sectionToDelete) return
+      setSections(reorderedSections);
 
-      const positionToDelete = sectionToDelete.position
-
-      setSections((prevSections) => {
-        // Remove the section
-        const filteredSections = prevSections.filter((section) => section.id !== id)
-
-        // Update positions of remaining sections
-        return filteredSections
-          .map((section) => {
-            if (section.position > positionToDelete) {
-              return { ...section, position: section.position - 1 }
-            }
-            return section
-          })
-          .sort((a, b) => a.position - b.position)
-      })
+      // Update each section with new order
+      for (const [index, section] of reorderedSections.entries()) {
+        const updatedSection = { ...section, order: index };
+        await apiService.saveSection(updatedSection);
+      }
     } catch (err) {
-      setError("Failed to delete section")
-      console.error(err)
+      console.error("Error reordering sections:", err);
+      setError("Failed to reorder sections");
+      throw err;
     }
-  }
+  };
 
-  // Update section title
-  const updateSectionTitle = async (id: number, title: string) => {
-    if (!isAdmin) return
-
-    try {
-      setSections((prevSections) =>
-        prevSections.map((section) => (section.id === id ? { ...section, title } : section)),
-      )
-    } catch (err) {
-      setError("Failed to update section title")
-      console.error(err)
-    }
-  }
-
-  // Update section background color
-  const updateSectionBgColor = async (id: number, bgColor: string) => {
-    if (!isAdmin) return
-
-    try {
-      setSections((prevSections) =>
-        prevSections.map((section) => (section.id === id ? { ...section, bgColor } : section)),
-      )
-    } catch (err) {
-      setError("Failed to update section background color")
-      console.error(err)
-    }
-  }
+  // Function to retry connection (simply re-fetches)
+  const retryConnection = async () => {
+    await fetchSections();
+  };
 
   return (
     <SectionContext.Provider
       value={{
         sections,
+        addSection,
+        updateSection,
+        deleteSection,
+        reorderSections,
         isLoading,
         error,
-        toggleSectionVisibility,
-        reorderSection,
-        addSection,
-        deleteSection,
-        updateSectionTitle,
-        updateSectionBgColor,
+        connectionStatus,
+        retryConnection,
       }}
     >
       {children}
     </SectionContext.Provider>
-  )
+  );
 }
 
-export const useSections = () => {
-  const context = useContext(SectionContext)
+export function useSections() {
+  const context = useContext(SectionContext);
   if (context === undefined) {
-    throw new Error("useSections must be used within a SectionProvider")
+    throw new Error("useSections must be used within a SectionProvider");
   }
-  return context
+  return context;
 }

@@ -2,15 +2,10 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
-
-// Demo admin credentials
-const DEMO_ADMIN = {
-  email: "admin@portfolio.com",
-  password: "admin123",
-  name: "Admin User",
-}
+import { useRouter } from "next/navigation"
 
 type User = {
+  id: string
   email: string
   name: string
   isAdmin: boolean
@@ -28,14 +23,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   // Check for existing session on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem("portfolio-user")
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
+    const checkAuth = () => {
+      try {
+        const storedUser = localStorage.getItem("portfolio-user")
+        if (storedUser) {
+          setUser(JSON.parse(storedUser))
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
-    setIsLoading(false)
+
+    // Small delay to ensure consistent behavior
+    const timer = setTimeout(checkAuth, 50)
+    return () => clearTimeout(timer)
   }, [])
 
   // Save user to localStorage when it changes
@@ -48,27 +55,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user])
 
   const login = async (email: string, password: string) => {
-    // Simulate API call
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    // Check against demo credentials
-    if (email === DEMO_ADMIN.email && password === DEMO_ADMIN.password) {
-      setUser({
-        email: DEMO_ADMIN.email,
-        name: DEMO_ADMIN.name,
-        isAdmin: true,
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setIsLoading(false)
+        return false
+      }
+
+      setUser(data.user)
+
+      // Add a small delay before completing to ensure state updates
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
       setIsLoading(false)
       return true
+    } catch (error) {
+      console.error("Login error:", error)
+      setIsLoading(false)
+      return false
     }
-
-    setIsLoading(false)
-    return false
   }
 
   const logout = () => {
     setUser(null)
+    router.push("/")
   }
 
   return <AuthContext.Provider value={{ user, login, logout, isLoading }}>{children}</AuthContext.Provider>

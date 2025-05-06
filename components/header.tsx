@@ -6,7 +6,6 @@ import { Menu, X, User, LogOut } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ThemeToggle } from "./ui/theme-toggle"
 import { useAuth } from "@/context/auth-context"
-import { LoginModal } from "./ui/login-modal"
 import { Button } from "./ui/button"
 import {
   DropdownMenu,
@@ -77,7 +76,7 @@ export default function Header({ sections }: HeaderProps) {
           className="text-sm font-medium"
         >
           CREATIVE PORTFOLIO
-        </motion.div> */}
+        </motion.div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex gap-6">
@@ -135,15 +134,12 @@ export default function Header({ sections }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full bg-primary/10 hover:bg-primary/20"
-              onClick={() => setLoginModalOpen(true)}
-            >
-              <User className="h-[1.2rem] w-[1.2rem]" />
-              <span className="sr-only">Login</span>
-            </Button>
+            <Link href="/auth/login">
+              <Button variant="ghost" size="icon" className="rounded-full bg-primary/10 hover:bg-primary/20">
+                <User className="h-[1.2rem] w-[1.2rem]" />
+                <span className="sr-only">Login</span>
+              </Button>
+            </Link>
           )}
         </motion.div>
 
@@ -229,25 +225,23 @@ export default function Header({ sections }: HeaderProps) {
                   Logout
                 </Button>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setLoginModalOpen(true)
-                    setMobileMenuOpen(false)
-                  }}
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  Login
-                </Button>
+                <Link href="/auth/login">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                    }}
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Login
+                  </Button>
+                </Link>
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Login Modal */}
-      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
     </header>
   )
 }
