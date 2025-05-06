@@ -5,6 +5,9 @@ import Client from "./client"
 export const metadata: Metadata = {
   title: "Portfolio Landing Page",
   description: "A customizable portfolio landing page",
+  icons: {
+    icon: "/favicon.ico",
+  },
 }
 
 export default function RootLayout({
