@@ -134,8 +134,7 @@ export default function Home() {
 
     switch (section.type) {
       case "hero":
-        // return <Hero key={section.id} />;
-        return <div>Hero</div>;
+        return <Hero key={section.id} />;
       case "introduction":
         return (
           <>
