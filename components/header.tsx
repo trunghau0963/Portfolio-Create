@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState, useEffect } from "react"
-import { Menu, X, User, LogOut } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ThemeToggle } from "./ui/theme-toggle"
-import { useAuth } from "@/context/auth-context"
-import { Button } from "./ui/button"
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { Menu, X, User, LogOut } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ThemeToggle } from "./ui/theme-toggle";
+import { useAuth } from "@/context/auth-context";
+import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,51 +14,52 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import HeaderResumeButton from "./ui/header-resume-button"
-import type { Section } from "@/components/ui/section-manager"
+} from "@/components/ui/dropdown-menu";
+import HeaderResumeButton from "./ui/header-resume-button";
+import type { Section } from "@/app/page";
 
 interface HeaderProps {
-  sections: Section[]
+  sections: Section[];
 }
 
 export default function Header({ sections }: HeaderProps) {
-  const { user, logout } = useAuth()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-  const [socialHandle, setSocialHandle] = useState("@REALLYGREATSITE")
-  const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [socialHandle, setSocialHandle] = useState("@REALLYGREATSITE");
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   // Handle scroll effect for header
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen)
+    setMobileMenuOpen(!mobileMenuOpen);
     // Prevent scrolling when menu is open
     if (!mobileMenuOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = ""
+      document.body.style.overflow = "";
     }
-  }
+  };
 
   // Close mobile menu when clicking on a link
   const handleLinkClick = () => {
-    setMobileMenuOpen(false)
-    document.body.style.overflow = ""
-  }
+    setMobileMenuOpen(false);
+    document.body.style.overflow = "";
+  };
 
   // Generate navigation links based on visible sections
   const navLinks = sections.map((section) => ({
-    href: section.type === "custom" ? `#custom-${section.id}` : `#${section.type}`,
+    href:
+      section.type === "custom" ? `#custom-${section.id}` : `#${section.type}`,
     label: section.title,
-  }))
+  }));
 
   return (
     <header
@@ -87,7 +88,10 @@ export default function Header({ sections }: HeaderProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
-              <Link href={link.href} className="text-xs uppercase hover:text-red-600 transition-colors relative group">
+              <Link
+                href={link.href}
+                className="text-xs uppercase hover:text-red-600 transition-colors relative group"
+              >
                 {link.label}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-red-600 transition-all duration-300 group-hover:w-full"></span>
               </Link>
@@ -114,7 +118,11 @@ export default function Header({ sections }: HeaderProps) {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full bg-primary/10 hover:bg-primary/20">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full bg-primary/10 hover:bg-primary/20"
+                >
                   <User className="h-[1.2rem] w-[1.2rem]" />
                   <span className="sr-only">User menu</span>
                 </Button>
@@ -123,7 +131,9 @@ export default function Header({ sections }: HeaderProps) {
                 <DropdownMenuLabel>
                   <div className="flex flex-col">
                     <span>{user.name}</span>
-                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {user.email}
+                    </span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -135,7 +145,11 @@ export default function Header({ sections }: HeaderProps) {
             </DropdownMenu>
           ) : (
             <Link href="/auth/login">
-              <Button variant="ghost" size="icon" className="rounded-full bg-primary/10 hover:bg-primary/20">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full bg-primary/10 hover:bg-primary/20"
+              >
                 <User className="h-[1.2rem] w-[1.2rem]" />
                 <span className="sr-only">Login</span>
               </Button>
@@ -230,7 +244,7 @@ export default function Header({ sections }: HeaderProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setMobileMenuOpen(false)
+                      setMobileMenuOpen(false);
                     }}
                   >
                     <User className="mr-2 h-4 w-4" />
@@ -243,5 +257,5 @@ export default function Header({ sections }: HeaderProps) {
         )}
       </AnimatePresence>
     </header>
-  )
+  );
 }

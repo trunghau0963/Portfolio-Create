@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "target": "esnext",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "strict": true,
+    "lib": ["esnext"],
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+  "include": ["./seed.ts"],
+  "exclude": ["node_modules"]
+}

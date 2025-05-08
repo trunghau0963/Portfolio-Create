@@ -1,63 +1,86 @@
-import { NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
-import { ObjectId } from "mongodb"
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const client = await clientPromise
-    const db = client.db("portfolio")
-    const sections = await db.collection("sections").find({}).sort({ order: 1 }).toArray()
+    const sections = await prisma.section.findMany({
+      orderBy: {
+        order: "asc",
+      },
+      include: {
+        textBlocks: {
+          orderBy: {
+            order: "asc",
+          },
+        },
+        imageBlocks: {
+          orderBy: {
+            order: "asc",
+          },
+        },
+        heroContent: true,
+        contactInfoItems: {
+          orderBy: {
+            order: "asc",
+          },
+        },
+        customSectionContentBlocks: {
+          orderBy: {
+            order: "asc",
+          },
+        },
+        educationItems: {
+          orderBy: {
+            order: "asc",
+          },
+          include: {
+            images: { orderBy: { order: "asc" } },
+          },
+        },
+        skillItems: {
+          orderBy: { order: "asc" },
+        },
+        skillImages: {
+          orderBy: { order: "asc" },
+        },
+        experienceItems: {
+          orderBy: { order: "asc" },
+          include: {
+            detailImages: { orderBy: { order: "asc" } },
+          },
+        },
+        projectItems: {
+          orderBy: { order: "asc" },
+        },
+        testimonialItems: {
+          orderBy: { order: "asc" },
+        },
+      },
+    });
 
-    return NextResponse.json(sections)
+    return NextResponse.json(sections);
   } catch (error) {
-    console.error("Error fetching sections:", error)
-    return NextResponse.json({ error: "Failed to fetch sections" }, { status: 500 })
+    console.error("Error fetching sections:", error);
+    return NextResponse.json(
+      {
+        message: "Error fetching sections",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: Request) {
-  try {
-    const section = await request.json()
-    const client = await clientPromise
-    const db = client.db("portfolio")
-
-    const now = new Date()
-    const result = await db.collection("sections").insertOne({
-      ...section,
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    return NextResponse.json({
-      ...section,
-      _id: result.insertedId,
-      createdAt: now,
-      updatedAt: now,
-    })
-  } catch (error) {
-    console.error("Error saving section:", error)
-    return NextResponse.json({ error: "Failed to save section" }, { status: 500 })
-  }
+  return NextResponse.json(
+    { message: "POST not implemented with Prisma yet" },
+    { status: 501 }
+  );
 }
 
 export async function PUT(request: Request) {
-  try {
-    const section = await request.json()
-    const client = await clientPromise
-    const db = client.db("portfolio")
-
-    const { _id, ...updateData } = section
-    const objectId = new ObjectId(_id)
-
-    const now = new Date()
-    await db.collection("sections").updateOne({ _id: objectId }, { $set: { ...updateData, updatedAt: now } })
-
-    return NextResponse.json({
-      ...section,
-      updatedAt: now,
-    })
-  } catch (error) {
-    console.error("Error updating section:", error)
-    return NextResponse.json({ error: "Failed to update section" }, { status: 500 })
-  }
+  return NextResponse.json(
+    { message: "PUT not implemented with Prisma yet" },
+    { status: 501 }
+  );
 }

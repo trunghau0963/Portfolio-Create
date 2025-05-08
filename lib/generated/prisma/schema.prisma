@@ -1,0 +1,281 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String
+  password  String
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("Users")
+}
+
+model Section {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug      String   @unique // "hero", "about", "projects", etc.
+  title     String // "Home", "About", "Projects"
+  type      String // "hero", "introduction", "projects", "custom"
+  visible   Boolean  @default(true)
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Generic content blocks usable by multiple section types
+  textBlocks  TextBlock[]
+  imageBlocks ImageBlock[]
+
+  // Specific content relations
+  heroContent                HeroSectionContent?         @relation("HeroContentToSection")
+  educationItems             EducationItem[]             @relation("EducationItemsToSection")
+  skillItems                 SkillItem[]                 @relation("SkillItemsToSection")
+  skillImages                SkillImage[]                @relation("SkillImagesToSection") // General images for skill section
+  experienceItems            ExperienceItem[]            @relation("ExperienceItemsToSection")
+  projectItems               ProjectItem[]               @relation("ProjectItemsToSection")
+  testimonialItems           TestimonialItem[]           @relation("TestimonialItemsToSection")
+  contactInfoItems           ContactInfoItem[]           @relation("ContactInfoItemsToSection")
+  customSectionContentBlocks CustomSectionContentBlock[] @relation("CustomSectionContentBlocksToSection")
+}
+
+model Category {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String   @unique
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  projectIds String[] @db.ObjectId // Store an array of ProjectItem IDs
+  // projects  ProjectItem[] @relation("ProjectCategories") // Removed implicit relation
+}
+
+// Model for settings, based on db-init.ts
+// Assuming a single document for global settings.
+model Setting {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  siteTitle    String   @default("PORTFOLIO") // Added siteTitle
+  theme        String   @default("dark") // Changed default to dark
+  showPortrait Boolean  @default(true)
+  resumeUrl    String   @default("/resume.pdf")
+  createdAt    DateTime @default(now()) // Added createdAt for consistency
+  updatedAt    DateTime @updatedAt
+}
+
+// Models from db-init.ts that were not in seed-data.ts
+// You need to decide if you want to manage these with Prisma as well.
+// If so, define their structure. For now, I'm commenting them out.
+// model Project {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   // ... other fields
+// }
+
+// model Experience {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   // ... other fields
+// }
+
+// model Education {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   // ... other fields
+// }
+
+// model Skill {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   // ... other fields
+// }
+
+// --- Generic Content Blocks ---
+model TextBlock {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  order     Int      @default(0)
+  sectionId String   @db.ObjectId
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  // Potential fields: style (e.g., "paragraph", "heading1"), fontFamily, fontSize, textAlign
+  // For simplicity, frontend can handle styling based on context or a 'type' field here.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ImageBlock {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  src       String
+  alt       String?
+  caption   String?
+  order     Int      @default(0)
+  sectionId String   @db.ObjectId
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  // Potential fields: width, height, alignment
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- Specific Section Content Models ---
+
+model HeroSectionContent {
+  id               String  @id @default(auto()) @map("_id") @db.ObjectId
+  // Hero often has a unique structure, e.g., main title, subtitle, CTA button text/link
+  // Specific fields for Hero, or rely on TextBlocks/ImageBlocks linked to the "hero" Section.
+  // For now, let's assume Hero section uses TextBlocks and ImageBlocks for its main content.
+  // This model can hold fields unique to Hero that don't fit TextBlock/ImageBlock, like portrait settings.
+  portraitImageSrc String? // URL for the portrait image itself
+  portraitAlt      String? @default("Portrait")
+  // showPortrait is in global Setting, but can be overridden here if needed per section later.
+  // portraitPosition String  @default("center") // "left", "center", "right" -> this is UI state, maybe not DB
+
+  sectionId String   @unique @db.ObjectId
+  section   Section  @relation("HeroContentToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EducationItem {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  institution String
+  degree      String? // e.g., Bachelor's degree in Design
+  period      String // e.g., "2019-2020"
+  description String?
+  order       Int              @default(0)
+  sectionId   String           @db.ObjectId
+  section     Section          @relation("EducationItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  images      EducationImage[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model EducationImage {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  src             String
+  alt             String?
+  caption         String?
+  order           Int           @default(0)
+  educationItemId String        @db.ObjectId
+  educationItem   EducationItem @relation(fields: [educationItemId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+}
+
+model SkillItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  level       Int? // Optional: e.g., 1-5 or 1-100 for percentage
+  order       Int      @default(0)
+  sectionId   String   @db.ObjectId
+  section     Section  @relation("SkillItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SkillImage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  src       String
+  alt       String?
+  caption   String?
+  order     Int      @default(0)
+  sectionId String   @db.ObjectId
+  section   Section  @relation("SkillImagesToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model ExperienceItem {
+  id            String                  @id @default(auto()) @map("_id") @db.ObjectId
+  positionTitle String
+  companyName   String
+  period        String // e.g., "Jan 2020 - Dec 2022"
+  summary       String? // Short summary for card view
+  description   String? // Detailed description for modal/page view
+  imageSrc      String // Main image for the card/listing
+  order         Int                     @default(0)
+  sectionId     String                  @db.ObjectId
+  section       Section                 @relation("ExperienceItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  detailImages  ExperienceDetailImage[]
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+}
+
+model ExperienceDetailImage {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  src              String
+  alt              String?
+  caption          String?
+  order            Int            @default(0)
+  experienceItemId String         @db.ObjectId
+  experienceItem   ExperienceItem @relation(fields: [experienceItemId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+}
+
+model ProjectItem {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  projectNumber String? // "01", "02" - Can be auto-generated based on order
+  title         String // More descriptive than just companyName
+  companyName   String? // Can be part of title or separate
+  description1  String
+  description2  String?
+  imageSrc      String // Main project image
+  liveLink      String? // Link to live project
+  sourceLink    String? // Link to source code (GitHub)
+  layout        String   @default("layout1") // "layout1" or "layout2" for frontend styling
+  order         Int      @default(0)
+  sectionId     String   @db.ObjectId
+  section       Section  @relation("ProjectItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  categoryIds   String[] @db.ObjectId // Store an array of Category IDs
+  // categories     Category[] @relation("ProjectCategories") // Removed implicit relation
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TestimonialItem {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  clientName String
+  role       String?
+  company    String?
+  content    String
+  rating     Float // e.g., 4.5, 5
+  imageSrc   String? // Client's photo
+  order      Int      @default(0)
+  sectionId  String   @db.ObjectId
+  section    Section  @relation("TestimonialItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ContactInfoItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      String // "email", "phone", "linkedin", "github", "twitter", "facebook", "instagram", "website", "other"
+  value     String // The actual email, phone number, URL
+  label     String? // Optional display label, e.g., "Work Email", "Personal Phone"
+  icon      String? // Optional: if you want to store icon name like "Mail", "Phone"
+  order     Int      @default(0)
+  sectionId String   @db.ObjectId
+  section   Section  @relation("ContactInfoItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CustomSectionContentBlock {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      String // e.g., "HEADING_H1", "HEADING_H2", "PARAGRAPH", "IMAGE", "VIDEO_EMBED"
+  content   String? // For text-based types (text, heading content, video embed code)
+  imageSrc  String? // For IMAGE type
+  imageAlt  String? // For IMAGE type
+  linkUrl   String? // Optional link for text or image
+  order     Int      @default(0)
+  // stylingJson String? // For advanced styling overrides as JSON -> consider carefully, can get complex
+  sectionId String   @db.ObjectId
+  section   Section  @relation("CustomSectionContentBlocksToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

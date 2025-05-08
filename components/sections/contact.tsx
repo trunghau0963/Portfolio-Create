@@ -1,8 +1,7 @@
 "use client";
 
 import type React from "react";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import EditableText from "@/components/ui/editable-text";
 import EditableImage from "@/components/ui/editable-image";
 import EditablePortrait from "@/components/ui/editable-portrait";
@@ -24,6 +23,10 @@ import {
   Send,
   Eye,
   EyeOff,
+  ExternalLink,
+  Globe,
+  Pencil,
+  ImagePlus,
 } from "lucide-react";
 import {
   Dialog,
@@ -37,53 +40,53 @@ import { Input } from "@/components/ui/input";
 import { Label as InputLabel } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/auth-context";
+import {
+  Section as PrismaSection,
+  TextBlock as PrismaTextBlock,
+  ImageBlock as PrismaImageBlock,
+  ContactInfoItem as PrismaContactInfoItem,
+} from "../../lib/generated/prisma";
+import EditableTextAutoResize from "@/components/ui/editable-text-auto-resize";
 
-// Define contact type
-interface ContactItem {
-  id: number;
-  type:
-    | "email"
-    | "phone"
-    | "facebook"
-    | "linkedin"
-    | "instagram"
-    | "twitter"
-    | "other";
-  value: string;
-  label?: string;
+interface ContactSectionProps {
+  section: PrismaSection & {
+    textBlocks: PrismaTextBlock[];
+    imageBlocks: PrismaImageBlock[];
+    contactInfoItems: PrismaContactInfoItem[];
+  };
+  onDataChange: () => void;
 }
 
-export default function ContactSection() {
+export default function ContactSection({
+  section,
+  onDataChange,
+}: ContactSectionProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
+  const sectionId = section.id;
 
-  // State for portrait visibility and position
+  const textBlock1 = section.textBlocks?.[0];
+  const textBlock2 = section.textBlocks?.[1];
+  const imageBlock1 = section.imageBlocks?.[0];
+  const imageBlock2 = section.imageBlocks?.[1];
+  const contactInfoItemsToRender = section.contactInfoItems || [];
+
   const [showPortrait, setShowPortrait] = useState(true);
   const [portraitPosition, setPortraitPosition] = useState<
     "left" | "center" | "right"
   >("right");
 
-  // State for contact items
-  const [contactItems, setContactItems] = useState<ContactItem[]>([
-    { id: 1, type: "email", value: "hello@myportfolio.com" },
-    { id: 2, type: "phone", value: "+123-456-7890" },
-    { id: 3, type: "linkedin", value: "linkedin.com/in/myportfolio" },
-  ]);
-
-  // State for add/edit contact dialog
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
-  const [currentContact, setCurrentContact] = useState<ContactItem | null>(
-    null
-  );
-  const [contactType, setContactType] = useState<ContactItem["type"]>("email");
+  const [currentContact, setCurrentContact] =
+    useState<PrismaContactInfoItem | null>(null);
+  const [contactType, setContactType] =
+    useState<PrismaContactInfoItem["type"]>("email");
   const [contactValue, setContactValue] = useState("");
   const [contactLabel, setContactLabel] = useState("");
 
-  // State for delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [contactToDelete, setContactToDelete] = useState<number | null>(null);
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
-  // State for contact form dialog
   const [contactFormOpen, setContactFormOpen] = useState(false);
   const [contactFormEmail, setContactFormEmail] = useState("");
   const [contactFormSubject, setContactFormSubject] = useState("");
@@ -91,7 +94,21 @@ export default function ContactSection() {
   const [contactFormSubmitting, setContactFormSubmitting] = useState(false);
   const [contactFormSuccess, setContactFormSuccess] = useState(false);
 
-  // Load portrait visibility from localStorage
+  const [deleteBlockConfirm, setDeleteBlockConfirm] = useState<{
+    type: "text" | "image";
+    id: string;
+  } | null>(null);
+  const [editingBlock, setEditingBlock] = useState<{
+    type: "text" | "image";
+    id: string;
+    currentContent?: string;
+    currentSrc?: string;
+    currentAlt?: string;
+  } | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editImageSrc, setEditImageSrc] = useState("");
+  const [editImageAlt, setEditImageAlt] = useState("");
+
   useEffect(() => {
     const storedFooterPortraitVisibility = localStorage.getItem(
       "portfolio-footer-portrait-visibility"
@@ -101,7 +118,6 @@ export default function ContactSection() {
     }
   }, []);
 
-  // Save portrait visibility to localStorage when it changes
   useEffect(() => {
     localStorage.setItem(
       "portfolio-footer-portrait-visibility",
@@ -109,7 +125,6 @@ export default function ContactSection() {
     );
   }, [showPortrait]);
 
-  // Function to open add contact dialog
   const openAddContactDialog = () => {
     setCurrentContact(null);
     setContactType("email");
@@ -118,8 +133,7 @@ export default function ContactSection() {
     setContactDialogOpen(true);
   };
 
-  // Function to open edit contact dialog
-  const openEditContactDialog = (contact: ContactItem) => {
+  const openEditContactDialog = (contact: PrismaContactInfoItem) => {
     setCurrentContact(contact);
     setContactType(contact.type);
     setContactValue(contact.value);
@@ -127,79 +141,44 @@ export default function ContactSection() {
     setContactDialogOpen(true);
   };
 
-  // Function to save contact
   const saveContact = () => {
-    if (currentContact) {
-      // Edit existing contact
-      setContactItems(
-        contactItems.map((item) =>
-          item.id === currentContact.id
-            ? {
-                ...item,
-                type: contactType,
-                value: contactValue,
-                label: contactLabel || undefined,
-              }
-            : item
-        )
-      );
-    } else {
-      // Add new contact
-      const newContactId =
-        contactItems.length > 0
-          ? Math.max(...contactItems.map((item) => item.id)) + 1
-          : 1;
-      const newContact: ContactItem = {
-        id: newContactId,
-        type: contactType,
-        value: contactValue,
-        label: contactLabel || undefined,
-      };
-      setContactItems([...contactItems, newContact]);
-    }
+    console.log("Save contact clicked (API call needed)", {
+      currentContact,
+      contactType,
+      contactValue,
+      contactLabel,
+    });
     setContactDialogOpen(false);
   };
 
-  // Function to open delete confirmation dialog
-  const confirmDeleteContact = (contactId: number) => {
+  const confirmDeleteContact = (contactId: string) => {
     setContactToDelete(contactId);
     setDeleteDialogOpen(true);
   };
 
-  // Function to delete a contact
   const deleteContact = () => {
-    if (contactToDelete !== null) {
-      setContactItems(
-        contactItems.filter((item) => item.id !== contactToDelete)
-      );
-      setDeleteDialogOpen(false);
-      setContactToDelete(null);
-    }
+    console.log("Delete contact clicked (API call needed)", contactToDelete);
+    setDeleteDialogOpen(false);
+    setContactToDelete(null);
   };
 
-  // Function to handle contact form submission
   const handleContactFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setContactFormSubmitting(true);
-
-    // Simulate form submission
     setTimeout(() => {
       setContactFormSubmitting(false);
       setContactFormSuccess(true);
-
-      // Reset form after success
       setTimeout(() => {
         setContactFormOpen(false);
+        setContactFormSuccess(false);
         setContactFormEmail("");
         setContactFormSubject("");
         setContactFormMessage("");
-        setContactFormSuccess(false);
       }, 2000);
     }, 1500);
   };
 
-  // Function to get icon for contact type
-  const getContactIcon = (type: ContactItem["type"]) => {
+  const getContactIcon = (type: PrismaContactInfoItem["type"]) => {
     switch (type) {
       case "email":
         return <Mail className="h-5 w-5" />;
@@ -213,22 +192,145 @@ export default function ContactSection() {
         return <Instagram className="h-5 w-5" />;
       case "twitter":
         return <Twitter className="h-5 w-5" />;
+      case "website":
+        return <Globe className="h-5 w-5" />;
       default:
-        return <Mail className="h-5 w-5" />;
+        return <ExternalLink className="h-5 w-5" />;
     }
   };
 
+  const formatContactLink = (item: PrismaContactInfoItem): string => {
+    switch (item.type) {
+      case "email":
+        return `mailto:${item.value}`;
+      case "phone":
+        return `tel:${item.value}`;
+      case "linkedin":
+      case "facebook":
+      case "instagram":
+      case "twitter":
+      case "github":
+      case "website":
+        return item.value.startsWith("http")
+          ? item.value
+          : `https://${item.value}`;
+      default:
+        return item.value;
+    }
+  };
+
+  const handleAddTextBlock = async () => {
+    const content = prompt("Enter new text content:", "New contact text...");
+    if (content === null) return;
+    try {
+      const res = await fetch("/api/textblocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectionId, content }),
+      });
+      if (!res.ok) throw new Error("Failed to add text block");
+      onDataChange();
+    } catch (error) {
+      console.error(error); /* Add user feedback */
+    }
+  };
+
+  const handleAddImageBlock = async () => {
+    const src = prompt("Enter image URL:", "https://picsum.photos/400/300");
+    if (!src) return;
+    const alt = prompt("Enter image alt text (optional):");
+    try {
+      const res = await fetch("/api/imageblocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectionId, src, alt: alt || "" }), // Ensure alt is string
+      });
+      if (!res.ok) throw new Error("Failed to add image block");
+      onDataChange();
+    } catch (error) {
+      console.error(error); /* Add user feedback */
+    }
+  };
+
+  const handleSaveTextBlock = async (blockId: string, newContent: string) => {
+    try {
+      const res = await fetch(`/api/textblocks/${blockId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to save text block");
+      }
+      setEditingBlock(null);
+      onDataChange();
+    } catch (error) {
+      console.error("Error saving text block in ContactSection:", error);
+      throw error;
+    }
+  };
+
+  const handleSaveImageBlock = async (
+    blockId: string,
+    data: { src?: string; alt?: string }
+  ) => {
+    try {
+      const res = await fetch(`/api/imageblocks/${blockId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to save image block");
+      }
+      setEditingBlock(null);
+      onDataChange();
+    } catch (error) {
+      console.error("Error saving image block in ContactSection:", error);
+      throw error;
+    }
+  };
+
+  const startEditText = (block: PrismaTextBlock) => {
+    setEditingBlock({ type: "text", id: block.id });
+    setEditText(block.content || "");
+  };
+
+  const startEditImage = (block: PrismaImageBlock) => {
+    setEditingBlock({ type: "image", id: block.id });
+    setEditImageSrc(block.src || "");
+    setEditImageAlt(block.alt || "");
+  };
+
+  const cancelEdit = () => {
+    setEditingBlock(null);
+  };
+
   return (
-    <footer className="py-16 md:py-20 lg:py-24 bg-red-600 text-white">
+    <footer
+      id={section.id}
+      className="py-16 md:py-20 lg:py-24 bg-red-600 text-white"
+    >
       <div className="max-w-6xl mx-auto px-4">
         {/* Title Row */}
         <div className="mb-12">
           <AnimatedSection delay={0.1}>
             <h2 className="text-white font-bold tracking-tighter leading-none">
               <EditableText
-                initialText="LET'S WORK TOGETHER"
+                initialText={section.title || "LET'S WORK TOGETHER"}
                 as="span"
                 initialFontSize={90}
+                blockId={`section-title-${section.id}`}
+                onSave={async (id, newTitle) => {
+                  console.log(
+                    "Section title save attempt (not implemented):",
+                    id,
+                    newTitle
+                  );
+                }}
+                isAdmin={isAdmin}
               />
             </h2>
             <div className="flex mt-4 ml-1">
@@ -246,8 +348,10 @@ export default function ContactSection() {
             <div className="md:col-span-4 lg:col-span-3 order-2 md:order-1">
               <AnimatedSection delay={0.2} variant="fadeInRight">
                 <EditablePortrait
-                  initialSrc="/placeholder.svg?height=400&width=300"
-                  alt="Footer portrait"
+                  initialSrc={
+                    imageBlock2?.src || "/placeholder.svg?height=400&width=300"
+                  }
+                  alt={imageBlock2?.alt || "Footer portrait"}
                   width={300}
                   height={400}
                   onPositionChange={setPortraitPosition}
@@ -265,63 +369,72 @@ export default function ContactSection() {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <AnimatedSection delay={0.3} variant="fadeInLeft">
-                <div className="bg-red-700/30 backdrop-blur-sm rounded-lg p-6 shadow-md">
-                  <EditableText
-                    initialText="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique."
-                    className="text-sm mb-4"
-                    initialFontSize={14}
-                  />
-                  <EditableText
-                    initialText="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique."
-                    className="text-sm"
-                    initialFontSize={14}
-                  />
+                <div className="bg-red-700/30 backdrop-blur-sm rounded-lg p-6 shadow-md min-h-[150px]">
+                  {textBlock1 ? (
+                    <EditableText
+                      key={textBlock1.id}
+                      blockId={textBlock1.id}
+                      initialText={textBlock1.content}
+                      onSave={handleSaveTextBlock}
+                      isAdmin={isAdmin}
+                      className="text-sm mb-4 text-white"
+                      initialFontSize={14}
+                    />
+                  ) : isAdmin ? (
+                    <div className="text-center text-white/50">
+                      Text block 1 missing.
+                    </div>
+                  ) : null}
                 </div>
               </AnimatedSection>
               <AnimatedSection delay={0.5} variant="fadeInLeft">
                 <div className="bg-red-700/30 backdrop-blur-sm rounded-lg p-6 shadow-md">
-                  <motion.div
-                    className="overflow-hidden rounded-lg shadow-md mb-4"
-                    whileHover={{ scale: 1.03 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <EditableImage
-                      src="https://picsum.photos/400/300?random=footer"
-                      alt="Contact image"
-                      width={400}
-                      height={300}
-                      className="w-full h-auto object-cover"
-                    />
-                  </motion.div>
-
-                  {/* Contact Information */}
+                  <div className="mb-4 min-h-[150px]">
+                    {imageBlock1 ? (
+                      <EditableImage
+                        key={imageBlock1.id}
+                        blockId={imageBlock1.id}
+                        src={imageBlock1.src}
+                        alt={imageBlock1.alt || "Contact image"}
+                        width={400}
+                        height={300}
+                        onSave={handleSaveImageBlock}
+                        isAdmin={isAdmin}
+                        className="w-full h-auto object-cover rounded-lg shadow-md"
+                      />
+                    ) : isAdmin ? (
+                      <div className="text-center text-white/50">
+                        Image block 1 missing.
+                      </div>
+                    ) : null}
+                  </div>
                   <div className="space-y-3 mb-6">
-                    {contactItems.map((contact) => (
+                    {contactInfoItemsToRender.map((item) => (
                       <div
-                        key={contact.id}
+                        key={item.id}
                         className="flex items-center justify-between group"
                       >
                         <div className="flex items-center">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10 mr-2">
-                            {getContactIcon(contact.type)}
+                            {getContactIcon(item.type)}
                           </span>
-                          <span>{contact.value}</span>
+                          <span>{item.value}</span>
                         </div>
                         {isAdmin && (
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+                          <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-white/70 hover:text-white hover:bg-red-700/50"
-                              onClick={() => openEditContactDialog(contact)}
+                              className="h-6 w-6 text-blue-300 hover:text-blue-100"
+                              onClick={() => openEditContactDialog(item)}
                             >
-                              <PlusCircle size={14} />
+                              <Pencil size={14} />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-white/70 hover:text-white hover:bg-red-700/50"
-                              onClick={() => confirmDeleteContact(contact.id)}
+                              className="h-6 w-6 text-red-300 hover:text-red-100"
+                              onClick={() => confirmDeleteContact(item.id)}
                             >
                               <Trash2 size={14} />
                             </Button>
@@ -330,8 +443,6 @@ export default function ContactSection() {
                       </div>
                     ))}
                   </div>
-
-                  {/* Add Contact Button */}
                   <div className="flex justify-between items-center">
                     {isAdmin && (
                       <Button
@@ -340,7 +451,7 @@ export default function ContactSection() {
                         onClick={openAddContactDialog}
                       >
                         <PlusCircle size={16} className="mr-2" />
-                        Add Contact
+                        Add Contact Info
                       </Button>
                     )}
 
@@ -389,12 +500,6 @@ export default function ContactSection() {
             </AnimatedSection>
           </div>
         )}
-        {/* 
-        <div className="max-w-6xl mx-auto px-4 mt-12 pt-6 border-t border-white/20">
-          <div className="text-center text-sm text-white/70">
-            © {new Date().getFullYear()} Creative Portfolio. All rights reserved.
-          </div>
-        </div> */}
       </div>
 
       {/* Add/Edit Contact Dialog */}
@@ -412,16 +517,16 @@ export default function ContactSection() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <InputLabel htmlFor="contactType" className="text-right">
-                Type
-              </InputLabel>
+              <InputLabel htmlFor="contact-type">Type</InputLabel>
               <select
-                id="contactType"
-                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="contact-type"
                 value={contactType}
                 onChange={(e) =>
-                  setContactType(e.target.value as ContactItem["type"])
+                  setContactType(
+                    e.target.value as PrismaContactInfoItem["type"]
+                  )
                 }
+                className="w-full p-2 border rounded bg-white text-black dark:bg-gray-700 dark:text-white dark:border-gray-600"
               >
                 <option value="email">Email</option>
                 <option value="phone">Phone</option>

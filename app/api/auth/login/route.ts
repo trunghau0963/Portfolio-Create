@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import clientPromise from "../../../../lib/mongodb";
 import type { User as DbUser } from "@/models/User"; // Assuming you have a User model type
 // IMPORTANT: In a real application, use a library like bcrypt to hash and compare passwords!
-// import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
   try {
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     const client = await clientPromise;
     const db = client.db("myDatabase"); // Replace with your database name
-    const usersCollection = db.collection<DbUser>("users"); // Replace with your user collection name
+    const usersCollection = db.collection<DbUser>("Users"); // Changed "Users" to "users"
 
     // Find user by email
     // Explicitly type the user document or use projection if needed
@@ -33,8 +33,11 @@ export async function POST(request: Request) {
     // *** SECURITY WARNING ***
     // Replace this plain text comparison with a secure hashing check (e.g., bcrypt.compare)
     // Ensure your user document actually has a 'password' field
-    const passwordMatches = user.password && password === user.password;
-    // const passwordMatches = await bcrypt.compare(password, user.passwordHash); // Example with bcrypt
+    const passwordMatches = user.password
+      ? await bcrypt.compare(password, user.password)
+      : false;
+
+    console.log("passwordMatches", passwordMatches);
 
     if (!passwordMatches) {
       return NextResponse.json(

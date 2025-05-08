@@ -49,17 +49,33 @@ import { Input } from "@/components/ui/input";
 import CategoryFilter from "../ui/category-filter";
 import { useAuth } from "@/context/auth-context";
 import ProjectCategoryDialog from "../ui/project-category-dialog";
+import {
+  Section as PrismaSection,
+  TextBlock as PrismaTextBlock,
+  ProjectItem as PrismaProjectItem,
+  Category as PrismaCategory,
+} from "../../lib/generated/prisma";
+import EditableTextAutoResize from "../ui/editable-text-auto-resize";
 
 // Define a project type for better type safety
 interface Project {
-  id: number;
+  id: string;
   number: string;
-  companyName: string;
+  title: string;
+  companyName?: string;
   description1: string;
   description2?: string;
   imageSrc: string;
   layout: "layout1" | "layout2";
-  categories: string[]; // Added categories field
+  categories: string[];
+  liveLink?: string;
+  sourceLink?: string;
+  titleBlockId?: string;
+  companyNameBlockId?: string;
+  description1BlockId?: string;
+  description2BlockId?: string;
+  projectNumberBlockId?: string;
+  mainImageBlockId?: string;
 }
 
 // Sortable Project Item Component
@@ -71,14 +87,30 @@ function SortableProjectItem({
   onChangeLayout,
   showImages,
   onEditCategories,
+  isAdmin,
+  onSaveProjectText,
+  onSaveProjectImage,
 }: {
   project: Project;
   index: number;
   projects: Project[];
-  confirmDelete: (id: number) => void;
-  onChangeLayout: (id: number, layout: "layout1" | "layout2") => void;
+  confirmDelete: (id: string) => void;
+  onChangeLayout: (id: string, layout: "layout1" | "layout2") => void;
   showImages: boolean;
-  onEditCategories: (id: number) => void;
+  onEditCategories: (id: string) => void;
+  isAdmin: boolean | undefined;
+  onSaveProjectText: (
+    projectId: string,
+    field: keyof Project,
+    newText: string,
+    blockId?: string
+  ) => Promise<void>;
+  onSaveProjectImage: (
+    projectId: string,
+    field: "imageSrc",
+    newData: { src?: string; alt?: string },
+    blockId?: string
+  ) => Promise<void>;
 }) {
   const {
     attributes,
@@ -98,8 +130,6 @@ function SortableProjectItem({
     marginBottom: index < projects.length - 1 ? "2rem" : 0,
   };
 
-  // Layout 1: Title on left, content on right
-  // Layout 2: Title on right, content on left
   const isLayout1 = project.layout === "layout1";
   const bgColorClass = index % 2 === 0 ? "bg-red-600" : "bg-black";
 
@@ -107,25 +137,24 @@ function SortableProjectItem({
     <motion.div
       ref={setNodeRef}
       style={style}
-      className="mb-16 md:mb-24"
+      className={`sortable-item ${isDragging ? "dragging" : ""}`}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
     >
       <div className={`${bgColorClass} rounded-lg p-6 md:p-12`}>
         {isLayout1 ? (
-          // Layout 1: PROJECT 01 on left, content on right
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-            {/* Project Title */}
             <div className="md:col-span-5 lg:col-span-4 relative">
-              <div
-                className="absolute -left-6 sm:-left-10 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing touch-manipulation"
-                {...attributes}
-                {...listeners}
-              >
-                <GripVertical className="h-5 w-5 text-white hover:text-gray-200" />
-              </div>
-
+              {isAdmin && (
+                <div
+                  className="absolute -left-6 sm:-left-10 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing touch-manipulation z-10"
+                  {...attributes}
+                  {...listeners}
+                >
+                  <GripVertical className="h-5 w-5 text-white hover:text-gray-200" />
+                </div>
+              )}
               <div>
                 <div className="text-white text-sm font-medium mb-1">
                   PROJECT
@@ -136,6 +165,14 @@ function SortableProjectItem({
                     as="span"
                     initialFontSize={72}
                     className="text-white"
+                    blockId={
+                      project.projectNumberBlockId ||
+                      `project-${project.id}-number`
+                    }
+                    onSave={async (blockId, newText) =>
+                      onSaveProjectText(project.id, "number", newText, blockId)
+                    }
+                    isAdmin={isAdmin}
                   />
                 </div>
                 <div className="flex mt-4 ml-1">
@@ -143,89 +180,143 @@ function SortableProjectItem({
                   <div className="w-2 h-2 rounded-full bg-white mr-2"></div>
                   <div className="w-2 h-2 rounded-full bg-white"></div>
                 </div>
-
-                {/* Project Categories */}
                 {project.categories.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {project.categories.map((category) => (
+                    {project.categories.map((categoryName) => (
                       <span
-                        key={category}
+                        key={categoryName}
                         className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-white/10 text-white"
                       >
                         <Tag className="h-3 w-3 mr-1" />
-                        {category}
+                        {categoryName}
                       </span>
                     ))}
                   </div>
                 )}
               </div>
-
-              {/* Layout Toggle and Delete Button */}
-              <div className="absolute top-0 right-0 flex items-center space-x-2">
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:text-gray-200 hover:bg-red-700"
-                    onClick={() => onEditCategories(project.id)}
-                    title="Edit Categories"
+              {isAdmin && (
+                <div className="absolute top-0 right-0 flex items-center space-x-1 sm:space-x-2">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <Tag size={20} />
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:text-gray-200 hover:bg-red-700"
-                    onClick={() => onChangeLayout(project.id, "layout2")}
-                    title="Switch to Layout 2"
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
+                      onClick={() => onEditCategories(project.id)}
+                      title="Edit Categories"
+                    >
+                      <Tag size={18} />
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <LayoutList size={20} />
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:text-gray-200 hover:bg-red-700"
-                    onClick={() => confirmDelete(project.id)}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
+                      onClick={() => onChangeLayout(project.id, "layout2")}
+                      title="Switch to Layout 2"
+                    >
+                      <LayoutList size={18} />
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <Trash2 size={20} />
-                    <span className="sr-only">Delete project</span>
-                  </Button>
-                </motion.div>
-              </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
+                      onClick={() => confirmDelete(project.id)}
+                    >
+                      <Trash2 size={18} />
+                    </Button>
+                  </motion.div>
+                </div>
+              )}
             </div>
-
-            {/* Project Content */}
             <div className="md:col-span-7 lg:col-span-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="min-h-[100px]">
-                  {" "}
-                  {/* Minimum height to prevent collapse */}
                   <EditableText
-                    initialText={project.companyName}
+                    initialText={project.title}
                     as="h3"
-                    className="font-bold uppercase mb-3 text-white"
-                    initialFontSize={16}
+                    className="font-bold uppercase mb-2 text-white"
+                    initialFontSize={18}
+                    blockId={
+                      project.titleBlockId || `project-${project.id}-title`
+                    }
+                    onSave={async (blockId, newText) =>
+                      onSaveProjectText(project.id, "title", newText, blockId)
+                    }
+                    isAdmin={isAdmin}
                   />
+                  {project.companyName && (
+                    <EditableText
+                      initialText={project.companyName}
+                      as="h4"
+                      className="font-medium uppercase mb-3 text-white/80"
+                      initialFontSize={15}
+                      blockId={
+                        project.companyNameBlockId ||
+                        `project-${project.id}-company`
+                      }
+                      onSave={async (blockId, newText) =>
+                        onSaveProjectText(
+                          project.id,
+                          "companyName",
+                          newText,
+                          blockId
+                        )
+                      }
+                      isAdmin={isAdmin}
+                    />
+                  )}
                   <EditableText
                     initialText={project.description1}
                     className="text-white"
                     initialFontSize={14}
+                    blockId={
+                      project.description1BlockId ||
+                      `project-${project.id}-desc1`
+                    }
+                    onSave={async (blockId, newText) =>
+                      onSaveProjectText(
+                        project.id,
+                        "description1",
+                        newText,
+                        blockId
+                      )
+                    }
+                    isAdmin={isAdmin}
                   />
+                  {project.description2 && (
+                    <EditableText
+                      initialText={project.description2}
+                      className="text-white mt-2"
+                      initialFontSize={14}
+                      blockId={
+                        project.description2BlockId ||
+                        `project-${project.id}-desc2`
+                      }
+                      onSave={async (blockId, newText) =>
+                        onSaveProjectText(
+                          project.id,
+                          "description2",
+                          newText,
+                          blockId
+                        )
+                      }
+                      isAdmin={isAdmin}
+                    />
+                  )}
                 </div>
-                {showImages && (
+                {showImages && project.imageSrc && (
                   <motion.div
                     className="overflow-hidden rounded-lg shadow-md"
                     whileHover={{ scale: 1.05 }}
@@ -233,10 +324,23 @@ function SortableProjectItem({
                   >
                     <EditableImage
                       src={project.imageSrc}
-                      alt={`Project ${project.number} image`}
+                      alt={project.title}
                       width={400}
                       height={300}
                       className="w-full h-auto object-cover"
+                      blockId={
+                        project.mainImageBlockId ||
+                        `project-${project.id}-image`
+                      }
+                      onSave={async (blockId, newData) =>
+                        onSaveProjectImage(
+                          project.id,
+                          "imageSrc",
+                          newData,
+                          blockId
+                        )
+                      }
+                      isAdmin={isAdmin}
                     />
                   </motion.div>
                 )}
@@ -244,145 +348,207 @@ function SortableProjectItem({
             </div>
           </div>
         ) : (
-          // Layout 2: Content on left, PROJECT 02 on right
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-            {/* Project Content */}
             <div className="md:col-span-7 lg:col-span-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div className="min-h-[100px]">
                   <EditableText
-                    initialText={project.companyName}
+                    initialText={project.title}
                     as="h3"
-                    className="font-bold uppercase mb-3 text-sm sm:text-base text-white"
-                    initialFontSize={16}
+                    className="font-bold uppercase mb-2 text-white"
+                    initialFontSize={18}
+                    blockId={
+                      project.titleBlockId || `project-${project.id}-title-L2`
+                    }
+                    onSave={async (blockId, newText) =>
+                      onSaveProjectText(project.id, "title", newText, blockId)
+                    }
+                    isAdmin={isAdmin}
                   />
+                  {project.companyName && (
+                    <EditableText
+                      initialText={project.companyName}
+                      as="h4"
+                      className="font-medium uppercase mb-3 text-white/80"
+                      initialFontSize={15}
+                      blockId={
+                        project.companyNameBlockId ||
+                        `project-${project.id}-company-L2`
+                      }
+                      onSave={async (blockId, newText) =>
+                        onSaveProjectText(
+                          project.id,
+                          "companyName",
+                          newText,
+                          blockId
+                        )
+                      }
+                      isAdmin={isAdmin}
+                    />
+                  )}
                   <EditableText
                     initialText={project.description1}
-                    className="text-sm mb-4 text-white"
+                    className="text-white mb-2"
                     initialFontSize={14}
+                    blockId={
+                      project.description1BlockId ||
+                      `project-${project.id}-desc1-L2`
+                    }
+                    onSave={async (blockId, newText) =>
+                      onSaveProjectText(
+                        project.id,
+                        "description1",
+                        newText,
+                        blockId
+                      )
+                    }
+                    isAdmin={isAdmin}
                   />
                   {project.description2 && (
                     <EditableText
                       initialText={project.description2}
-                      className="text-sm text-white"
+                      className="text-white mt-2"
                       initialFontSize={14}
+                      blockId={
+                        project.description2BlockId ||
+                        `project-${project.id}-desc2-L2`
+                      }
+                      onSave={async (blockId, newText) =>
+                        onSaveProjectText(
+                          project.id,
+                          "description2",
+                          newText,
+                          blockId
+                        )
+                      }
+                      isAdmin={isAdmin}
                     />
                   )}
                 </div>
-                <div>
-                  {showImages && (
-                    <motion.div
-                      className="overflow-hidden rounded-lg shadow-md mb-4"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <EditableImage
-                        src={project.imageSrc}
-                        alt={`Project ${project.number} image`}
-                        width={400}
-                        height={300}
-                        className="w-full h-auto object-cover"
-                      />
-                    </motion.div>
-                  )}
-                  <EditableText
-                    initialText="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet."
-                    className="text-sm text-white"
-                    initialFontSize={14}
-                  />
-                </div>
+                {showImages && project.imageSrc && (
+                  <motion.div
+                    className="overflow-hidden rounded-lg shadow-md"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <EditableImage
+                      src={project.imageSrc}
+                      alt={project.title}
+                      width={400}
+                      height={300}
+                      className="w-full h-auto object-cover"
+                      blockId={
+                        project.mainImageBlockId ||
+                        `project-${project.id}-image-L2`
+                      }
+                      onSave={async (blockId, newData) =>
+                        onSaveProjectImage(
+                          project.id,
+                          "imageSrc",
+                          newData,
+                          blockId
+                        )
+                      }
+                      isAdmin={isAdmin}
+                    />
+                  </motion.div>
+                )}
               </div>
             </div>
-
-            {/* Project Title */}
             <div className="md:col-span-5 lg:col-span-4 relative">
-              <div
-                className="absolute -right-6 sm:-right-10 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing touch-manipulation"
-                {...attributes}
-                {...listeners}
-              >
-                <GripVertical className="h-5 w-5 text-white hover:text-gray-200" />
-              </div>
-
-              <div className="flex flex-col items-end">
+              {isAdmin && (
+                <div
+                  className="absolute -right-6 sm:-right-10 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing touch-manipulation z-10"
+                  {...attributes}
+                  {...listeners}
+                >
+                  <GripVertical className="h-5 w-5 text-white hover:text-gray-200" />
+                </div>
+              )}
+              <div className="flex flex-col items-end text-right">
                 <div className="text-white text-sm font-medium mb-1">
                   PROJECT
                 </div>
-                <div className="text-white font-bold tracking-tighter leading-none">
+                <div className="text-white font-bold tracking-tighter leading-none overflow-hidden">
                   <EditableText
                     initialText={project.number}
                     as="span"
                     initialFontSize={72}
                     className="text-white"
+                    blockId={
+                      project.projectNumberBlockId ||
+                      `project-${project.id}-number-L2`
+                    }
+                    onSave={async (blockId, newText) =>
+                      onSaveProjectText(project.id, "number", newText, blockId)
+                    }
+                    isAdmin={isAdmin}
                   />
                 </div>
-                <div className="flex mt-4 ml-1">
+                <div className="flex mt-4 ml-1 self-end">
                   <div className="w-2 h-2 rounded-full bg-white mr-2"></div>
                   <div className="w-2 h-2 rounded-full bg-white mr-2"></div>
                   <div className="w-2 h-2 rounded-full bg-white"></div>
                 </div>
-
-                {/* Project Categories */}
                 {project.categories.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-4 justify-end">
-                    {project.categories.map((category) => (
+                    {project.categories.map((categoryName) => (
                       <span
-                        key={category}
+                        key={categoryName}
                         className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-white/10 text-white"
                       >
                         <Tag className="h-3 w-3 mr-1" />
-                        {category}
+                        {categoryName}
                       </span>
                     ))}
                   </div>
                 )}
               </div>
-
-              {/* Layout Toggle and Delete Button */}
-              <div className="absolute top-0 left-0 flex items-center space-x-2">
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:text-gray-200 hover:bg-red-700"
-                    onClick={() => onEditCategories(project.id)}
-                    title="Edit Categories"
+              {isAdmin && (
+                <div className="absolute top-0 left-0 flex items-center space-x-1 sm:space-x-2">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <Tag size={20} />
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:text-gray-200 hover:bg-red-700"
-                    onClick={() => onChangeLayout(project.id, "layout1")}
-                    title="Switch to Layout 1"
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
+                      onClick={() => onEditCategories(project.id)}
+                      title="Edit Categories"
+                    >
+                      <Tag size={18} />
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <LayoutGrid size={20} />
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:text-gray-200 hover:bg-red-700"
-                    onClick={() => confirmDelete(project.id)}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
+                      onClick={() => onChangeLayout(project.id, "layout1")}
+                      title="Switch to Layout 1"
+                    >
+                      <LayoutGrid size={18} />
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <Trash2 size={20} />
-                    <span className="sr-only">Delete project</span>
-                  </Button>
-                </motion.div>
-              </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
+                      onClick={() => confirmDelete(project.id)}
+                    >
+                      <Trash2 size={18} />
+                    </Button>
+                  </motion.div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -391,178 +557,286 @@ function SortableProjectItem({
   );
 }
 
-export default function ProjectsSection() {
+interface ProjectsSectionProps {
+  section: PrismaSection & {
+    textBlocks: PrismaTextBlock[];
+    projectItems?: PrismaProjectItem[];
+  };
+  allCategoriesFromDB?: PrismaCategory[];
+  onDataChange?: () => void;
+}
+
+export default function ProjectsSection({
+  section,
+  allCategoriesFromDB,
+  onDataChange,
+}: ProjectsSectionProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
+  const introTextBlock = section.textBlocks?.[0];
 
-  // Initialize with the two existing projects
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: 1,
-      number: "01",
-      companyName: "LICERIA & CO.",
-      description1:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique.",
-      imageSrc: "https://picsum.photos/400/300?random=101",
-      layout: "layout1",
-      categories: ["Web Design", "Branding"],
-    },
-    {
-      id: 2,
-      number: "02",
-      companyName: "WARIDERE INC.",
-      description1:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique.",
-      description2:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique.",
-      imageSrc: "https://picsum.photos/400/300?random=102",
-      layout: "layout2",
-      categories: ["Mobile App", "UI/UX"],
-    },
-    {
-      id: 3,
-      number: "03",
-      companyName: "NEXUS STUDIOS",
-      description1:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique.",
-      imageSrc: "https://picsum.photos/400/300?random=103",
-      layout: "layout1",
-      categories: ["Branding", "Print"],
-    },
-    {
-      id: 4,
-      number: "04",
-      companyName: "QUANTUM LABS",
-      description1:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique.",
-      imageSrc: "https://picsum.photos/400/300?random=104",
-      layout: "layout2",
-      categories: ["Web Design", "Development"],
-    },
-  ]);
-
-  // State for delete confirmation dialog
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
-
-  // State for image visibility toggle
-  const [showImages, setShowImages] = useState(true);
-
-  // State for category management
+  const [projects, setProjects] = useState<Project[]>([]);
   const [allCategories, setAllCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>(projects);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [showImages, setShowImages] = useState(true);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [projectCategoryDialogOpen, setProjectCategoryDialogOpen] =
+  const [projectCategoriesDialogOpen, setProjectCategoriesDialogOpen] =
     useState(false);
-  const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [newCategory, setNewCategory] = useState("");
-  const [categoryToEdit, setCategoryToEdit] = useState<string | null>(null);
+  const [currentProjectForCategories, setCurrentProjectForCategories] =
+    useState<Project | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
-  // Extract all unique categories from projects
-  useEffect(() => {
-    const categories = new Set<string>();
-    projects.forEach((project) => {
-      project.categories.forEach((category) => {
-        categories.add(category);
+  const handleSaveSectionTextBlock = async (
+    blockId: string,
+    newContent: string
+  ) => {
+    try {
+      const res = await fetch(`/api/textblocks/${blockId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
       });
-    });
-    setAllCategories(Array.from(categories).sort());
-  }, [projects]);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          errorData.message || "Failed to save text block for section"
+        );
+      }
+      if (onDataChange) onDataChange();
+      else {
+        console.warn(
+          "onDataChange not provided to ProjectsSection, UI might not reflect save immediately for intro text."
+        );
+      }
+    } catch (error) {
+      console.error("Error saving section text block:", error);
+    }
+  };
 
-  // Filter projects when selected category changes
-  useEffect(() => {
-    if (selectedCategory === null) {
-      setFilteredProjects(projects);
+  const handleSaveProjectText = async (
+    projectId: string,
+    field: keyof Project,
+    newText: string,
+    blockId?: string
+  ) => {
+    console.log(
+      `Saving text for project ${projectId}, field ${field}, text: ${newText}, blockId: ${blockId}`
+    );
+    if (
+      blockId &&
+      (field === "title" ||
+        field === "companyName" ||
+        field === "description1" ||
+        field === "description2" ||
+        field === "number")
+    ) {
+      try {
+        const res = await fetch(`/api/textblocks/${blockId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: newText }),
+        });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(
+            errorData.message ||
+              `Failed to save ${field} (TextBlock ${blockId}) for project ${projectId}`
+          );
+        }
+        if (onDataChange) onDataChange();
+        else {
+          setProjects((prev) =>
+            prev.map((p) =>
+              p.id === projectId ? { ...p, [field]: newText } : p
+            )
+          );
+        }
+      } catch (error) {
+        console.error(
+          `Error saving ${field} (TextBlock ${blockId}) for project ${projectId}:`,
+          error
+        );
+        throw error;
+      }
     } else {
-      setFilteredProjects(
-        projects.filter((project) =>
-          project.categories.includes(selectedCategory)
+      console.log(`Local update for project ${projectId}, field ${field}`);
+      setProjects((prev) =>
+        prev.map((p) => (p.id === projectId ? { ...p, [field]: newText } : p))
+      );
+    }
+  };
+
+  const handleSaveProjectImage = async (
+    projectId: string,
+    field: "imageSrc",
+    newData: { src?: string; alt?: string },
+    blockId?: string
+  ) => {
+    console.log(
+      `Saving image for project ${projectId}, field ${field}, data: ${JSON.stringify(
+        newData
+      )}, blockId: ${blockId}`
+    );
+    if (blockId) {
+      try {
+        const res = await fetch(`/api/imageblocks/${blockId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newData),
+        });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(
+            errorData.message ||
+              `Failed to save image (ImageBlock ${blockId}) for project ${projectId}`
+          );
+        }
+        if (onDataChange) onDataChange();
+        else {
+          setProjects((prev) =>
+            prev.map((p) =>
+              p.id === projectId
+                ? { ...p, imageSrc: newData.src || p.imageSrc }
+                : p
+            )
+          );
+        }
+      } catch (error) {
+        console.error(
+          `Error saving image (ImageBlock ${blockId}) for project ${projectId}:`,
+          error
+        );
+        throw error;
+      }
+    } else {
+      console.log(
+        `Local update for project ${projectId}, field ${field} (image)`
+      );
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === projectId ? { ...p, imageSrc: newData.src || p.imageSrc } : p
         )
       );
     }
-  }, [selectedCategory, projects]);
+  };
 
-  // Set up sensors for drag and drop
+  useEffect(() => {
+    const categoryMap = new Map<string, string>(
+      allCategoriesFromDB?.map((cat: PrismaCategory) => [cat.id, cat.name]) ||
+        []
+    );
+
+    const mappedProjects: Project[] =
+      section.projectItems?.map((item: PrismaProjectItem): Project => {
+        const findBlockId = (purpose: string): string | undefined => undefined;
+        const findImageBlockId = (purpose: string): string | undefined =>
+          undefined;
+
+        return {
+          id: String(item.id),
+          number: item.projectNumber || String(item.order + 1).padStart(2, "0"),
+          title: item.title || "Untitled Project",
+          companyName: item.companyName || undefined,
+          description1: item.description1 || "",
+          description2: item.description2 || undefined,
+          imageSrc: item.imageSrc || "",
+          liveLink: item.liveLink || undefined,
+          sourceLink: item.sourceLink || undefined,
+          layout:
+            item.layout === "layout1" || item.layout === "layout2"
+              ? item.layout
+              : "layout1",
+          categories:
+            item.categoryIds
+              ?.map((id: string) => categoryMap.get(id) || id)
+              .filter((name): name is string => !!name) || [],
+          projectNumberBlockId: findBlockId("projectNumber"),
+          titleBlockId: findBlockId("title"),
+          companyNameBlockId: findBlockId("companyName"),
+          description1BlockId: findBlockId("description1"),
+          description2BlockId: findBlockId("description2"),
+          mainImageBlockId: findImageBlockId("mainProjectImage"),
+        };
+      }) || [];
+    setProjects(mappedProjects);
+
+    const uniqueCategoryNames = new Set<string>();
+    mappedProjects.forEach((p: Project) =>
+      p.categories.forEach((catName: string) =>
+        uniqueCategoryNames.add(catName)
+      )
+    );
+    allCategoriesFromDB?.forEach((cat: PrismaCategory) =>
+      uniqueCategoryNames.add(cat.name)
+    );
+    setAllCategories(Array.from(uniqueCategoryNames).sort());
+  }, [section.projectItems, allCategoriesFromDB, section.textBlocks]);
+
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // 8px of movement required before drag starts - helps on touch devices
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Function to handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
-    if (over && active.id !== over.id) {
+    if (over && String(active.id) !== String(over.id)) {
       setProjects((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-
-        // Update project numbers after reordering
-        const reorderedItems = arrayMove(items, oldIndex, newIndex);
-        return reorderedItems.map((project, index) => ({
-          ...project,
-          number: String(index + 1).padStart(2, "0"),
-        }));
+        const oldIndex = items.findIndex(
+          (item) => String(item.id) === String(active.id)
+        );
+        const newIndex = items.findIndex(
+          (item) => String(item.id) === String(over.id)
+        );
+        if (oldIndex === -1 || newIndex === -1) return items;
+        console.log(
+          "Reordering projects (API call needed)",
+          items[oldIndex].title,
+          "to",
+          newIndex
+        );
+        return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
 
-  // Function to add a new project
   const addNewProject = () => {
-    const newProjectId =
-      projects.length > 0 ? Math.max(...projects.map((p) => p.id)) + 1 : 1;
-    const newProjectNumber = String(projects.length + 1).padStart(2, "0");
-
-    const newProject: Project = {
+    console.log("Add new project (API call needed)");
+    const newProjectId = `new-project-${Date.now().toString()}`;
+    const newProjectData: Project = {
       id: newProjectId,
-      number: newProjectNumber,
-      companyName: "NEW PROJECT",
-      description1:
-        "Add your project description here. Click the pencil icon to edit this text.",
-      imageSrc: `https://picsum.photos/400/300?random=${Math.floor(
-        Math.random() * 1000
-      )}`,
-      layout: "layout1", // Default to layout1
-      categories: [], // Empty categories array
+      number: String(projects.length + 1).padStart(2, "0"),
+      title: "NEW PROJECT",
+      description1: "Enter project description here.",
+      imageSrc: `https://picsum.photos/400/300?random=new${newProjectId}`,
+      layout: "layout1",
+      categories: [],
     };
-
-    setProjects([...projects, newProject]);
+    setProjects((prev) => [...prev, newProjectData]);
   };
 
-  // Function to open delete confirmation dialog
-  const confirmDelete = (projectId: number) => {
+  const confirmDelete = (projectId: string) => {
     setProjectToDelete(projectId);
     setDeleteDialogOpen(true);
   };
 
-  // Function to delete a project
   const deleteProject = () => {
     if (projectToDelete !== null) {
-      const updatedProjects = projects
-        .filter((project) => project.id !== projectToDelete)
-        .map((project, index) => ({
-          ...project,
-          number: String(index + 1).padStart(2, "0"),
-        }));
-
-      setProjects(updatedProjects);
+      console.log(`Deleting project ${projectToDelete} (API call needed)`);
+      setProjects(projects.filter((project) => project.id !== projectToDelete));
       setDeleteDialogOpen(false);
       setProjectToDelete(null);
     }
   };
 
-  // Function to change project layout
   const changeProjectLayout = (
-    projectId: number,
+    projectId: string,
     layout: "layout1" | "layout2"
   ) => {
+    console.log(
+      `Changing layout for project ${projectId} to ${layout} (API call needed)`
+    );
     setProjects(
       projects.map((project) =>
         project.id === projectId ? { ...project, layout } : project
@@ -570,316 +844,283 @@ export default function ProjectsSection() {
     );
   };
 
-  // Function to add a new category
-  const addCategory = () => {
-    if (newCategory && !allCategories.includes(newCategory)) {
-      setAllCategories([...allCategories, newCategory].sort());
-      setNewCategory("");
+  const openGlobalCategoryDialog = () => setCategoryDialogOpen(true);
+  const handleAddGlobalCategory = () => {
+    console.log("Add global category (API call needed):", newCategoryName);
+    if (
+      newCategoryName.trim() &&
+      !allCategories.includes(newCategoryName.trim())
+    ) {
+      setAllCategories((prev) => [...prev, newCategoryName.trim()].sort());
+    }
+    setNewCategoryName("");
+  };
+  const handleDeleteGlobalCategory = (catName: string) => {
+    console.log("Delete global category (API call needed):", catName);
+    setAllCategories((prev) => prev.filter((c) => c !== catName));
+  };
+
+  const openProjectSpecificCategoriesDialog = (projectId: string) => {
+    const projectToEdit = projects.find((p) => p.id === projectId);
+    if (projectToEdit) {
+      setCurrentProjectForCategories(projectToEdit);
+      setProjectCategoriesDialogOpen(true);
     }
   };
 
-  // Function to delete a category
-  const deleteCategory = (categoryToDelete: string) => {
-    // Remove category from all projects
-    const updatedProjects = projects.map((project) => ({
-      ...project,
-      categories: project.categories.filter((cat) => cat !== categoryToDelete),
-    }));
-
-    setProjects(updatedProjects);
-
-    // Remove from allCategories
-    setAllCategories(allCategories.filter((cat) => cat !== categoryToDelete));
-
-    // Reset selected category if it was deleted
-    if (selectedCategory === categoryToDelete) {
-      setSelectedCategory(null);
-    }
-  };
-
-  // Function to open category management dialog
-  const openCategoryDialog = () => {
-    setNewCategory("");
-    setCategoryToEdit(null);
-    setCategoryDialogOpen(true);
-  };
-
-  // Function to open project categories dialog
-  const openProjectCategoriesDialog = (projectId: number) => {
-    const project = projects.find((p) => p.id === projectId);
-    if (project) {
-      setCurrentProject(project);
-      setProjectCategoryDialogOpen(true);
-    }
-  };
-
-  // Function to save project categories
-  const saveProjectCategories = (projectId: number, categories: string[]) => {
+  const handleSaveProjectCategoriesForDialog = (
+    projectIdAsNumber: number,
+    updatedCategoryNames: string[]
+  ) => {
+    const projectIdAsString = String(projectIdAsNumber);
+    console.log(
+      "Save project categories (API call needed):",
+      projectIdAsString,
+      updatedCategoryNames
+    );
     setProjects(
       projects.map((project) =>
-        project.id === projectId ? { ...project, categories } : project
+        project.id === projectIdAsString
+          ? { ...project, categories: updatedCategoryNames }
+          : project
       )
     );
+    setProjectCategoriesDialogOpen(false);
+    const newUniqueCategories = new Set(allCategories);
+    updatedCategoryNames.forEach((catName) => newUniqueCategories.add(catName));
+    setAllCategories(Array.from(newUniqueCategories).sort());
   };
 
-  // Function to add a new category and update all categories list
-  const handleAddCategory = (category: string) => {
-    if (!allCategories.includes(category)) {
-      setAllCategories([...allCategories, category].sort());
+  const handleAddNewCategoryFromProjectDialog = (categoryName: string) => {
+    console.log(
+      "Add new category from project dialog (API call needed):",
+      categoryName
+    );
+    if (categoryName.trim() && !allCategories.includes(categoryName.trim())) {
+      setAllCategories([...allCategories, categoryName.trim()].sort());
     }
   };
 
-  // Function to edit project categories
-  const openEditProjectCategories = (projectId: number) => {
-    openProjectCategoriesDialog(projectId);
-  };
+  const filteredProjects = selectedCategory
+    ? projects.filter((p) => p.categories.includes(selectedCategory))
+    : projects;
 
   return (
-    <section
-      id="projects"
-      className="py-16 md:py-20 lg:py-24 bg-black shadow-sm dark:shadow-gray-900 dark:shadow-sm"
-    >
-      <div className="max-w-6xl mx-auto px-4 pl-6 sm:pl-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <AnimatedSection delay={0.1}>
-            <h2 className="text-white text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-none">
-              PROJECTS
-            </h2>
-            <div className="flex mt-4 ml-1">
-              <div className="w-2 h-2 rounded-full bg-white mr-2"></div>
-              <div className="w-2 h-2 rounded-full bg-white mr-2"></div>
-              <div className="w-2 h-2 rounded-full bg-white"></div>
-            </div>
-          </AnimatedSection>
-
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            {/* Image visibility toggle */}
-            <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm p-3 rounded-lg">
-              <Label htmlFor="show-images" className="text-white">
-                {showImages ? "Hide Images" : "Show Images"}
-              </Label>
-              <Switch
-                id="show-images"
-                checked={showImages}
-                onCheckedChange={setShowImages}
+    <AnimatedSection variant="fadeInUp">
+      <section
+        id={section.id}
+        className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-black dark:bg-red-700"
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12 md:mb-16">
+            <EditableTextAutoResize
+              initialText={section.title || "PROJECTS"}
+              as="h1"
+              className="text-red-600 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter mb-2"
+            />
+            {introTextBlock && (
+              <EditableText
+                initialText={introTextBlock.content}
+                className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
+                as="p"
+                blockId={introTextBlock.id}
+                onSave={handleSaveSectionTextBlock}
+                isAdmin={isAdmin}
               />
-              {showImages ? (
-                <Eye size={18} className="text-white" />
-              ) : (
-                <EyeOff size={18} className="text-white/70" />
+            )}
+            {!introTextBlock && isAdmin && (
+              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                Intro text block missing. Add one via section manager or Prisma
+                Studio.
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 md:mb-12 gap-4">
+            <div className="flex items-center space-x-4">
+              {isAdmin && (
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="show-images-toggle"
+                    checked={showImages}
+                    onCheckedChange={setShowImages}
+                    aria-label={showImages ? "Hide images" : "Show images"}
+                  />
+                  <Label
+                    htmlFor="show-images-toggle"
+                    className="text-sm text-gray-600 dark:text-gray-300"
+                  >
+                    {showImages ? (
+                      <Eye className="inline mr-1 h-4 w-4" />
+                    ) : (
+                      <EyeOff className="inline mr-1 h-4 w-4" />
+                    )}
+                    Images
+                  </Label>
+                </div>
               )}
             </div>
 
-            {/* Category management button (admin only) */}
-            {isAdmin && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={openCategoryDialog}
-              >
-                <Tag className="h-4 w-4 mr-2" />
-                Manage Categories
-              </Button>
-            )}
+            <div className="flex items-center space-x-2">
+              {isAdmin && (
+                <Button
+                  onClick={openGlobalCategoryDialog}
+                  variant="outline"
+                  className="dark:text-white"
+                >
+                  <Tag className="mr-2 h-4 w-4" /> Manage Categories
+                </Button>
+              )}
+              <CategoryFilter
+                categories={allCategories}
+                selectedCategory={selectedCategory}
+                onChange={setSelectedCategory}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Category filter */}
-        <AnimatedSection delay={0.3} className="mb-8">
-          <CategoryFilter
-            categories={allCategories}
-            selectedCategory={selectedCategory}
-            onChange={setSelectedCategory}
-          />
-        </AnimatedSection>
-
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={filteredProjects.map((project) => project.id)}
-            strategy={verticalListSortingStrategy}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            <AnimatePresence>
-              {filteredProjects.length > 0 ? (
-                filteredProjects.map((project, index) => (
+            <SortableContext
+              items={filteredProjects.map((p) => p.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-16 md:space-y-24">
+                {filteredProjects.map((projectItem, index) => (
                   <SortableProjectItem
-                    key={project.id}
-                    project={project}
+                    key={projectItem.id}
+                    project={projectItem}
                     index={index}
                     projects={filteredProjects}
                     confirmDelete={confirmDelete}
                     onChangeLayout={changeProjectLayout}
                     showImages={showImages}
-                    onEditCategories={openEditProjectCategories}
+                    onEditCategories={openProjectSpecificCategoriesDialog}
+                    isAdmin={isAdmin}
+                    onSaveProjectText={handleSaveProjectText}
+                    onSaveProjectImage={handleSaveProjectImage}
                   />
-                ))
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="bg-white/10 rounded-lg p-12 text-center"
-                >
-                  <p className="text-white text-lg">
-                    No projects found in this category.
-                  </p>
-                  {selectedCategory && (
-                    <Button
-                      variant="outline"
-                      className="mt-4 border-white text-white hover:bg-white/10"
-                      onClick={() => setSelectedCategory(null)}
-                    >
-                      Show All Projects
-                    </Button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </SortableContext>
-        </DndContext>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
 
-        {/* Add New Project Button (admin only) */}
-        {isAdmin && (
-          <motion.div
-            className="mt-12 flex justify-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.3 }}
-          >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                onClick={addNewProject}
-                className="bg-white hover:bg-gray-100 text-red-600 flex items-center gap-2"
+          {isAdmin && (
+            <motion.div
+              className="mt-12 flex justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <PlusCircle size={18} />
-                Add New Project
-              </Button>
+                <Button
+                  onClick={addNewProject}
+                  variant="outline"
+                  className="dark:text-white bg-white hover:bg-gray-100 text-red-600"
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Project
+                </Button>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </div>
+          )}
 
-      {/* Delete Confirmation Dialog */}
+          {filteredProjects.length === 0 && selectedCategory && (
+            <div className="text-center py-10">
+              <p className="text-gray-500 dark:text-gray-400">
+                No projects found for the category "{selectedCategory}".
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
       <AnimatePresence>
         {deleteDialogOpen && (
           <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <DialogContent>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-red-500" />
-                    Confirm Deletion
-                  </DialogTitle>
-                  <DialogDescription>
-                    Are you sure you want to delete this project? This action
-                    cannot be undone.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="sm:justify-start mt-4">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button variant="destructive" onClick={deleteProject}>
-                      Delete
-                    </Button>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      variant="outline"
-                      onClick={() => setDeleteDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </motion.div>
-                </DialogFooter>
-              </motion.div>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this project? This action
+                  cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="sm:justify-start">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={deleteProject}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDeleteDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         )}
       </AnimatePresence>
 
-      {/* Category Management Dialog (admin only) */}
       <AnimatePresence>
-        {categoryDialogOpen && isAdmin && (
+        {categoryDialogOpen && (
           <Dialog
             open={categoryDialogOpen}
             onOpenChange={setCategoryDialogOpen}
           >
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent>
               <DialogHeader>
                 <DialogTitle>Manage Categories</DialogTitle>
                 <DialogDescription>
-                  Add, edit, or remove project categories.
+                  Add or delete global categories for projects.
                 </DialogDescription>
               </DialogHeader>
-
-              <div className="py-4 space-y-4">
-                {/* Add new category */}
-                <div className="flex items-center gap-2">
+              <div className="space-y-4 py-2">
+                <div className="flex space-x-2">
                   <Input
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
                     placeholder="New category name"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="flex-1"
                   />
-                  <Button onClick={addCategory} disabled={!newCategory.trim()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add
+                  <Button onClick={handleAddGlobalCategory}>
+                    <Plus className="mr-2 h-4 w-4" /> Add
                   </Button>
                 </div>
-
-                {/* Category list */}
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {allCategories.length === 0 ? (
-                    <p className="text-center text-gray-500 py-4">
-                      No categories yet. Add your first category above.
-                    </p>
-                  ) : (
-                    allCategories.map((category) => (
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                  {allCategories.length > 0 ? (
+                    allCategories.map((cat) => (
                       <div
-                        key={category}
-                        className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+                        key={cat}
+                        className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-700 rounded"
                       >
-                        <div className="flex items-center">
-                          <Tag className="h-4 w-4 mr-2 text-gray-500" />
-                          <span>{category}</span>
-                        </div>
+                        <span>{cat}</span>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => deleteCategory(category)}
+                          size="icon"
+                          onClick={() => handleDeleteGlobalCategory(cat)}
+                          title="Delete category"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
                     ))
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      No categories added yet.
+                    </p>
                   )}
                 </div>
-
-                {/* Usage information */}
-                <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-md">
-                  <p>
-                    Categories are automatically applied to projects. You can
-                    add or remove categories from projects by editing each
-                    project.
-                  </p>
-                </div>
               </div>
-
               <DialogFooter>
                 <Button
                   variant="outline"
@@ -893,18 +1134,18 @@ export default function ProjectsSection() {
         )}
       </AnimatePresence>
 
-      {currentProject && (
+      {currentProjectForCategories && (
         <ProjectCategoryDialog
-          open={projectCategoryDialogOpen}
-          onOpenChange={setProjectCategoryDialogOpen}
-          projectId={currentProject.id}
-          projectName={currentProject.companyName}
+          open={projectCategoriesDialogOpen}
+          onOpenChange={setProjectCategoriesDialogOpen}
+          projectId={Number(currentProjectForCategories.id)}
+          projectName={currentProjectForCategories.title}
           allCategories={allCategories}
-          selectedCategories={currentProject.categories}
-          onSave={saveProjectCategories}
-          onAddCategory={handleAddCategory}
+          selectedCategories={currentProjectForCategories.categories}
+          onSave={handleSaveProjectCategoriesForDialog}
+          onAddCategory={handleAddNewCategoryFromProjectDialog}
         />
       )}
-    </section>
+    </AnimatedSection>
   );
 }

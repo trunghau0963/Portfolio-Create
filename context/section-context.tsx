@@ -55,14 +55,14 @@ export function SectionProvider({ children }: { children: ReactNode }) {
       setConnectionStatus("error");
 
       // Optional: Fall back to localStorage if API fails
-      const storedSections = localStorage.getItem("portfolio-sections");
-      if (storedSections) {
-        setSections(JSON.parse(storedSections));
-        // Keep status as error to indicate API failure
-      } else {
-        // Optional: Set default sections if nothing is available
-        // setSections([...defaultSections])
-      }
+      // const storedSections = localStorage.getItem("portfolio-sections");
+      // if (storedSections) {
+      //   setSections(JSON.parse(storedSections));
+      //   // Keep status as error to indicate API failure
+      // } else {
+      //   // Optional: Set default sections if nothing is available
+      //   // setSections([...defaultSections])
+      // }
     } finally {
       setIsLoading(false);
     }

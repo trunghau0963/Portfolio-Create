@@ -1,11 +1,19 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import EditableText from "../ui/editable-text"
-import { Button } from "@/components/ui/button"
-import { PlusCircle, Trash2, AlertCircle, GripVertical, ImagePlus, X, Upload } from "lucide-react"
+import { useState, useEffect } from "react";
+import EditableText from "../ui/editable-text";
+import { Button } from "@/components/ui/button";
+import {
+  PlusCircle,
+  Trash2,
+  AlertCircle,
+  GripVertical,
+  ImagePlus,
+  X,
+  Upload,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +21,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   DndContext,
   closestCenter,
@@ -22,57 +30,71 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-} from "@dnd-kit/core"
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
-import { motion, AnimatePresence } from "framer-motion"
-import AnimatedSection from "../ui/animated-section"
-import Image from "next/image"
-import { useAuth } from "@/context/auth-context"
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { motion, AnimatePresence } from "framer-motion";
+import AnimatedSection from "../ui/animated-section";
+import Image from "next/image";
+import { useAuth } from "@/context/auth-context";
+import {
+  Section as PrismaSection,
+  TextBlock as PrismaTextBlock,
+  SkillItem as PrismaSkillItem,
+  SkillImage as PrismaSkillImage,
+} from "../../lib/generated/prisma";
+import EditableTextAutoResize from "../ui/editable-text-auto-resize";
 
 // Define a skill type
 interface Skill {
-  id: number
-  title: string
-  description: string
+  id: string;
+  title: string;
+  description: string;
+  level?: number;
+  titleBlockId?: string;
+  descriptionBlockId?: string;
 }
 
 // Image Upload Component
-function ImageUploadArea({ onImageSelected }: { onImageSelected: (file: File) => void }) {
-  const [isDraggingOver, setIsDraggingOver] = useState(false)
+function ImageUploadArea({
+  onImageSelected,
+}: {
+  onImageSelected: (file: File) => void;
+}) {
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDraggingOver(true)
-  }
+    e.preventDefault();
+    setIsDraggingOver(true);
+  };
 
   const handleDragLeave = () => {
-    setIsDraggingOver(false)
-  }
+    setIsDraggingOver(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDraggingOver(false)
+    e.preventDefault();
+    setIsDraggingOver(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0]
+      const file = e.dataTransfer.files[0];
       if (file.type.startsWith("image/")) {
-        onImageSelected(file)
+        onImageSelected(file);
       }
     }
-  }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      onImageSelected(e.target.files[0])
+      onImageSelected(e.target.files[0]);
     }
-  }
+  };
 
   return (
     <div
@@ -81,16 +103,26 @@ function ImageUploadArea({ onImageSelected }: { onImageSelected: (file: File) =>
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <input type="file" id="skill-image-upload" accept="image/*" className="hidden" onChange={handleFileChange} />
+      <input
+        type="file"
+        id="skill-image-upload"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
       <label htmlFor="skill-image-upload" className="cursor-pointer">
         <div className="flex flex-col items-center">
           <Upload className="h-10 w-10 text-gray-400 mb-2" />
-          <p className="text-sm text-gray-500">Click to select an image or drag and drop</p>
-          <p className="text-xs text-gray-400 mt-2">(For this demo, we'll use a random image if no file is selected)</p>
+          <p className="text-sm text-gray-500">
+            Click to select an image or drag and drop
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            (For this demo, we'll use a random image if no file is selected)
+          </p>
         </div>
       </label>
     </div>
-  )
+  );
 }
 
 // Sortable Skill Item Component
@@ -99,13 +131,27 @@ function SortableSkillItem({
   confirmDelete,
   index,
   isAdmin,
+  onSaveSkillText,
 }: {
-  skill: Skill
-  confirmDelete: (id: number) => void
-  index: number
-  isAdmin: boolean | undefined
+  skill: Skill;
+  confirmDelete: (id: string) => void;
+  index: number;
+  isAdmin: boolean | undefined;
+  onSaveSkillText: (
+    skillId: string,
+    field: "title" | "description",
+    newText: string,
+    blockId?: string
+  ) => Promise<void>;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: skill.id })
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: skill.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -113,19 +159,25 @@ function SortableSkillItem({
     opacity: isDragging ? 0.5 : 1,
     position: "relative" as const,
     zIndex: isDragging ? 1 : 0,
-  }
+  };
 
   return (
     <motion.div
       ref={setNodeRef}
       style={style}
-      className={`flex items-start mb-6 sortable-item ${isDragging ? "dragging" : ""}`}
+      className={`flex items-start mb-6 sortable-item ${
+        isDragging ? "dragging" : ""
+      }`}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
     >
       {isAdmin && (
-        <div className="mr-2 sortable-handle mt-1" {...attributes} {...listeners}>
+        <div
+          className="mr-2 sortable-handle mt-1"
+          {...attributes}
+          {...listeners}
+        >
           <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
         </div>
       )}
@@ -137,7 +189,17 @@ function SortableSkillItem({
       ></motion.div>
       <div className="flex-grow">
         <div className="flex justify-between items-start">
-          <EditableText initialText={skill.title} as="h3" className="font-bold uppercase mb-2" initialFontSize={16} />
+          <EditableText
+            initialText={skill.title}
+            as="h3"
+            className="font-bold uppercase mb-2"
+            initialFontSize={16}
+            blockId={skill.titleBlockId || `skill-${skill.id}-title`}
+            onSave={(blockId, newText) =>
+              onSaveSkillText(skill.id, "title", newText, blockId)
+            }
+            isAdmin={isAdmin}
+          />
           {isAdmin && (
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
               <Button
@@ -152,46 +214,143 @@ function SortableSkillItem({
             </motion.div>
           )}
         </div>
-        <EditableText initialText={skill.description} initialFontSize={14} />
+        <EditableText
+          initialText={skill.description}
+          initialFontSize={14}
+          blockId={skill.descriptionBlockId || `skill-${skill.id}-description`}
+          onSave={(blockId, newText) =>
+            onSaveSkillText(skill.id, "description", newText, blockId)
+          }
+          isAdmin={isAdmin}
+        />
       </div>
     </motion.div>
-  )
+  );
 }
 
-export default function SkillsSection() {
-  const { user } = useAuth()
-  const isAdmin = user?.isAdmin
+interface SkillsSectionProps {
+  section: PrismaSection & {
+    textBlocks: PrismaTextBlock[];
+    skillItems?: PrismaSkillItem[];
+    skillImages?: PrismaSkillImage[];
+  };
+  onDataChange?: () => void;
+}
 
-  // Initialize with existing skills
-  const [skills, setSkills] = useState<Skill[]>([
-    {
-      id: 1,
-      title: "TYPOGRAPHY",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique.",
-    },
-    {
-      id: 2,
-      title: "LAYOUT & COMPOSITION",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique.",
-    },
-  ])
+export default function SkillsSection({
+  section,
+  onDataChange,
+}: SkillsSectionProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.isAdmin;
+  const introTextBlock = section.textBlocks?.[0];
 
-  // State for skill images
-  const [skillImages, setSkillImages] = useState([
-    "https://picsum.photos/400/300?random=skill1",
-    "https://picsum.photos/400/300?random=skill2",
-  ])
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [skillImages, setSkillImages] = useState<string[]>([]);
 
-  // State for delete confirmation dialog
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [skillToDelete, setSkillToDelete] = useState<number | null>(null)
+  const handleSaveSectionTextBlock = async (
+    blockId: string,
+    newContent: string
+  ) => {
+    try {
+      const res = await fetch(`/api/textblocks/${blockId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          errorData.message || "Failed to save section intro text"
+        );
+      }
+      if (onDataChange) onDataChange();
+      else
+        console.warn(
+          "SkillsSection: onDataChange not provided, UI may not refresh for intro text."
+        );
+    } catch (error) {
+      console.error("Error saving section intro text:", error);
+    }
+  };
+
+  const handleSaveSkillText = async (
+    skillId: string,
+    field: "title" | "description",
+    newText: string,
+    blockId?: string
+  ) => {
+    console.log(
+      `Saving text for skill ${skillId}, field ${field}, text: ${newText}, blockId: ${blockId}`
+    );
+    if (blockId) {
+      try {
+        const res = await fetch(`/api/textblocks/${blockId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: newText }),
+        });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(
+            errorData.message ||
+              `Failed to save ${field} (TextBlock ${blockId}) for skill ${skillId}`
+          );
+        }
+        if (onDataChange) onDataChange();
+        else {
+          setSkills((prev) =>
+            prev.map((s) => (s.id === skillId ? { ...s, [field]: newText } : s))
+          );
+        }
+      } catch (error) {
+        console.error(
+          `Error saving ${field} (TextBlock ${blockId}) for skill ${skillId}:`,
+          error
+        );
+        throw error;
+      }
+    } else {
+      console.log(
+        `Local update for skill ${skillId}, field ${field}. API call to update SkillItem needed.`
+      );
+      setSkills((prev) =>
+        prev.map((s) => (s.id === skillId ? { ...s, [field]: newText } : s))
+      );
+    }
+  };
+
+  useEffect(() => {
+    const mappedSkills: Skill[] =
+      section.skillItems?.map((item: PrismaSkillItem): Skill => {
+        const findBlockId = (purpose: string): string | undefined => undefined;
+        return {
+          id: String(item.id),
+          title: item.title || "",
+          description: item.description || "",
+          level: item.level ?? undefined,
+          titleBlockId: findBlockId("skillTitle"),
+          descriptionBlockId: findBlockId("skillDescription"),
+        };
+      }) || [];
+    setSkills(mappedSkills);
+  }, [section.skillItems]);
+
+  useEffect(() => {
+    const mappedImageSrcs =
+      section.skillImages
+        ?.map((img: PrismaSkillImage) => img.src)
+        .filter((src): src is string => !!src) || [];
+    setSkillImages(mappedImageSrcs);
+  }, [section.skillImages]);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
 
   // State for image management dialog
-  const [imageDialogOpen, setImageDialogOpen] = useState(false)
-  const [imageToDelete, setImageToDelete] = useState<number | null>(null)
-  const [imageDeleteDialogOpen, setImageDeleteDialogOpen] = useState(false)
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<number | null>(null);
+  const [imageDeleteDialogOpen, setImageDeleteDialogOpen] = useState(false);
 
   // Set up sensors for drag and drop
   const sensors = useSensors(
@@ -202,110 +361,134 @@ export default function SkillsSection() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  )
+    })
+  );
 
   // Function to handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
+    const { active, over } = event;
 
     if (over && active.id !== over.id) {
       setSkills((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id)
-        const newIndex = items.findIndex((item) => item.id === over.id)
-
-        return arrayMove(items, oldIndex, newIndex)
-      })
+        const oldIndex = items.findIndex(
+          (item) => String(item.id) === String(active.id)
+        );
+        const newIndex = items.findIndex(
+          (item) => String(item.id) === String(over.id)
+        );
+        if (oldIndex === -1 || newIndex === -1) return items;
+        console.log("Reordering skills (API Call needed)");
+        return arrayMove(items, oldIndex, newIndex);
+      });
     }
-  }
+  };
 
   // Function to add a new skill
   const addNewSkill = () => {
-    const newSkillId = skills.length > 0 ? Math.max(...skills.map((skill) => skill.id)) + 1 : 1
-
+    console.log("Add new skill (API Call needed)");
+    const newSkillId = `new-skill-${Date.now().toString()}`;
     const newSkill: Skill = {
       id: newSkillId,
       title: "NEW SKILL",
-      description: "Add your skill description here. Click the pencil icon to edit this text.",
-    }
-
-    setSkills([...skills, newSkill])
-  }
+      description: "Add your skill description here.",
+    };
+    setSkills([...skills, newSkill]);
+  };
 
   // Function to open delete confirmation dialog
-  const confirmDelete = (skillId: number) => {
-    setSkillToDelete(skillId)
-    setDeleteDialogOpen(true)
-  }
+  const confirmDelete = (skillId: string) => {
+    setSkillToDelete(skillId);
+    setDeleteDialogOpen(true);
+  };
 
   // Function to delete a skill
   const deleteSkill = () => {
     if (skillToDelete !== null) {
-      setSkills(skills.filter((skill) => skill.id !== skillToDelete))
-      setDeleteDialogOpen(false)
-      setSkillToDelete(null)
+      console.log("Delete skill (API Call needed):", skillToDelete);
+      setSkills(skills.filter((skill) => skill.id !== skillToDelete));
+      setDeleteDialogOpen(false);
+      setSkillToDelete(null);
     }
-  }
+  };
 
   // Function to add a new skill image
   const addSkillImage = (file?: File) => {
-    let newImageUrl: string
-
-    if (file) {
-      // In a real implementation, you would upload the file to storage
-      // For now, we'll just create a temporary URL
-      newImageUrl = URL.createObjectURL(file)
-    } else {
-      // Use a random image if no file is provided
-      const randomId = Math.floor(Math.random() * 1000)
-      newImageUrl = `https://picsum.photos/400/300?random=${randomId}`
-    }
-
-    setSkillImages([...skillImages, newImageUrl])
-    setImageDialogOpen(false)
-  }
+    // If a file is provided, you would typically upload it and get a URL
+    // For this demo, we just add a random picsum photo URL or the file's object URL for local preview
+    const newImageSrc = file
+      ? URL.createObjectURL(file) // For local preview
+      : `https://picsum.photos/400/300?random=skill${skillImages.length + 1}`;
+    console.log(
+      "Adding skill image (API Call needed for upload/save):",
+      newImageSrc
+    );
+    setSkillImages([...skillImages, newImageSrc]);
+    setImageDialogOpen(false); // Close dialog after adding
+  };
 
   // Function to confirm image deletion
   const confirmDeleteImage = (index: number) => {
-    setImageToDelete(index)
-    setImageDeleteDialogOpen(true)
-  }
+    setImageToDelete(index);
+    setImageDeleteDialogOpen(true);
+  };
 
   // Function to delete a skill image
   const deleteSkillImage = () => {
     if (imageToDelete !== null) {
-      const updatedImages = [...skillImages]
-      updatedImages.splice(imageToDelete, 1)
-      setSkillImages(updatedImages)
-      setImageDeleteDialogOpen(false)
-      setImageToDelete(null)
+      console.log(
+        "Delete skill image (API Call needed):",
+        skillImages[imageToDelete]
+      );
+      setSkillImages(skillImages.filter((_, i) => i !== imageToDelete));
+      setImageDeleteDialogOpen(false);
+      setImageToDelete(null);
     }
-  }
+  };
 
   return (
-    <section id="skills" className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-gray-100">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Title Row - Now at the top */}
-        <div className="mb-12">
-          <AnimatedSection delay={0.1}>
-            <h2 className="text-red-600 font-bold tracking-tighter leading-none mb-6 overflow-hidden">
-              <EditableText initialText="MY SKILLS" as="span" initialFontSize={72} className="text-red-600" />
-            </h2>
-            <div className="flex mt-4">
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-              <div className="w-2 h-2 rounded-full bg-red-600"></div>
-            </div>
-          </AnimatedSection>
-        </div>
+    <AnimatedSection variant="fadeInUp">
+      <section
+        id={section.id}
+        className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-gray-100"
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          {/* Section Title and Subtitle */}
+          <div className="text-center mb-12 md:mb-16">
+            <EditableTextAutoResize
+              initialText={section.title || "MY SKILLS"}
+              as="h1"
+              className="text-red-600 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter mb-2"
+            />
+            {introTextBlock && (
+              <EditableText
+                initialText={introTextBlock.content}
+                className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
+                as="p"
+                blockId={introTextBlock.id}
+                onSave={handleSaveSectionTextBlock}
+                isAdmin={isAdmin}
+              />
+            )}
+            {!introTextBlock && isAdmin && (
+              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                Intro text block missing.
+              </p>
+            )}
+          </div>
 
-        {/* Content Row - Now below the title */}
-        <div className="space-y-8">
-          {/* Skills List */}
-          <AnimatedSection delay={0.3} variant="fadeInLeft">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={skills.map((skill) => skill.id)} strategy={verticalListSortingStrategy}>
+          {/* Skills Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Left Column: Skills List */}
+            <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 md:p-8">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={skills.map((skill) => skill.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                   <AnimatePresence>
                     {skills.map((skill, index) => (
                       <SortableSkillItem
@@ -314,6 +497,7 @@ export default function SkillsSection() {
                         confirmDelete={confirmDelete}
                         index={index}
                         isAdmin={isAdmin}
+                        onSaveSkillText={handleSaveSkillText}
                       />
                     ))}
                   </AnimatePresence>
@@ -328,7 +512,10 @@ export default function SkillsSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.3 }}
                 >
-                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                  <motion.div
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
                     <Button
                       onClick={addNewSkill}
                       variant="secondary"
@@ -341,16 +528,17 @@ export default function SkillsSection() {
                 </motion.div>
               )}
             </div>
-          </AnimatedSection>
 
-          {/* Skill Images */}
-          <AnimatedSection delay={0.5} variant="fadeInLeft">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            {/* Right Column: Skill Images */}
+            <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 md:p-8">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">Skill Images</h3>
                 {isAdmin && (
                   <div className="flex gap-2">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
                       <Button
                         variant="secondary"
                         size="sm"
@@ -361,7 +549,10 @@ export default function SkillsSection() {
                         Add Image
                       </Button>
                     </motion.div>
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
                       <Button
                         variant="secondary"
                         size="sm"
@@ -378,7 +569,9 @@ export default function SkillsSection() {
 
               {isAdmin && imageDialogOpen && (
                 <div className="mb-6">
-                  <ImageUploadArea onImageSelected={(file) => addSkillImage(file)} />
+                  <ImageUploadArea
+                    onImageSelected={(file) => addSkillImage(file)}
+                  />
                 </div>
               )}
 
@@ -429,9 +622,9 @@ export default function SkillsSection() {
                 )}
               </div>
             </div>
-          </AnimatedSection>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Delete Skill Confirmation Dialog */}
       <AnimatePresence>
@@ -450,17 +643,27 @@ export default function SkillsSection() {
                     Confirm Deletion
                   </DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to delete this skill? This action cannot be undone.
+                    Are you sure you want to delete this skill? This action
+                    cannot be undone.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="sm:justify-start mt-4">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Button variant="destructive" onClick={deleteSkill}>
                       Delete
                     </Button>
                   </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button variant="default" onClick={() => setDeleteDialogOpen(false)}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      variant="default"
+                      onClick={() => setDeleteDialogOpen(false)}
+                    >
                       Cancel
                     </Button>
                   </motion.div>
@@ -474,7 +677,10 @@ export default function SkillsSection() {
       {/* Delete Image Confirmation Dialog */}
       <AnimatePresence>
         {imageDeleteDialogOpen && (
-          <Dialog open={imageDeleteDialogOpen} onOpenChange={setImageDeleteDialogOpen}>
+          <Dialog
+            open={imageDeleteDialogOpen}
+            onOpenChange={setImageDeleteDialogOpen}
+          >
             <DialogContent>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -488,17 +694,27 @@ export default function SkillsSection() {
                     Confirm Deletion
                   </DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to delete this image? This action cannot be undone.
+                    Are you sure you want to delete this image? This action
+                    cannot be undone.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="sm:justify-start mt-4">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Button variant="destructive" onClick={deleteSkillImage}>
                       Delete
                     </Button>
                   </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button variant="default" onClick={() => setImageDeleteDialogOpen(false)}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      variant="default"
+                      onClick={() => setImageDeleteDialogOpen(false)}
+                    >
                       Cancel
                     </Button>
                   </motion.div>
@@ -508,6 +724,6 @@ export default function SkillsSection() {
           </Dialog>
         )}
       </AnimatePresence>
-    </section>
-  )
+    </AnimatedSection>
+  );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EditableText from "../ui/editable-text";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,13 +46,19 @@ import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
 import EditableTextAutoResize from "../ui/editable-text-auto-resize";
+import {
+  Section as PrismaSection,
+  TextBlock as PrismaTextBlock,
+  EducationItem as PrismaEducationItem,
+} from "../../lib/generated/prisma";
 
-// Define an education item type
+// Local UI EducationItem type
 interface EducationItem {
-  id: number;
+  id: string;
   institution: string;
   period: string;
   description: string;
+  degree: string;
   images: string[];
 }
 
@@ -68,8 +74,8 @@ function SortableEducationItem({
   item: EducationItem;
   index: number;
   items: EducationItem[];
-  confirmDelete: (id: number) => void;
-  onView: (id: number) => void;
+  confirmDelete: (id: string) => void;
+  onView: (id: string) => void;
   isAdmin: boolean | undefined;
 }) {
   const {
@@ -215,52 +221,68 @@ function ImageUploadArea({
   );
 }
 
-export default function EducationSection() {
+interface EducationSectionProps {
+  section: PrismaSection & {
+    textBlocks: PrismaTextBlock[];
+    educationItems?: PrismaEducationItem[]; // Raw items from DB
+  };
+  onDataChange: () => void; // ADDED: Callback to trigger data refresh in parent
+}
+
+export default function EducationSection({
+  section,
+  onDataChange,
+}: EducationSectionProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
+  const introTextBlock = section.textBlocks?.[0]; // Use the text block directly
+  const sectionId = section.id;
 
-  // Initialize with the existing education items
-  const [educationItems, setEducationItems] = useState<EducationItem[]>([
-    {
-      id: 1,
-      institution: "RIMBERIO UNIVERSITY",
-      period: "2019-2020",
-      description:
-        "Bachelor's degree in Design. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet.",
-      images: [
-        "https://picsum.photos/600/400?random=edu1",
-        "https://picsum.photos/600/400?random=edu2",
-      ],
-    },
-    {
-      id: 2,
-      institution: "LAKANA UNIVERSITY",
-      period: "2020-2021",
-      description:
-        "Master's degree in Creative Arts. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc aliquam justo et nibh venenatis aliquet.",
-      images: ["https://picsum.photos/600/400?random=edu3"],
-    },
-    {
-      id: 3,
-      institution: "RIMBERIO UNIVERSITY",
-      period: "2021-2022",
-      description:
-        "Advanced studies in Digital Design. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      images: [],
-    },
-    {
-      id: 4,
-      institution: "WARIDERE UNIVERSITY",
-      period: "2022-2023",
-      description:
-        "PhD in Visual Communication. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      images: ["https://picsum.photos/600/400?random=edu4"],
-    },
-  ]);
+  const [educationItems, setEducationItems] = useState<EducationItem[]>([]);
+
+  // Handler for saving the section's intro TextBlock
+  const handleSaveSectionTextBlock = async (
+    blockId: string,
+    newContent: string
+  ) => {
+    try {
+      const res = await fetch(`/api/textblocks/${blockId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          errorData.message || "Failed to save section intro text"
+        );
+      }
+      onDataChange(); // Refresh data
+    } catch (error) {
+      console.error("Error saving section intro text:", error);
+    }
+  };
+
+  // Effect to map props to local state (remains the same)
+  useEffect(() => {
+    const mappedItems =
+      section.educationItems?.map((apiItem) => ({
+        id: String(apiItem.id),
+        institution: apiItem.institution || "",
+        period: apiItem.period || "",
+        description: apiItem.description || "",
+        degree: apiItem.degree || "",
+        images:
+          (apiItem as any).images && Array.isArray((apiItem as any).images)
+            ? (apiItem as any).images.map((img: any) => String(img.src || "")) // Map image objects to src strings
+            : [],
+      })) || [];
+    setEducationItems(mappedItems);
+  }, [section.educationItems]);
 
   // State for delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   // State for education detail dialog
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
@@ -272,6 +294,7 @@ export default function EducationSection() {
   const [editedInstitution, setEditedInstitution] = useState("");
   const [editedPeriod, setEditedPeriod] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
+  const [editedDegree, setEditedDegree] = useState(""); // Need state for degree too
 
   // Set up sensors for drag and drop
   const sensors = useSensors(
@@ -286,83 +309,145 @@ export default function EducationSection() {
   );
 
   // Function to handle drag end
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
-      setEducationItems((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
+      const oldIndex = educationItems.findIndex(
+        (item) => String(item.id) === String(active.id)
+      );
+      const newIndex = educationItems.findIndex(
+        (item) => String(item.id) === String(over.id)
+      );
+      if (oldIndex === -1 || newIndex === -1) return;
 
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      const reorderedItems = arrayMove(educationItems, oldIndex, newIndex);
+      setEducationItems(reorderedItems); // Optimistic UI update
+
+      const orderedIds = reorderedItems.map((item) => item.id);
+
+      try {
+        const response = await fetch(
+          `/api/sections/${sectionId}/education/reorder`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderedIds }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to reorder items");
+        }
+        onDataChange(); // Refresh data from server to confirm order
+      } catch (error) {
+        console.error("Reordering failed:", error);
+        // Optional: Rollback optimistic update here if needed by re-fetching
+        onDataChange(); // Re-fetch to get original order on error
+      }
     }
   };
 
   // Function to add a new education item
-  const addNewEducationItem = () => {
-    const newItemId =
-      educationItems.length > 0
-        ? Math.max(...educationItems.map((item) => item.id)) + 1
-        : 1;
-
-    const newItem: EducationItem = {
-      id: newItemId,
+  const addNewEducationItem = async () => {
+    // Prepare the data for the new item
+    const newItemData = {
+      sectionId: sectionId,
       institution: "NEW INSTITUTION",
       period: `${new Date().getFullYear()}-Present`,
       description: "Add details about this education here.",
-      images: [],
+      degree: "New Degree",
     };
 
-    setEducationItems([...educationItems, newItem]);
+    try {
+      const response = await fetch("/api/education", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newItemData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add new education item");
+      }
+      // const addedItem = await response.json(); // Can use this if needed
+      onDataChange(); // Trigger parent re-fetch to get the new item list
+    } catch (error) {
+      console.error("Adding education item failed:", error);
+      // Handle error display to user if necessary
+    }
   };
 
   // Function to open delete confirmation dialog
-  const confirmDelete = (itemId: number) => {
+  const confirmDelete = (itemId: string) => {
     setItemToDelete(itemId);
     setDeleteDialogOpen(true);
   };
 
   // Function to delete an education item
-  const deleteEducationItem = () => {
-    if (itemToDelete !== null) {
-      setEducationItems(
-        educationItems.filter((item) => item.id !== itemToDelete)
-      );
-      setDeleteDialogOpen(false);
-      setItemToDelete(null);
+  const deleteEducationItem = async () => {
+    if (itemToDelete === null) return;
+    const idToDelete = itemToDelete;
+
+    // Optimistic UI update (optional, or remove after API call)
+    // setEducationItems(educationItems.filter((item) => item.id !== idToDelete));
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
+
+    try {
+      const response = await fetch(`/api/education/${idToDelete}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({})); // Try to get error message
+        throw new Error(errorData.message || "Failed to delete education item");
+      }
+      onDataChange(); // Trigger parent re-fetch
+    } catch (error) {
+      console.error("Deleting education item failed:", error);
+      // Optional: Rollback optimistic update if used
+      // Handle error display
+      onDataChange(); // Re-fetch even on error to ensure UI consistency
     }
   };
 
   // Function to view education details
-  const viewEducationDetails = (educationId: number) => {
+  const viewEducationDetails = (educationId: string) => {
     const education = educationItems.find((item) => item.id === educationId);
     if (education) {
       setCurrentEducation(education);
       setEditedInstitution(education.institution);
       setEditedPeriod(education.period);
       setEditedDescription(education.description);
+      setEditedDegree(education.degree); // Set degree state
       setDetailDialogOpen(true);
     }
   };
 
   // Function to save edited education details
-  const saveEducationDetails = () => {
-    if (currentEducation) {
-      const updatedEducation = {
-        ...currentEducation,
-        institution: editedInstitution,
-        period: editedPeriod,
-        description: editedDescription,
-      };
+  const saveEducationDetails = async () => {
+    if (!currentEducation) return;
 
-      setEducationItems(
-        educationItems.map((item) =>
-          item.id === currentEducation.id ? updatedEducation : item
-        )
-      );
-      setCurrentEducation(updatedEducation);
-      setIsEditing(false);
+    const updatedData = {
+      institution: editedInstitution,
+      period: editedPeriod,
+      description: editedDescription,
+      degree: editedDegree, // Include degree
+    };
+
+    try {
+      const response = await fetch(`/api/education/${currentEducation.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update education details");
+      }
+      // const updatedItemFromServer = await response.json();
+      setDetailDialogOpen(false); // Close dialog on success
+      setIsEditing(false); // Assuming edit mode is toggled elsewhere or based on dialog state
+      onDataChange(); // Trigger parent re-fetch
+    } catch (error) {
+      console.error("Updating education details failed:", error);
+      // Handle error display
     }
   };
 
@@ -416,82 +501,90 @@ export default function EducationSection() {
   };
 
   return (
-    <section id="education" className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-gray-100">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Title Row - Now at the top */}
-        <div className="mb-12">
-          <AnimatedSection variant="fadeInLeft" delay={0.1}>
+    <AnimatedSection variant="fadeInUp">
+      <section
+        id={section.id}
+        className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24"
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          {/* Section Title and Subtitle */}
+          <div className="text-center mb-12 md:mb-16">
             <EditableTextAutoResize
-              initialText="EDUCATION"
+              initialText={section.title || "EDUCATION"}
               as="h1"
-              className="text-red-600 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter"
+              className="text-red-600 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter mb-2"
             />
-            <div className="flex mt-4">
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
-              <div className="w-2 h-2 rounded-full bg-red-600"></div>
-            </div>
-          </AnimatedSection>
-        </div>
+            {introTextBlock && (
+              <EditableText
+                initialText={introTextBlock.content}
+                className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
+                as="p"
+                blockId={introTextBlock.id}
+                onSave={handleSaveSectionTextBlock}
+                isAdmin={isAdmin}
+              />
+            )}
+            {!introTextBlock && isAdmin && (
+              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                Intro text block missing.
+              </p>
+            )}
+          </div>
 
-        {/* Content Row - Now below the title */}
-        <div className="space-y-8">
-          {/* Education List */}
-          <AnimatedSection delay={0.3} variant="fadeInLeft">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-                modifiers={[]}
+          {/* Education List and Controls */}
+          <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 md:p-8">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              modifiers={[]}
+            >
+              <SortableContext
+                items={educationItems.map((item) => item.id)}
+                strategy={verticalListSortingStrategy}
               >
-                <SortableContext
-                  items={educationItems.map((item) => item.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <AnimatePresence>
-                    {educationItems.map((item, index) => (
-                      <SortableEducationItem
-                        key={item.id}
-                        item={item}
-                        index={index}
-                        items={educationItems}
-                        confirmDelete={confirmDelete}
-                        onView={viewEducationDetails}
-                        isAdmin={isAdmin}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </SortableContext>
-              </DndContext>
+                <AnimatePresence>
+                  {educationItems.map((item, index) => (
+                    <SortableEducationItem
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      items={educationItems}
+                      confirmDelete={confirmDelete}
+                      onView={viewEducationDetails}
+                      isAdmin={isAdmin}
+                    />
+                  ))}
+                </AnimatePresence>
+              </SortableContext>
+            </DndContext>
 
-              {/* Add New Education Item Button - Only visible to admin */}
-              {isAdmin && (
+            {/* Add New Education Item Button - Only visible to admin */}
+            {isAdmin && (
+              <motion.div
+                className="mt-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+              >
                 <motion.div
-                  className="mt-6"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.3 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <motion.div
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                  <Button
+                    onClick={addNewEducationItem}
+                    variant="secondary"
+                    className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
                   >
-                    <Button
-                      onClick={addNewEducationItem}
-                      variant="secondary"
-                      className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
-                    >
-                      <PlusCircle size={16} />
-                      Add Education
-                    </Button>
-                  </motion.div>
+                    <PlusCircle size={16} />
+                    Add Education
+                  </Button>
                 </motion.div>
-              )}
-            </div>
-          </AnimatedSection>
+              </motion.div>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Delete Confirmation Dialog */}
       <AnimatePresence>
@@ -722,6 +815,6 @@ export default function EducationSection() {
           </Dialog>
         )}
       </AnimatePresence>
-    </section>
+    </AnimatedSection>
   );
 }

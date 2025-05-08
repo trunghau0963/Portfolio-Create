@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Hero from "@/components/sections/hero";
-import Introduction from "@/components/sections/introduction";
+import IntroductionComponent from "@/components/sections/introduction";
 import Education from "@/components/sections/education";
 import Skills from "@/components/sections/skills";
 import Experience from "@/components/sections/experience";
@@ -12,204 +12,202 @@ import Contact from "@/components/sections/contact";
 import CustomSection from "@/components/sections/custom-section";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import SectionManager, { type Section } from "@/components/ui/section-manager";
+import {
+  type Section as ManagerSection,
+  default as SectionManager,
+} from "@/components/ui/section-manager";
 import ScrollProgress from "@/components/ui/scroll-progress";
 import ScrollToTop from "@/components/ui/scroll-to-top";
 import { useAuth } from "@/context/auth-context";
 import AdminIndicator from "@/components/admin-indicator";
 import { motion } from "framer-motion";
 import SectionTransition from "@/components/ui/section-transition";
-import IntroductionSection from "@/components/sections/introduction";
+import {
+  type Section as PrismaSection,
+  type TextBlock as PrismaTextBlock,
+  type HeroSectionContent as PrismaHeroContent,
+  type ImageBlock as PrismaImageBlock,
+  type ContactInfoItem as PrismaContactInfoItem,
+  type CustomSectionContentBlock as PrismaCustomSectionContentBlock,
+  type EducationItem as PrismaEducationItem,
+  type EducationImage as PrismaEducationImage,
+  type SkillItem as PrismaSkillItem,
+  type SkillImage as PrismaSkillImage,
+  type ExperienceItem as PrismaExperienceItem,
+  type ExperienceDetailImage as PrismaExperienceDetailImage,
+  type ProjectItem as PrismaProjectItem,
+  type TestimonialItem as PrismaTestimonialItem,
+  type Category as PrismaCategory,
+} from "@/lib/generated/prisma";
 
+// Extend PrismaSection type to include expected relations
+export type Section = PrismaSection & {
+  textBlocks: PrismaTextBlock[];
+  imageBlocks: PrismaImageBlock[];
+  contactInfoItems: PrismaContactInfoItem[];
+  customSectionContentBlocks: PrismaCustomSectionContentBlock[];
+  heroContent: PrismaHeroContent | null;
+  educationItems?: (PrismaEducationItem & { images: PrismaEducationImage[] })[];
+  skillItems?: PrismaSkillItem[];
+  skillImages?: PrismaSkillImage[];
+  experienceItems?: (PrismaExperienceItem & {
+    detailImages: PrismaExperienceDetailImage[];
+  })[];
+  projectItems?: PrismaProjectItem[];
+  testimonialItems?: PrismaTestimonialItem[];
+};
+
+// This is the main client component for the page
 export default function Home() {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
 
-  // State for sections
   const [sections, setSections] = useState<Section[]>([]);
+  const [allCategoriesFromDB, setAllCategoriesFromDB] = useState<
+    PrismaCategory[]
+  >([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load sections from localStorage on component mount
-  useEffect(() => {
-    const loadSections = () => {
-      const savedSections = localStorage.getItem("portfolioSections");
-      if (savedSections) {
-        setSections(JSON.parse(savedSections));
-      } else {
-        // Default sections if none exist
-        const defaultSections: Section[] = [
-          { id: 1, type: "hero", title: "Hero", visible: true, position: 1 },
-          {
-            id: 2,
-            type: "introduction",
-            title: "Introduction",
-            visible: true,
-            position: 2,
-          },
-          {
-            id: 3,
-            type: "education",
-            title: "Education",
-            visible: true,
-            position: 3,
-          },
-          {
-            id: 4,
-            type: "skills",
-            title: "Skills",
-            visible: true,
-            position: 4,
-          },
-          {
-            id: 5,
-            type: "experience",
-            title: "Experience",
-            visible: true,
-            position: 5,
-          },
-          {
-            id: 6,
-            type: "projects",
-            title: "Projects",
-            visible: true,
-            position: 6,
-          },
-          {
-            id: 7,
-            type: "testimonials",
-            title: "Testimonials",
-            visible: true,
-            position: 7,
-          },
-          {
-            id: 8,
-            type: "contact",
-            title: "Contact",
-            visible: true,
-            position: 8,
-          },
-        ];
-        setSections(defaultSections);
-        localStorage.setItem(
-          "portfolioSections",
-          JSON.stringify(defaultSections)
+  // Function to fetch all page data
+  const fetchPageData = async () => {
+    console.log("Refreshing page data...");
+    try {
+      const [sectionsResponse, categoriesResponse] = await Promise.all([
+        fetch("/api/sections"),
+        fetch("/api/categories"),
+      ]);
+
+      if (!sectionsResponse.ok) {
+        throw new Error(
+          `HTTP error! status: ${sectionsResponse.status} for sections`
         );
       }
-      setLoading(false);
-    };
+      const sectionsData = await sectionsResponse.json();
+      setSections(sectionsData as Section[]);
 
-    loadSections();
-  }, []);
+      if (!categoriesResponse.ok) {
+        throw new Error(
+          `HTTP error! status: ${categoriesResponse.status} for categories`
+        );
+      }
+      const categoriesData = await categoriesResponse.json();
+      setAllCategoriesFromDB(categoriesData as PrismaCategory[]);
+      setError(null); // Clear error on successful fetch
+    } catch (e) {
+      console.error("Failed to fetch page data:", e);
+      setError(e instanceof Error ? e.message : "An unknown error occurred");
+    } finally {
+      if (loading) setLoading(false);
+    }
+  };
 
-  // Listen for changes to sections in localStorage
+  // Fetch data on initial mount
   useEffect(() => {
-    const handleStorageChange = () => {
-      const savedSections = localStorage.getItem("portfolioSections");
-      if (savedSections) {
-        setSections(JSON.parse(savedSections));
-      }
-    };
+    fetchPageData();
+  }, []); // Empty dependency array means run once on mount
 
-    window.addEventListener("storage", handleStorageChange);
+  console.log("Fetched sections on page:", sections);
+  // console.log("Fetched categories on page:", allCategoriesFromDB);
 
-    // Custom event listener for local changes
-    const handleLocalChange = () => {
-      const savedSections = localStorage.getItem("portfolioSections");
-      if (savedSections) {
-        setSections(JSON.parse(savedSections));
-      }
-    };
-
-    window.addEventListener("sectionsUpdated", handleLocalChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("sectionsUpdated", handleLocalChange);
-    };
-  }, []);
-
-  // Render section based on type
   const renderSection = (section: Section) => {
     if (!section.visible) return null;
-
     switch (section.type) {
       case "hero":
-        return <Hero key={section.id} />;
+        return <Hero key={section.id} section={section} />;
       case "introduction":
         return (
           <>
-            <SectionTransition id="introduction-transition"  color="black" />
-            <Introduction key={section.id} />
+            <SectionTransition id="introduction-transition" color="black" />
+            <IntroductionComponent
+              key={section.id}
+              section={section}
+              onDataChange={fetchPageData}
+            />
           </>
         );
       case "education":
         return (
           <>
             <SectionTransition id="education-transition" color="black" />
-            <Education key={section.id} />
+            <Education
+              key={section.id}
+              section={section}
+              onDataChange={fetchPageData}
+            />
           </>
         );
       case "skills":
         return (
           <>
             <SectionTransition id="skills-transition" color="black" />
-            <Skills key={section.id} />
+            <Skills key={section.id} section={section} />
           </>
         );
       case "experience":
         return (
           <>
             <SectionTransition id="experience-transition" color="black" />
-            <Experience key={section.id} />
+            <Experience key={section.id} section={section} />
           </>
         );
       case "projects":
         return (
           <>
             <SectionTransition id="projects-transition" color="black" />
-            <Projects key={section.id} />
+            <Projects
+              key={section.id}
+              section={section}
+              allCategoriesFromDB={allCategoriesFromDB}
+            />
           </>
         );
       case "testimonials":
         return (
           <>
             <SectionTransition id="testimonials-transition" color="black" />
-            <Testimonials key={section.id} />
+            <Testimonials key={section.id} section={section} />
           </>
         );
       case "contact":
         return (
           <>
             <SectionTransition id="contact-transition" color="black" />
-            <Contact key={section.id} />
+            <Contact
+              key={section.id}
+              section={section}
+              onDataChange={fetchPageData}
+            />
           </>
         );
       case "custom":
         return (
           <>
-            <SectionTransition id="custom-transition" color="black" />
-            <CustomSection
-              key={section.id}
-              id={section.id}
-              title={section.title}
-              bgColor={section.bgColor}
+            <SectionTransition
+              id={`custom-${section.slug}-transition`}
+              color="black"
             />
+            <CustomSection key={section.id} section={section} />
           </>
         );
       default:
+        console.warn("Unknown section type:", section.type);
         return null;
     }
   };
-
-  // Get visible sections for navigation
-  const visibleSections = sections
-    .filter((section) => section.visible)
-    .sort((a, b) => a.position - b.position);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-red-500">
+        Error loading page sections: {error}
       </div>
     );
   }
@@ -222,10 +220,12 @@ export default function Home() {
       transition={{ duration: 0.5 }}
     >
       <ScrollProgress />
-      <Header sections={visibleSections} />
-
-      {visibleSections.map(renderSection)}
-
+      <Header sections={sections.filter((s) => s.visible)} />
+      {sections
+        .filter((s) => s.visible)
+        .map((section) => (
+          <div key={section.id}>{renderSection(section)}</div>
+        ))}
       <Footer />
       <ScrollToTop />
       <AdminIndicator />

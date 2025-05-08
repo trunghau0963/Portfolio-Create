@@ -10,6 +10,7 @@ interface CategoryFilterProps {
 }
 
 export default function CategoryFilter({ categories, selectedCategory, onChange }: CategoryFilterProps) {
+  
   return (
     <div className="flex flex-wrap gap-2 mb-6">
       <Button
@@ -38,7 +39,7 @@ export default function CategoryFilter({ categories, selectedCategory, onChange 
             variant={selectedCategory === category ? "destructive" : "ghost"}
             size="sm"
             onClick={() => onChange(category)}
-            className={`rounded-full flex items-center gap-1 ${
+            className={`rounded-full flex items-center gap-1  ${
               selectedCategory === category
                 ? " hover:bg-red-600"
                 : "border-white/50 text-white hover:bg-white/10"
