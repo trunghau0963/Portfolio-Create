@@ -148,7 +148,11 @@ export default function Home() {
         return (
           <>
             <SectionTransition id="experience-transition" color="black" />
-            <Experience key={section.id} section={section} />
+            <Experience
+              key={section.id}
+              section={section}
+              onDataChange={fetchPageData}
+            />
           </>
         );
       case "projects":

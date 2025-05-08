@@ -27,22 +27,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check for existing session on mount
   useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const storedUser = localStorage.getItem("portfolio-user");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
-      } catch (error) {
-        console.error("Error checking auth:", error);
-      } finally {
-        setIsLoading(false);
+    try {
+      const storedUser = localStorage.getItem("portfolio-user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
-    };
-
-    // Small delay to ensure consistent behavior
-    const timer = setTimeout(checkAuth, 50);
-    return () => clearTimeout(timer);
+    } catch (error) {
+      console.error("Error reading auth from storage:", error);
+      // Ensure user is null if storage is corrupt or inaccessible
+      setUser(null);
+      localStorage.removeItem("portfolio-user");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   // Save user to localStorage when it changes
@@ -74,10 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setUser(data.user);
-
-      // Add a small delay before completing to ensure state updates
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
       setIsLoading(false);
       return true;
     } catch (error) {

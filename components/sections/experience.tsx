@@ -14,6 +14,7 @@ import {
   GripVertical,
   X,
   Upload,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -53,6 +54,7 @@ import {
   ExperienceDetailImage as PrismaExperienceDetailImage,
 } from "../../lib/generated/prisma";
 import EditableTextAutoResize from "../ui/editable-text-auto-resize";
+import { toast } from "sonner";
 
 // Define an experience type
 interface Experience {
@@ -62,7 +64,7 @@ interface Experience {
   summary: string;
   description: string;
   imageSrc: string;
-  detailImages: string[];
+  detailImages: PrismaExperienceDetailImage[];
   period: string;
 }
 
@@ -137,17 +139,12 @@ function SortableExperienceItem({
   onView,
   confirmDelete,
   index,
-  onSaveExperienceImage,
 }: {
   experience: Experience;
   isAdmin: boolean | undefined;
   onView: (id: string) => void;
   confirmDelete: (id: string) => void;
   index: number;
-  onSaveExperienceImage: (
-    experienceId: string,
-    newData: { src?: string; alt?: string }
-  ) => Promise<void>;
 }) {
   const {
     attributes,
@@ -200,11 +197,6 @@ function SortableExperienceItem({
             width={400}
             height={300}
             className="w-full h-auto object-cover"
-            // blockId={experience.id}
-            // onSave={async (_blockId, newData) =>
-            //   onSaveExperienceImage(experience.id, newData)
-            // }
-            // isAdmin={isAdmin}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
             <div>
@@ -250,7 +242,7 @@ interface ExperienceSectionProps {
       detailImages: PrismaExperienceDetailImage[];
     })[];
   };
-  onDataChange?: () => void;
+  onDataChange: () => void;
 }
 
 export default function ExperienceSection({
@@ -263,6 +255,29 @@ export default function ExperienceSection({
 
   const [experiences, setExperiences] = useState<Experience[]>([]);
 
+  // Restore state variables for the detail dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [experienceToDelete, setExperienceToDelete] = useState<string | null>(
+    null
+  );
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [currentExperience, setCurrentExperience] = useState<Experience | null>(
+    null
+  );
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedPositionTitle, setEditedPositionTitle] = useState("");
+  const [editedCompany, setEditedCompany] = useState("");
+  const [editedPeriod, setEditedPeriod] = useState("");
+  const [editedSummary, setEditedSummary] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingDetails, setIsSavingDetails] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  const [isAddingImage, setIsAddingImage] = useState(false);
+  const [isDeletingImage, setIsDeletingImage] = useState<number | null>(null);
+  const [isSavingSectionText, setIsSavingSectionText] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -274,45 +289,256 @@ export default function ExperienceSection({
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setExperiences((items) => {
-        const oldIndex = items.findIndex(
-          (item) => String(item.id) === String(active.id)
+      const oldIndex = experiences.findIndex(
+        (item) => String(item.id) === String(active.id)
+      );
+      const newIndex = experiences.findIndex(
+        (item) => String(item.id) === String(over.id)
+      );
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      // Determine the reordered items BEFORE updating state
+      const reorderedItems = arrayMove(experiences, oldIndex, newIndex);
+      const orderedIds = reorderedItems.map((item) => item.id);
+
+      // Optimistic UI update
+      setExperiences(reorderedItems);
+
+      // API call for reordering
+      setIsReordering(true);
+      try {
+        const response = await fetch(
+          `/api/sections/${section.id}/experience/reorder`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderedIds }), // Send the ordered IDs
+          }
         );
-        const newIndex = items.findIndex(
-          (item) => String(item.id) === String(over.id)
-        );
-        if (oldIndex === -1 || newIndex === -1) return items;
-        return arrayMove(items, oldIndex, newIndex);
-      });
+        if (!response.ok) {
+          throw new Error("Failed to reorder experience items");
+        }
+        toast.success("Experience items reordered!");
+        if (onDataChange) onDataChange();
+      } catch (error) {
+        console.error("Reordering failed:", error);
+        toast.error(`Reordering failed: ${(error as Error).message}`);
+        // Revert optimistic update on error by re-fetching
+        if (onDataChange) onDataChange();
+      } finally {
+        setIsReordering(false);
+      }
     }
   };
 
-  const addNewExperience = () => {
-    const newExperienceId = `new-exp-${Date.now().toString()}`;
-    const newExperience: Experience = {
-      id: newExperienceId,
+  const addNewExperience = async () => {
+    setIsAdding(true);
+    const newItemData = {
+      sectionId: section.id,
       positionTitle: "NEW POSITION",
-      company: "NEW COMPANY",
+      companyName: "NEW COMPANY",
       period: "Year - Year",
       summary: "Brief summary of role",
       description: "Add your experience description here.",
       imageSrc: `https://picsum.photos/300/200?random=${Math.floor(
         Math.random() * 1000
-      )}`,
-      detailImages: [],
+      )}`, // Placeholder image
     };
-    setExperiences([...experiences, newExperience]);
+
+    try {
+      const response = await fetch("/api/experience", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newItemData),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to add new experience item");
+      }
+      toast.success("New experience item added!");
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error("Adding experience item failed:", error);
+      toast.error(`Adding item failed: ${(error as Error).message}`);
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const confirmDelete = (experienceId: string) => {
-    setExperiences(experiences.filter((exp) => exp.id !== experienceId));
+    setExperienceToDelete(experienceId);
+    setDeleteDialogOpen(true);
+  };
+
+  const deleteExperience = async () => {
+    if (experienceToDelete === null) return;
+    const idToDelete = experienceToDelete;
+    setIsDeleting(true);
+    setDeleteDialogOpen(false);
+    setExperienceToDelete(null);
+
+    try {
+      const response = await fetch(`/api/experience/${idToDelete}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || "Failed to delete experience item"
+        );
+      }
+      toast.success("Experience item deleted!");
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error("Deleting experience item failed:", error);
+      toast.error(`Deleting item failed: ${(error as Error).message}`);
+      if (onDataChange) onDataChange(); // Re-fetch to ensure consistency
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const viewExperienceDetails = (experienceId: string) => {
-    // Implementation of viewExperienceDetails
+    const experience = experiences.find((exp) => exp.id === experienceId);
+    if (experience) {
+      setCurrentExperience(experience);
+      setEditedPositionTitle(experience.positionTitle);
+      setEditedCompany(experience.company);
+      setEditedPeriod(experience.period);
+      setEditedSummary(experience.summary);
+      setEditedDescription(experience.description);
+      setIsEditing(false);
+      setDetailDialogOpen(true);
+    }
+  };
+
+  const saveExperienceDetails = async () => {
+    if (!currentExperience) return;
+    setIsSavingDetails(true);
+
+    const updatedData = {
+      positionTitle: editedPositionTitle,
+      companyName: editedCompany, // API expects companyName
+      period: editedPeriod,
+      summary: editedSummary,
+      description: editedDescription,
+      // imageSrc is updated separately if using EditableImage or another mechanism
+    };
+
+    try {
+      const response = await fetch(`/api/experience/${currentExperience.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update experience details");
+      }
+      toast.success("Experience details saved!");
+      setDetailDialogOpen(false); // Close dialog on success
+      setIsEditing(false);
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error("Updating experience details failed:", error);
+      toast.error(`Saving details failed: ${(error as Error).message}`);
+    } finally {
+      setIsSavingDetails(false);
+    }
+  };
+
+  const addDetailImage = async (file?: File) => {
+    if (!currentExperience) return;
+    setIsAddingImage(true);
+
+    // Determine image src (placeholder or actual upload result in future)
+    let imageSrcForApi = `https://picsum.photos/600/400?random=exp_detail_${Date.now()}`;
+    let localPreviewUrl: string | undefined = undefined;
+    if (file) {
+      localPreviewUrl = URL.createObjectURL(file);
+      // In real scenario: upload file, get URL, use it for imageSrcForApi
+      imageSrcForApi = localPreviewUrl; // Using local for now for API save
+      console.warn("Using local/placeholder URL for saving detail image.");
+    }
+
+    const imageData = {
+      experienceItemId: currentExperience.id,
+      src: imageSrcForApi,
+      alt: `Detail image for ${currentExperience.positionTitle}`,
+      // order: currentExperience.detailImages.length // Handled by API
+    };
+
+    try {
+      const response = await fetch("/api/experience-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(imageData),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to add detail image");
+      }
+      toast.success("Detail image added!");
+
+      if (onDataChange) {
+        onDataChange();
+      } else {
+        // This else block should ideally not be reached if onDataChange is mandatory
+        // and correctly passed by the parent.
+        console.warn(
+          "ExperienceSection: addDetailImage - onDataChange is not defined. UI might not update."
+        );
+      }
+      window.location.reload(); // Force reload
+    } catch (error) {
+      console.error("Adding detail image failed:", error);
+      toast.error(`Adding image failed: ${(error as Error).message}`);
+    } finally {
+      setIsAddingImage(false);
+    }
+  };
+
+  const deleteDetailImage = async (index: number) => {
+    if (!currentExperience) return;
+
+    const imageToDelete = currentExperience.detailImages[index];
+    if (!imageToDelete || !imageToDelete.id) {
+      console.error("Image ID not found at index", index);
+      toast.error("Image ID not found.");
+      return;
+    }
+    const imageIdToDelete = imageToDelete.id;
+
+    setIsDeletingImage(index); // Use index for UI feedback
+    try {
+      const response = await fetch(
+        `/api/experience-images/${imageIdToDelete}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete detail image");
+      }
+      toast.success("Detail image deleted!");
+      if (onDataChange) {
+        onDataChange();
+      } else {
+        // This else block should ideally not be reached if onDataChange is mandatory.
+        console.warn(
+          "ExperienceSection: deleteDetailImage - onDataChange is not defined. UI might not update."
+        );
+      }
+      window.location.reload(); // Force reload
+    } catch (error) {
+      console.error("Deleting detail image failed:", error);
+      toast.error(`Deleting image failed: ${(error as Error).message}`);
+      // Optionally re-fetch on error too
+      if (onDataChange) onDataChange();
+    } finally {
+      setIsDeletingImage(null);
+    }
   };
 
   const handleSaveSectionTextBlock = async (
@@ -338,57 +564,9 @@ export default function ExperienceSection({
     }
   };
 
-  const handleSaveExperienceImage = async (
-    experienceId: string,
-    newData: { src?: string; alt?: string }
-  ) => {
-    console.log(
-      `Saving image for experience ${experienceId}, data: ${JSON.stringify(
-        newData
-      )}`
-    );
-    console.log(`API call to update ExperienceItem ${experienceId} needed.`);
-    try {
-      // TODO: Implement API call to PUT /api/experience/${experienceId} with { imageSrc: newData.src, imageAlt: newData.alt }
-      // Example placeholder for fetch:
-      /*
-      const res = await fetch(`/api/experience/${experienceId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageSrc: newData.src, imageAlt: newData.alt }), // Send relevant fields
-      });
-      if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || `Failed to update image for experience ${experienceId}`);
-      }
-      */
-      // If API call successful:
-      if (onDataChange) {
-        onDataChange(); // Refresh all data
-      } else {
-        // Fallback: Local update if no refresh callback
-        setExperiences((prev) =>
-          prev.map((e) =>
-            e.id === experienceId
-              ? { ...e, imageSrc: newData.src || e.imageSrc }
-              : e
-          )
-        );
-      }
-    } catch (error) {
-      console.error(
-        `Error saving image for experience ${experienceId}:`,
-        error
-      );
-      // Potentially show error to user
-      throw error; // Re-throw for EditableImage if needed
-    }
-  };
-
   useEffect(() => {
     const mappedExperiences: Experience[] =
       section.experienceItems?.map((item): Experience => {
-        // No longer mapping imageBlockId
         return {
           id: String(item.id),
           positionTitle: item.positionTitle || "",
@@ -397,11 +575,7 @@ export default function ExperienceSection({
           summary: item.summary || "",
           description: item.description || "",
           imageSrc: item.imageSrc || "",
-          detailImages:
-            item.detailImages
-              ?.map((img: PrismaExperienceDetailImage) => img.src)
-              .filter((src): src is string => !!src) || [],
-          // imageBlockId: findImageBlockId('experienceCover'), // REMOVED
+          detailImages: item.detailImages || [],
         };
       }) || [];
     setExperiences(mappedExperiences);
@@ -426,9 +600,6 @@ export default function ExperienceSection({
                 initialText={introTextBlock.content}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
                 as="p"
-                // blockId={introTextBlock.id}
-                // onSave={handleSaveSectionTextBlock}
-                // isAdmin={isAdmin}
               />
             )}
             {!introTextBlock && isAdmin && (
@@ -457,7 +628,6 @@ export default function ExperienceSection({
                     onView={viewExperienceDetails}
                     confirmDelete={confirmDelete}
                     index={index}
-                    onSaveExperienceImage={handleSaveExperienceImage}
                   />
                 ))}
               </div>
@@ -479,9 +649,14 @@ export default function ExperienceSection({
                     onClick={addNewExperience}
                     variant="secondary"
                     className="flex items-center gap-2"
+                    disabled={isAdding}
                   >
-                    <PlusCircle size={16} />
-                    Add Experience
+                    {isAdding ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <PlusCircle size={16} />
+                    )}
+                    {isAdding ? "Adding..." : "Add Experience"}
                   </Button>
                 </motion.div>
               </motion.div>
@@ -489,6 +664,289 @@ export default function ExperienceSection({
           </DndContext>
         </div>
       </section>
+
+      {/* Delete Confirmation Dialog (Modified to use string ID state) */}
+      <AnimatePresence>
+        {deleteDialogOpen && (
+          <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <DialogContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    Confirm Deletion
+                  </DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this experience? This action
+                    cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="sm:justify-start mt-4">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      variant="destructive"
+                      onClick={deleteExperience}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      variant="outline"
+                      onClick={() => setDeleteDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </motion.div>
+                </DialogFooter>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+
+      {/* Restore Experience Detail Dialog JSX */}
+      <AnimatePresence>
+        {currentExperience && detailDialogOpen && (
+          <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <DialogHeader>
+                  <DialogTitle className="text-lg sm:text-xl font-bold">
+                    Experience Details
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="py-4 space-y-6">
+                  {/* Experience Fields - Use state for editing */}
+                  {isAdmin ? (
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="expPositionTitle">Position Title</Label>
+                        <Input
+                          id="expPositionTitle"
+                          value={editedPositionTitle}
+                          onChange={(e) =>
+                            setEditedPositionTitle(e.target.value)
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="expCompany">Company</Label>
+                        <Input
+                          id="expCompany"
+                          value={editedCompany}
+                          onChange={(e) => setEditedCompany(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="expPeriod">Period</Label>
+                        <Input
+                          id="expPeriod"
+                          value={editedPeriod}
+                          onChange={(e) => setEditedPeriod(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="expSummary">Summary</Label>
+                        <Input
+                          id="expSummary"
+                          value={editedSummary}
+                          onChange={(e) => setEditedSummary(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="expDescription">Description</Label>
+                        <Textarea
+                          id="expDescription"
+                          value={editedDescription}
+                          onChange={(e) => setEditedDescription(e.target.value)}
+                          className="min-h-[150px] mt-1"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-bold">
+                          {currentExperience.positionTitle}
+                        </h3>
+                        <p className="text-base font-medium">
+                          {currentExperience.company}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {currentExperience.period}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {currentExperience.summary}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-700 whitespace-pre-line">
+                          {currentExperience.description}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Save Button for Admin */}
+                  {isAdmin && (
+                    <div className="flex justify-end">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button
+                          onClick={saveExperienceDetails}
+                          disabled={isSavingDetails}
+                        >
+                          {isSavingDetails ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : null}
+                          {isSavingDetails ? "Saving..." : "Save Details"}
+                        </Button>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {/* Detail Images */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-semibold">Project Images</h3>
+                      {isAdmin && (
+                        <div className="flex gap-2">
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-1"
+                              onClick={() => addDetailImage()}
+                              disabled={isAddingImage}
+                            >
+                              {isAddingImage ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                              ) : (
+                                <PlusCircle size={14} />
+                              )}
+                              {isAddingImage ? "Adding..." : "Add Random Image"}
+                            </Button>
+                          </motion.div>
+                        </div>
+                      )}
+                    </div>
+
+                    {isAdmin && (
+                      <div className="mb-4">
+                        <ImageUploadArea
+                          onImageSelected={(file) => addDetailImage(file)}
+                        />
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <AnimatePresence>
+                        {currentExperience.detailImages.map((image, index) => (
+                          <motion.div
+                            key={image.id}
+                            className="relative group"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.3 }}
+                            whileHover={{ scale: 1.03 }}
+                          >
+                            <Image
+                              src={image.src || "https://picsum.photos/600/400"}
+                              alt={
+                                image.alt ||
+                                `${currentExperience.positionTitle} detail ${
+                                  index + 1
+                                }`
+                              }
+                              width={600}
+                              height={400}
+                              className="w-full h-auto rounded-md shadow-md"
+                            />
+                            {isAdmin && (
+                              <motion.div
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
+                                  onClick={() => deleteDetailImage(index)}
+                                  disabled={isDeletingImage === index}
+                                >
+                                  {isDeletingImage === index ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <X size={14} />
+                                  )}
+                                  <span className="sr-only">Remove image</span>
+                                </Button>
+                              </motion.div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+
+                      {currentExperience.detailImages.length === 0 && (
+                        <div className="col-span-2 text-center py-8 border border-dashed rounded-md text-gray-400">
+                          No project images available
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      variant="outline"
+                      onClick={() => setDetailDialogOpen(false)}
+                    >
+                      Close
+                    </Button>
+                  </motion.div>
+                </DialogFooter>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </AnimatedSection>
   );
 }

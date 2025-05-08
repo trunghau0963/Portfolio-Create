@@ -50,6 +50,11 @@ import {
   SkillImage as PrismaSkillImage,
 } from "../../lib/generated/prisma";
 import EditableTextAutoResize from "../ui/editable-text-auto-resize";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 // Define a skill type
 interface Skill {
@@ -131,18 +136,13 @@ function SortableSkillItem({
   confirmDelete,
   index,
   isAdmin,
-  onSaveSkillText,
+  onViewDetails,
 }: {
   skill: Skill;
   confirmDelete: (id: string) => void;
   index: number;
   isAdmin: boolean | undefined;
-  onSaveSkillText: (
-    skillId: string,
-    field: "title" | "description",
-    newText: string,
-    blockId?: string
-  ) => Promise<void>;
+  onViewDetails: (skill: Skill) => void;
 }) {
   const {
     attributes,
@@ -165,12 +165,17 @@ function SortableSkillItem({
     <motion.div
       ref={setNodeRef}
       style={style}
-      className={`flex items-start mb-6 sortable-item ${
-        isDragging ? "dragging" : ""
-      }`}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
+      onClick={() => {
+        if (isAdmin) {
+          onViewDetails(skill);
+        }
+      }}
+      className={`flex items-start mb-6 sortable-item ${
+        isAdmin ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700" : ""
+      } ${isDragging ? "dragging" : ""}`}
     >
       {isAdmin && (
         <div
@@ -189,24 +194,19 @@ function SortableSkillItem({
       ></motion.div>
       <div className="flex-grow">
         <div className="flex justify-between items-start">
-          <EditableText
-            initialText={skill.title}
-            as="h3"
-            className="font-bold uppercase mb-2"
-            initialFontSize={16}
-            // blockId={skill.titleBlockId || `skill-${skill.id}-title`}
-            // onSave={(blockId, newText) =>
-            //   onSaveSkillText(skill.id, "title", newText, blockId)
-            // }
-            // isAdmin={isAdmin}
-          />
+          <h3 className="font-bold uppercase mb-2 text-base text-gray-800 dark:text-gray-200">
+            {skill.title}
+          </h3>
           {isAdmin && (
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
               <Button
                 variant="ghost"
                 size="icon"
                 className="ml-2 text-gray-400 hover:text-red-600 hover:bg-transparent"
-                onClick={() => confirmDelete(skill.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  confirmDelete(skill.id);
+                }}
               >
                 <Trash2 size={16} />
                 <span className="sr-only">Delete skill</span>
@@ -214,15 +214,9 @@ function SortableSkillItem({
             </motion.div>
           )}
         </div>
-        <EditableText
-          initialText={skill.description}
-          initialFontSize={14}
-          // blockId={skill.descriptionBlockId || `skill-${skill.id}-description`}
-          // onSave={(blockId, newText) =>
-          //   onSaveSkillText(skill.id, "description", newText, blockId)
-          // }
-          // isAdmin={isAdmin}
-        />
+        <p className="text-sm text-gray-700 dark:text-gray-400 whitespace-pre-line mt-1">
+          {skill.description}
+        </p>
       </div>
     </motion.div>
   );
@@ -244,15 +238,29 @@ export default function SkillsSection({
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
   const introTextBlock = section.textBlocks?.[0];
+  const sectionId = section.id;
 
   const [skills, setSkills] = useState<Skill[]>([]);
-  const [skillImages, setSkillImages] = useState<string[]>([]);
+  const [skillImages, setSkillImages] = useState<
+    (PrismaSkillImage & { localPreviewUrl?: string })[]
+  >([]);
+
+  // State for Skill Detail Dialog
+  const [isSkillDetailDialogOpen, setIsSkillDetailDialogOpen] = useState(false);
+  const [currentEditingSkill, setCurrentEditingSkill] = useState<Skill | null>(
+    null
+  );
+  const [editedSkillTitle, setEditedSkillTitle] = useState("");
+  const [editedSkillDescription, setEditedSkillDescription] = useState("");
+  const [isSavingSkillDetails, setIsSavingSkillDetails] = useState(false);
+  const [isSavingSectionText, setIsSavingSectionText] = useState(false);
 
   const handleSaveSectionTextBlock = async (
     blockId: string,
     newContent: string
   ) => {
     try {
+      setIsSavingSectionText(true);
       const res = await fetch(`/api/textblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -265,12 +273,12 @@ export default function SkillsSection({
         );
       }
       if (onDataChange) onDataChange();
-      else
-        console.warn(
-          "SkillsSection: onDataChange not provided, UI may not refresh for intro text."
-        );
+      toast.success("Section intro text saved!");
     } catch (error) {
       console.error("Error saving section intro text:", error);
+      toast.error(`Failed to save intro text: ${(error as Error).message}`);
+    } finally {
+      setIsSavingSectionText(false);
     }
   };
 
@@ -322,26 +330,24 @@ export default function SkillsSection({
 
   useEffect(() => {
     const mappedSkills: Skill[] =
-      section.skillItems?.map((item: PrismaSkillItem): Skill => {
-        const findBlockId = (purpose: string): string | undefined => undefined;
-        return {
-          id: String(item.id),
-          title: item.title || "",
-          description: item.description || "",
-          level: item.level ?? undefined,
-          titleBlockId: findBlockId("skillTitle"),
-          descriptionBlockId: findBlockId("skillDescription"),
-        };
-      }) || [];
+      section.skillItems
+        ?.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .map((item: PrismaSkillItem): Skill => {
+          return {
+            id: String(item.id),
+            title: item.title || "",
+            description: item.description || "",
+            level: item.level ?? undefined,
+          };
+        }) || [];
     setSkills(mappedSkills);
   }, [section.skillItems]);
 
   useEffect(() => {
-    const mappedImageSrcs =
-      section.skillImages
-        ?.map((img: PrismaSkillImage) => img.src)
-        .filter((src): src is string => !!src) || [];
-    setSkillImages(mappedImageSrcs);
+    const mappedImageObjects: (PrismaSkillImage & {
+      localPreviewUrl?: string;
+    })[] = section.skillImages?.map((img) => ({ ...img })) || [];
+    setSkillImages(mappedImageObjects);
   }, [section.skillImages]);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -412,18 +418,83 @@ export default function SkillsSection({
   };
 
   // Function to add a new skill image
-  const addSkillImage = (file?: File) => {
-    // If a file is provided, you would typically upload it and get a URL
-    // For this demo, we just add a random picsum photo URL or the file's object URL for local preview
-    const newImageSrc = file
-      ? URL.createObjectURL(file) // For local preview
-      : `https://picsum.photos/400/300?random=skill${skillImages.length + 1}`;
-    console.log(
-      "Adding skill image (API Call needed for upload/save):",
-      newImageSrc
-    );
-    setSkillImages([...skillImages, newImageSrc]);
-    setImageDialogOpen(false); // Close dialog after adding
+  const addSkillImage = async (file?: File) => {
+    let imageSrcForApi = `https://picsum.photos/400/300?random=skill${
+      skillImages.length + 1
+    }`;
+    let localPreviewUrl: string | undefined = undefined;
+
+    if (file) {
+      localPreviewUrl = URL.createObjectURL(file);
+      // In a real scenario, you would upload the file and get a persistent URL.
+      // For now, we can use the local preview URL for optimistic update if desired,
+      // but the API will save a placeholder or what it's designed to save.
+      // For the API call, we might still send a placeholder or handle file upload separately.
+      imageSrcForApi = localPreviewUrl; // Or a placeholder / result of an upload function
+      console.warn(
+        "addSkillImage: File provided, but actual upload to persistent storage is not implemented. Using local/placeholder URL for API."
+      );
+    }
+
+    const newImageDataForApi = {
+      sectionId: sectionId,
+      src: imageSrcForApi, // This src will be saved to DB
+      alt: "New Skill Image", // TODO: Allow user to set alt text
+      order: skillImages.length, // Basic ordering
+    };
+
+    // Optimistic update object (might not have DB id, createdAt etc. yet)
+    const optimisticImageObject: PrismaSkillImage & {
+      localPreviewUrl?: string;
+    } = {
+      id: `temp-${Date.now()}`, // Temporary ID for local state key
+      src: imageSrcForApi, // This will be displayed
+      alt: newImageDataForApi.alt,
+      order: newImageDataForApi.order,
+      sectionId: sectionId,
+      caption: null, // Assuming caption can be null
+      createdAt: new Date(), // Placeholder, DB will set actual
+      localPreviewUrl: file ? localPreviewUrl : undefined, // Keep local preview if file was used
+    };
+
+    // Optimistically add to UI, then call API
+    // To fully fix type issues, API should return the created PrismaSkillImage
+    // For now, if onDataChange is not called, this optimistic update might lack DB ID.
+    // setSkillImages((prev) => [...prev, optimisticImageObject]);
+    // Decided against optimistic update for images for now to simplify until API returns full object
+
+    try {
+      const response = await fetch("/api/skill-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newImageDataForApi),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to add skill image");
+      }
+      const addedImageFromApi = await response.json(); // This should be PrismaSkillImage
+      toast.success("Skill image added!");
+      if (onDataChange) {
+        onDataChange(); // Re-fetch to get the complete list with new image from DB
+      } else {
+        // If no onDataChange, update local state with API response for better type safety
+        setSkillImages((prev) => [
+          ...prev,
+          {
+            ...addedImageFromApi,
+            localPreviewUrl: file ? localPreviewUrl : undefined,
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Adding skill image failed:", error);
+      toast.error(`Adding image failed: ${(error as Error).message}`);
+      // If optimistic update was used, revert it here:
+      // setSkillImages((prev) => prev.filter(img => img.id !== optimisticImageObject.id));
+    } finally {
+      setImageDialogOpen(false);
+    }
   };
 
   // Function to confirm image deletion
@@ -437,11 +508,71 @@ export default function SkillsSection({
     if (imageToDelete !== null) {
       console.log(
         "Delete skill image (API Call needed):",
-        skillImages[imageToDelete]
+        skillImages[imageToDelete].src
       );
       setSkillImages(skillImages.filter((_, i) => i !== imageToDelete));
       setImageDeleteDialogOpen(false);
       setImageToDelete(null);
+    }
+  };
+
+  const openSkillDetailDialog = (skill: Skill) => {
+    setCurrentEditingSkill(skill);
+    setEditedSkillTitle(skill.title);
+    setEditedSkillDescription(skill.description);
+    setIsSkillDetailDialogOpen(true);
+  };
+
+  const saveSkillDetailsFromDialog = async () => {
+    if (!currentEditingSkill) return;
+    setIsSavingSkillDetails(true);
+    try {
+      // Call API to update title
+      const titleUpdatePromise = fetch(
+        `/api/skills/${currentEditingSkill.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: editedSkillTitle }),
+        }
+      );
+      // Call API to update description
+      const descriptionUpdatePromise = fetch(
+        `/api/skills/${currentEditingSkill.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ description: editedSkillDescription }),
+        }
+      );
+
+      const [titleResponse, descriptionResponse] = await Promise.all([
+        titleUpdatePromise,
+        descriptionUpdatePromise,
+      ]);
+
+      if (!titleResponse.ok || !descriptionResponse.ok) {
+        let errorMsg = "Failed to save skill details.";
+        if (!titleResponse.ok) {
+          const titleError = await titleResponse.json().catch(() => ({}));
+          errorMsg = titleError.message || "Failed to save title.";
+        }
+        if (!descriptionResponse.ok) {
+          const descError = await descriptionResponse.json().catch(() => ({}));
+          errorMsg += ` ${descError.message || "Failed to save description."}`;
+        }
+        throw new Error(errorMsg.trim());
+      }
+
+      toast.success("Skill details saved!");
+      if (onDataChange) onDataChange();
+      setIsSkillDetailDialogOpen(false);
+      setCurrentEditingSkill(null);
+    } catch (error) {
+      console.error("Error saving skill details:", error);
+      toast.error(`Saving skill failed: ${(error as Error).message}`);
+    } finally {
+      setIsSavingSkillDetails(false);
     }
   };
 
@@ -464,9 +595,6 @@ export default function SkillsSection({
                 initialText={introTextBlock.content}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
                 as="p"
-                // blockId={introTextBlock.id}
-                // onSave={handleSaveSectionTextBlock}
-                // isAdmin={isAdmin}
               />
             )}
             {!introTextBlock && isAdmin && (
@@ -497,7 +625,7 @@ export default function SkillsSection({
                         confirmDelete={confirmDelete}
                         index={index}
                         isAdmin={isAdmin}
-                        onSaveSkillText={handleSaveSkillText}
+                        onViewDetails={openSkillDetailDialog}
                       />
                     ))}
                   </AnimatePresence>
@@ -579,7 +707,7 @@ export default function SkillsSection({
                 <AnimatePresence>
                   {skillImages.map((image, index) => (
                     <motion.div
-                      key={`${image}-${index}`}
+                      key={`${image.src}-${index}`}
                       className="relative group"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -588,7 +716,7 @@ export default function SkillsSection({
                       whileHover={{ scale: 1.03 }}
                     >
                       <Image
-                        src={image || "/placeholder.svg"}
+                        src={image.src || "/placeholder.svg"}
                         alt={`Skill image ${index + 1}`}
                         width={400}
                         height={300}
@@ -718,6 +846,77 @@ export default function SkillsSection({
                       Cancel
                     </Button>
                   </motion.div>
+                </DialogFooter>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+
+      {/* Skill Detail Edit Dialog */}
+      <AnimatePresence>
+        {isSkillDetailDialogOpen && currentEditingSkill && (
+          <Dialog
+            open={isSkillDetailDialogOpen}
+            onOpenChange={setIsSkillDetailDialogOpen}
+          >
+            <DialogContent className="sm:max-w-[600px]">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <DialogHeader>
+                  <DialogTitle>Edit Skill</DialogTitle>
+                  <DialogDescription>
+                    Update the details for &ldquo;{currentEditingSkill.title}
+                    &rdquo;.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="py-4 space-y-4">
+                  <div>
+                    <Label htmlFor="skillTitle">Title</Label>
+                    <Input
+                      id="skillTitle"
+                      value={editedSkillTitle}
+                      onChange={(e) => setEditedSkillTitle(e.target.value)}
+                      className="mt-1"
+                      disabled={isSavingSkillDetails}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="skillDescription">Description</Label>
+                    <Textarea
+                      id="skillDescription"
+                      value={editedSkillDescription}
+                      onChange={(e) =>
+                        setEditedSkillDescription(e.target.value)
+                      }
+                      className="mt-1 min-h-[100px]"
+                      disabled={isSavingSkillDetails}
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter className="mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsSkillDetailDialogOpen(false)}
+                    disabled={isSavingSkillDetails}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={saveSkillDetailsFromDialog}
+                    disabled={isSavingSkillDetails}
+                  >
+                    {isSavingSkillDetails ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    {isSavingSkillDetails ? "Saving..." : "Save Changes"}
+                  </Button>
                 </DialogFooter>
               </motion.div>
             </DialogContent>

@@ -52,6 +52,7 @@ import {
   Section as PrismaSection,
   TextBlock as PrismaTextBlock,
   EducationItem as PrismaEducationItem,
+  EducationImage as PrismaEducationImage,
 } from "../../lib/generated/prisma";
 
 // Local UI EducationItem type
@@ -61,7 +62,7 @@ interface EducationItem {
   period: string;
   description: string;
   degree: string;
-  images: string[];
+  images: PrismaEducationImage[];
 }
 
 // Sortable Education Item Component
@@ -226,9 +227,11 @@ function ImageUploadArea({
 interface EducationSectionProps {
   section: PrismaSection & {
     textBlocks: PrismaTextBlock[];
-    educationItems?: PrismaEducationItem[]; // Raw items from DB
+    educationItems?: (PrismaEducationItem & {
+      images: PrismaEducationImage[];
+    })[];
   };
-  onDataChange: () => void; // ADDED: Callback to trigger data refresh in parent
+  onDataChange: () => void;
 }
 
 export default function EducationSection({
@@ -237,19 +240,21 @@ export default function EducationSection({
 }: EducationSectionProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
-  const introTextBlock = section.textBlocks?.[0]; // Use the text block directly
+  const introTextBlock = section.textBlocks?.[0];
   const sectionId = section.id;
 
   const [educationItems, setEducationItems] = useState<EducationItem[]>([]);
 
-  // Loading states
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
   const [isSavingSectionText, setIsSavingSectionText] = useState(false);
+  const [isAddingImage, setIsAddingImage] = useState(false);
+  const [isDeletingImageById, setIsDeletingImageById] = useState<string | null>(
+    null
+  );
 
-  // Handler for saving the section's intro TextBlock
   const handleSaveSectionTextBlock = async (
     blockId: string,
     newContent: string
@@ -267,7 +272,7 @@ export default function EducationSection({
           errorData.message || "Failed to save section intro text"
         );
       }
-      onDataChange(); // Refresh data
+      if (onDataChange) onDataChange();
       toast.success("Section intro text saved!");
     } catch (error) {
       console.error("Error saving section intro text:", error);
@@ -277,7 +282,6 @@ export default function EducationSection({
     }
   };
 
-  // Effect to map props to local state (remains the same)
   useEffect(() => {
     const mappedItems =
       section.educationItems?.map((apiItem) => ({
@@ -286,35 +290,28 @@ export default function EducationSection({
         period: apiItem.period || "",
         description: apiItem.description || "",
         degree: apiItem.degree || "",
-        images:
-          (apiItem as any).images && Array.isArray((apiItem as any).images)
-            ? (apiItem as any).images.map((img: any) => String(img.src || "")) // Map image objects to src strings
-            : [],
+        images: apiItem.images || [],
       })) || [];
     setEducationItems(mappedItems);
   }, [section.educationItems]);
 
-  // State for delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  // State for education detail dialog
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [currentEducation, setCurrentEducation] =
     useState<EducationItem | null>(null);
 
-  // State for editing education fields
   const [isEditing, setIsEditing] = useState(false);
   const [editedInstitution, setEditedInstitution] = useState("");
   const [editedPeriod, setEditedPeriod] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
-  const [editedDegree, setEditedDegree] = useState(""); // Need state for degree too
+  const [editedDegree, setEditedDegree] = useState("");
 
-  // Set up sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // 8px of movement required before drag starts - helps on touch devices
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -322,7 +319,6 @@ export default function EducationSection({
     })
   );
 
-  // Function to handle drag end
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -335,7 +331,7 @@ export default function EducationSection({
       if (oldIndex === -1 || newIndex === -1) return;
 
       const reorderedItems = arrayMove(educationItems, oldIndex, newIndex);
-      setEducationItems(reorderedItems); // Optimistic UI update
+      setEducationItems(reorderedItems);
       setIsReordering(true);
 
       const orderedIds = reorderedItems.map((item) => item.id);
@@ -352,21 +348,19 @@ export default function EducationSection({
         if (!response.ok) {
           throw new Error("Failed to reorder items");
         }
-        onDataChange(); // Refresh data from server to confirm order
+        if (onDataChange) onDataChange();
         toast.success("Education items reordered!");
       } catch (error) {
         console.error("Reordering failed:", error);
         toast.error(`Reordering failed: ${(error as Error).message}`);
-        onDataChange(); // Re-fetch to get original order on error
+        if (onDataChange) onDataChange();
       } finally {
         setIsReordering(false);
       }
     }
   };
 
-  // Function to add a new education item
   const addNewEducationItem = async () => {
-    // Prepare the data for the new item
     const newItemData = {
       sectionId: sectionId,
       institution: "NEW INSTITUTION",
@@ -386,8 +380,7 @@ export default function EducationSection({
       if (!response.ok) {
         throw new Error("Failed to add new education item");
       }
-      // const addedItem = await response.json(); // Can use this if needed
-      onDataChange(); // Trigger parent re-fetch to get the new item list
+      if (onDataChange) onDataChange();
       toast.success("New education item added!");
     } catch (error) {
       console.error("Adding education item failed:", error);
@@ -397,19 +390,15 @@ export default function EducationSection({
     }
   };
 
-  // Function to open delete confirmation dialog
   const confirmDelete = (itemId: string) => {
     setItemToDelete(itemId);
     setDeleteDialogOpen(true);
   };
 
-  // Function to delete an education item
   const deleteEducationItem = async () => {
     if (itemToDelete === null) return;
     const idToDelete = itemToDelete;
 
-    // Optimistic UI update (optional, or remove after API call)
-    // setEducationItems(educationItems.filter((item) => item.id !== idToDelete));
     setDeleteDialogOpen(false);
     setItemToDelete(null);
 
@@ -419,21 +408,20 @@ export default function EducationSection({
         method: "DELETE",
       });
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({})); // Try to get error message
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to delete education item");
       }
-      onDataChange(); // Trigger parent re-fetch
+      if (onDataChange) onDataChange();
       toast.success("Education item deleted!");
     } catch (error) {
       console.error("Deleting education item failed:", error);
       toast.error(`Deleting item failed: ${(error as Error).message}`);
-      onDataChange(); // Re-fetch even on error to ensure UI consistency
+      if (onDataChange) onDataChange();
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // Function to view education details
   const viewEducationDetails = (educationId: string) => {
     const education = educationItems.find((item) => item.id === educationId);
     if (education) {
@@ -441,12 +429,11 @@ export default function EducationSection({
       setEditedInstitution(education.institution);
       setEditedPeriod(education.period);
       setEditedDescription(education.description);
-      setEditedDegree(education.degree); // Set degree state
+      setEditedDegree(education.degree);
       setDetailDialogOpen(true);
     }
   };
 
-  // Function to save edited education details
   const saveEducationDetails = async () => {
     if (!currentEducation) return;
 
@@ -455,7 +442,7 @@ export default function EducationSection({
       institution: editedInstitution,
       period: editedPeriod,
       description: editedDescription,
-      degree: editedDegree, // Include degree
+      degree: editedDegree,
     };
 
     try {
@@ -467,10 +454,9 @@ export default function EducationSection({
       if (!response.ok) {
         throw new Error("Failed to update education details");
       }
-      // const updatedItemFromServer = await response.json();
-      setDetailDialogOpen(false); // Close dialog on success
-      setIsEditing(false); // Assuming edit mode is toggled elsewhere or based on dialog state
-      onDataChange(); // Trigger parent re-fetch
+      setDetailDialogOpen(false);
+      setIsEditing(false);
+      if (onDataChange) onDataChange();
       toast.success("Education details saved!");
     } catch (error) {
       console.error("Updating education details failed:", error);
@@ -480,52 +466,76 @@ export default function EducationSection({
     }
   };
 
-  // Function to add an image to education
-  const addEducationImage = (file?: File) => {
-    if (currentEducation) {
-      let newImageUrl: string;
+  const addEducationImage = async (file?: File) => {
+    if (!currentEducation) return;
+    setIsAddingImage(true);
 
-      if (file) {
-        // In a real implementation, you would upload the file to storage
-        // For now, we'll just create a temporary URL
-        newImageUrl = URL.createObjectURL(file);
-      } else {
-        // Use a random image if no file is provided
-        const randomId = Math.floor(Math.random() * 1000);
-        newImageUrl = `https://picsum.photos/600/400?random=${randomId}`;
-      }
-
-      const updatedEducation = {
-        ...currentEducation,
-        images: [...currentEducation.images, newImageUrl],
-      };
-
-      setEducationItems(
-        educationItems.map((item) =>
-          item.id === currentEducation.id ? updatedEducation : item
-        )
+    let imageSrcForApi = `https://picsum.photos/600/400?random=edu_detail_${Date.now()}`;
+    if (file) {
+      console.warn(
+        "File selected, but using placeholder for API save. Implement actual file upload."
       );
-      setCurrentEducation(updatedEducation);
+    }
+
+    const imageData = {
+      educationItemId: currentEducation.id,
+      src: imageSrcForApi,
+      alt: `Detail image for ${currentEducation.institution}`,
+    };
+
+    try {
+      const response = await fetch("/api/education-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(imageData),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to add education detail image");
+      }
+      toast.success("Education image added!");
+      if (onDataChange) {
+        onDataChange();
+      } else {
+        console.warn(
+          "addEducationImage: onDataChange not provided, UI might not reflect server state accurately."
+        );
+      }
+    } catch (error) {
+      console.error("Adding education image failed:", error);
+      toast.error(`Adding image failed: ${(error as Error).message}`);
+    } finally {
+      setIsAddingImage(false);
     }
   };
 
-  // Function to delete an image
-  const deleteEducationImage = (index: number) => {
-    if (currentEducation) {
-      const updatedImages = [...currentEducation.images];
-      updatedImages.splice(index, 1);
+  const deleteEducationImage = async (imageId: string) => {
+    if (!currentEducation) return;
+    setIsDeletingImageById(imageId);
 
-      const updatedEducation = {
-        ...currentEducation,
-        images: updatedImages,
-      };
-
-      setEducationItems(
-        educationItems.map((item) =>
-          item.id === currentEducation.id ? updatedEducation : item
-        )
-      );
-      setCurrentEducation(updatedEducation);
+    try {
+      const response = await fetch(`/api/education-images/${imageId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || "Failed to delete education detail image"
+        );
+      }
+      toast.success("Education image deleted!");
+      if (onDataChange) {
+        onDataChange();
+      } else {
+        console.warn(
+          "deleteEducationImage: onDataChange not provided, UI might not reflect server state accurately."
+        );
+      }
+    } catch (error) {
+      console.error("Deleting education image failed:", error);
+      toast.error(`Deleting image failed: ${(error as Error).message}`);
+      if (onDataChange) onDataChange();
+    } finally {
+      setIsDeletingImageById(null);
     }
   };
 
@@ -536,7 +546,6 @@ export default function EducationSection({
         className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24"
       >
         <div className="max-w-6xl mx-auto px-4">
-          {/* Section Title and Subtitle */}
           <div className="text-center mb-12 md:mb-16">
             <EditableTextAutoResize
               initialText={section.title || "EDUCATION"}
@@ -557,7 +566,6 @@ export default function EducationSection({
             )}
           </div>
 
-          {/* Education List and Controls */}
           <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 md:p-8">
             <DndContext
               sensors={sensors}
@@ -585,7 +593,6 @@ export default function EducationSection({
               </SortableContext>
             </DndContext>
 
-            {/* Add New Education Item Button - Only visible to admin */}
             {isAdmin && (
               <motion.div
                 className="mt-6"
@@ -617,7 +624,6 @@ export default function EducationSection({
         </div>
       </section>
 
-      {/* Delete Confirmation Dialog */}
       <AnimatePresence>
         {deleteDialogOpen && (
           <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -672,7 +678,6 @@ export default function EducationSection({
         )}
       </AnimatePresence>
 
-      {/* Education Detail Dialog */}
       <AnimatePresence>
         {currentEducation && detailDialogOpen && (
           <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
@@ -690,7 +695,6 @@ export default function EducationSection({
                 </DialogHeader>
 
                 <div className="py-4 space-y-6">
-                  {/* Institution and Period Fields */}
                   {isAdmin ? (
                     <div className="space-y-4">
                       <div>
@@ -723,7 +727,6 @@ export default function EducationSection({
                     </div>
                   )}
 
-                  {/* Description */}
                   <div className="relative">
                     <Label htmlFor="description">Description</Label>
                     {isAdmin ? (
@@ -740,7 +743,6 @@ export default function EducationSection({
                     )}
                   </div>
 
-                  {/* Save Button for Admin */}
                   {isAdmin && (
                     <div className="flex justify-end">
                       <motion.div
@@ -760,7 +762,6 @@ export default function EducationSection({
                     </div>
                   )}
 
-                  {/* Education Images */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="font-semibold">Education Images</h3>
@@ -774,9 +775,14 @@ export default function EducationSection({
                             size="sm"
                             className="flex items-center gap-1"
                             onClick={() => addEducationImage()}
+                            disabled={isAddingImage}
                           >
-                            <ImagePlus size={14} />
-                            Add Random Image
+                            {isAddingImage ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            ) : (
+                              <ImagePlus size={14} />
+                            )}
+                            {isAddingImage ? "Adding..." : "Add Random Image"}
                           </Button>
                         </motion.div>
                       )}
@@ -794,7 +800,7 @@ export default function EducationSection({
                       <AnimatePresence>
                         {currentEducation.images.map((image, index) => (
                           <motion.div
-                            key={`${image}-${index}`}
+                            key={image.id}
                             className="relative group"
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -803,10 +809,13 @@ export default function EducationSection({
                             whileHover={{ scale: 1.03 }}
                           >
                             <Image
-                              src={image || "https://picsum.photos/600/400"}
-                              alt={`${currentEducation.institution} image ${
-                                index + 1
-                              }`}
+                              src={image.src || "https://picsum.photos/600/400"}
+                              alt={
+                                image.alt ||
+                                `${currentEducation.institution} image ${
+                                  index + 1
+                                }`
+                              }
                               width={600}
                               height={400}
                               className="w-full h-auto rounded-md shadow-md"
@@ -821,9 +830,14 @@ export default function EducationSection({
                                   variant="ghost"
                                   size="icon"
                                   className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
-                                  onClick={() => deleteEducationImage(index)}
+                                  onClick={() => deleteEducationImage(image.id)}
+                                  disabled={isDeletingImageById === image.id}
                                 >
-                                  <X size={14} />
+                                  {isDeletingImageById === image.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <X size={14} />
+                                  )}
                                   <span className="sr-only">Remove image</span>
                                 </Button>
                               </motion.div>
