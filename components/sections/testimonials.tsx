@@ -333,9 +333,9 @@ export default function TestimonialsSection({
                   initialText={introTextBlock.content}
                   className="text-gray-600 dark:text-gray-400 text-sm md:text-base leading-relaxed"
                   as="p"
-                  blockId={introTextBlock.id}
-                  onSave={handleSaveSectionTextBlock}
-                  isAdmin={isAdmin}
+                  // blockId={introTextBlock.id}
+                  // onSave={handleSaveSectionTextBlock}
+                  // isAdmin={isAdmin}
                 />
               )}
               {!introTextBlock && isAdmin && (

@@ -165,14 +165,6 @@ function SortableProjectItem({
                     as="span"
                     initialFontSize={72}
                     className="text-white"
-                    blockId={
-                      project.projectNumberBlockId ||
-                      `project-${project.id}-number`
-                    }
-                    onSave={async (blockId, newText) =>
-                      onSaveProjectText(project.id, "number", newText, blockId)
-                    }
-                    isAdmin={isAdmin}
                   />
                 </div>
                 <div className="flex mt-4 ml-1">
@@ -248,13 +240,6 @@ function SortableProjectItem({
                     as="h3"
                     className="font-bold uppercase mb-2 text-white"
                     initialFontSize={18}
-                    blockId={
-                      project.titleBlockId || `project-${project.id}-title`
-                    }
-                    onSave={async (blockId, newText) =>
-                      onSaveProjectText(project.id, "title", newText, blockId)
-                    }
-                    isAdmin={isAdmin}
                   />
                   {project.companyName && (
                     <EditableText
@@ -262,57 +247,18 @@ function SortableProjectItem({
                       as="h4"
                       className="font-medium uppercase mb-3 text-white/80"
                       initialFontSize={15}
-                      blockId={
-                        project.companyNameBlockId ||
-                        `project-${project.id}-company`
-                      }
-                      onSave={async (blockId, newText) =>
-                        onSaveProjectText(
-                          project.id,
-                          "companyName",
-                          newText,
-                          blockId
-                        )
-                      }
-                      isAdmin={isAdmin}
                     />
                   )}
                   <EditableText
                     initialText={project.description1}
                     className="text-white"
                     initialFontSize={14}
-                    blockId={
-                      project.description1BlockId ||
-                      `project-${project.id}-desc1`
-                    }
-                    onSave={async (blockId, newText) =>
-                      onSaveProjectText(
-                        project.id,
-                        "description1",
-                        newText,
-                        blockId
-                      )
-                    }
-                    isAdmin={isAdmin}
                   />
                   {project.description2 && (
                     <EditableText
                       initialText={project.description2}
                       className="text-white mt-2"
                       initialFontSize={14}
-                      blockId={
-                        project.description2BlockId ||
-                        `project-${project.id}-desc2`
-                      }
-                      onSave={async (blockId, newText) =>
-                        onSaveProjectText(
-                          project.id,
-                          "description2",
-                          newText,
-                          blockId
-                        )
-                      }
-                      isAdmin={isAdmin}
                     />
                   )}
                 </div>
@@ -328,19 +274,6 @@ function SortableProjectItem({
                       width={400}
                       height={300}
                       className="w-full h-auto object-cover"
-                      blockId={
-                        project.mainImageBlockId ||
-                        `project-${project.id}-image`
-                      }
-                      onSave={async (blockId, newData) =>
-                        onSaveProjectImage(
-                          project.id,
-                          "imageSrc",
-                          newData,
-                          blockId
-                        )
-                      }
-                      isAdmin={isAdmin}
                     />
                   </motion.div>
                 )}
@@ -357,13 +290,6 @@ function SortableProjectItem({
                     as="h3"
                     className="font-bold uppercase mb-2 text-white"
                     initialFontSize={18}
-                    blockId={
-                      project.titleBlockId || `project-${project.id}-title-L2`
-                    }
-                    onSave={async (blockId, newText) =>
-                      onSaveProjectText(project.id, "title", newText, blockId)
-                    }
-                    isAdmin={isAdmin}
                   />
                   {project.companyName && (
                     <EditableText
@@ -371,57 +297,18 @@ function SortableProjectItem({
                       as="h4"
                       className="font-medium uppercase mb-3 text-white/80"
                       initialFontSize={15}
-                      blockId={
-                        project.companyNameBlockId ||
-                        `project-${project.id}-company-L2`
-                      }
-                      onSave={async (blockId, newText) =>
-                        onSaveProjectText(
-                          project.id,
-                          "companyName",
-                          newText,
-                          blockId
-                        )
-                      }
-                      isAdmin={isAdmin}
                     />
                   )}
                   <EditableText
                     initialText={project.description1}
                     className="text-white mb-2"
                     initialFontSize={14}
-                    blockId={
-                      project.description1BlockId ||
-                      `project-${project.id}-desc1-L2`
-                    }
-                    onSave={async (blockId, newText) =>
-                      onSaveProjectText(
-                        project.id,
-                        "description1",
-                        newText,
-                        blockId
-                      )
-                    }
-                    isAdmin={isAdmin}
                   />
                   {project.description2 && (
                     <EditableText
                       initialText={project.description2}
                       className="text-white mt-2"
                       initialFontSize={14}
-                      blockId={
-                        project.description2BlockId ||
-                        `project-${project.id}-desc2-L2`
-                      }
-                      onSave={async (blockId, newText) =>
-                        onSaveProjectText(
-                          project.id,
-                          "description2",
-                          newText,
-                          blockId
-                        )
-                      }
-                      isAdmin={isAdmin}
                     />
                   )}
                 </div>
@@ -437,19 +324,6 @@ function SortableProjectItem({
                       width={400}
                       height={300}
                       className="w-full h-auto object-cover"
-                      blockId={
-                        project.mainImageBlockId ||
-                        `project-${project.id}-image-L2`
-                      }
-                      onSave={async (blockId, newData) =>
-                        onSaveProjectImage(
-                          project.id,
-                          "imageSrc",
-                          newData,
-                          blockId
-                        )
-                      }
-                      isAdmin={isAdmin}
                     />
                   </motion.div>
                 )}
@@ -475,14 +349,6 @@ function SortableProjectItem({
                     as="span"
                     initialFontSize={72}
                     className="text-white"
-                    blockId={
-                      project.projectNumberBlockId ||
-                      `project-${project.id}-number-L2`
-                    }
-                    onSave={async (blockId, newText) =>
-                      onSaveProjectText(project.id, "number", newText, blockId)
-                    }
-                    isAdmin={isAdmin}
                   />
                 </div>
                 <div className="flex mt-4 ml-1 self-end">
@@ -922,10 +788,7 @@ export default function ProjectsSection({
               <EditableText
                 initialText={introTextBlock.content}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
-                as="p"
-                blockId={introTextBlock.id}
-                onSave={handleSaveSectionTextBlock}
-                isAdmin={isAdmin}
+                initialFontSize={14}
               />
             )}
             {!introTextBlock && isAdmin && (

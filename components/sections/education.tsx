@@ -519,9 +519,9 @@ export default function EducationSection({
                 initialText={introTextBlock.content}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
                 as="p"
-                blockId={introTextBlock.id}
-                onSave={handleSaveSectionTextBlock}
-                isAdmin={isAdmin}
+                // blockId={introTextBlock.id}
+                // onSave={handleSaveSectionTextBlock}
+                // isAdmin={isAdmin}
               />
             )}
             {!introTextBlock && isAdmin && (

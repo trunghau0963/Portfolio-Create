@@ -58,7 +58,7 @@ export default function CustomSection({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newData),
-      });
+      }); 
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to save image block");
@@ -92,9 +92,7 @@ export default function CustomSection({
                   key={block.id}
                   initialText={block.content}
                   as="p"
-                  blockId={block.id}
-                  onSave={handleSaveTextBlock}
-                  isAdmin={isAdmin}
+                  // isAdmin={isAdmin}
                 />
               ))}
             </div>
@@ -112,9 +110,9 @@ export default function CustomSection({
                   width={600}
                   height={400}
                   className="w-full h-auto object-cover rounded-md shadow-md"
-                  blockId={block.id}
-                  onSave={handleSaveImageBlock}
-                  isAdmin={isAdmin}
+                  // blockId={block.id}
+                  // onSave={handleSaveImageBlock}
+                  // isAdmin={isAdmin}
                 />
               ))}
             </div>

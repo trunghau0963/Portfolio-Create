@@ -194,11 +194,11 @@ function SortableSkillItem({
             as="h3"
             className="font-bold uppercase mb-2"
             initialFontSize={16}
-            blockId={skill.titleBlockId || `skill-${skill.id}-title`}
-            onSave={(blockId, newText) =>
-              onSaveSkillText(skill.id, "title", newText, blockId)
-            }
-            isAdmin={isAdmin}
+            // blockId={skill.titleBlockId || `skill-${skill.id}-title`}
+            // onSave={(blockId, newText) =>
+            //   onSaveSkillText(skill.id, "title", newText, blockId)
+            // }
+            // isAdmin={isAdmin}
           />
           {isAdmin && (
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
@@ -217,11 +217,11 @@ function SortableSkillItem({
         <EditableText
           initialText={skill.description}
           initialFontSize={14}
-          blockId={skill.descriptionBlockId || `skill-${skill.id}-description`}
-          onSave={(blockId, newText) =>
-            onSaveSkillText(skill.id, "description", newText, blockId)
-          }
-          isAdmin={isAdmin}
+          // blockId={skill.descriptionBlockId || `skill-${skill.id}-description`}
+          // onSave={(blockId, newText) =>
+          //   onSaveSkillText(skill.id, "description", newText, blockId)
+          // }
+          // isAdmin={isAdmin}
         />
       </div>
     </motion.div>
@@ -464,9 +464,9 @@ export default function SkillsSection({
                 initialText={introTextBlock.content}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
                 as="p"
-                blockId={introTextBlock.id}
-                onSave={handleSaveSectionTextBlock}
-                isAdmin={isAdmin}
+                // blockId={introTextBlock.id}
+                // onSave={handleSaveSectionTextBlock}
+                // isAdmin={isAdmin}
               />
             )}
             {!introTextBlock && isAdmin && (

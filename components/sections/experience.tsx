@@ -200,11 +200,11 @@ function SortableExperienceItem({
             width={400}
             height={300}
             className="w-full h-auto object-cover"
-            blockId={experience.id}
-            onSave={async (_blockId, newData) =>
-              onSaveExperienceImage(experience.id, newData)
-            }
-            isAdmin={isAdmin}
+            // blockId={experience.id}
+            // onSave={async (_blockId, newData) =>
+            //   onSaveExperienceImage(experience.id, newData)
+            // }
+            // isAdmin={isAdmin}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
             <div>
@@ -426,9 +426,9 @@ export default function ExperienceSection({
                 initialText={introTextBlock.content}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
                 as="p"
-                blockId={introTextBlock.id}
-                onSave={handleSaveSectionTextBlock}
-                isAdmin={isAdmin}
+                // blockId={introTextBlock.id}
+                // onSave={handleSaveSectionTextBlock}
+                // isAdmin={isAdmin}
               />
             )}
             {!introTextBlock && isAdmin && (

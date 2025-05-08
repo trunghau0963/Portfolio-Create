@@ -114,10 +114,7 @@ export default function IntroductionSection({
                 {mainTextBlocks.map((block) => (
                   <EditableText
                     key={block.id}
-                    blockId={block.id}
                     initialText={block.content || ""}
-                    onSave={handleSaveTextBlock}
-                    isAdmin={isAdmin}
                     initialFontSize={14}
                     className="text-gray-700 dark:text-gray-300 leading-relaxed"
                   />
@@ -133,10 +130,7 @@ export default function IntroductionSection({
                   {sideTextBlock && (
                     <EditableText
                       key={sideTextBlock.id}
-                      blockId={sideTextBlock.id}
                       initialText={sideTextBlock.content || ""}
-                      onSave={handleSaveTextBlock}
-                      isAdmin={isAdmin}
                       initialFontSize={14}
                       className="text-gray-700 dark:text-gray-300 leading-relaxed"
                     />
@@ -149,13 +143,12 @@ export default function IntroductionSection({
                   {mainImageBlock ? (
                     <EditableImage
                       key={mainImageBlock.id}
-                      blockId={mainImageBlock.id}
                       src={mainImageBlock.src || ""}
                       alt={mainImageBlock.alt || "Introduction image"}
                       width={400}
                       height={300}
-                      onSave={handleSaveImageBlock}
-                      isAdmin={isAdmin}
+                      // onSave={handleSaveImageBlock}
+                      // isAdmin={isAdmin}
                       className="w-full h-auto object-cover rounded-md shadow-md hover:shadow-lg transition-shadow duration-300"
                     />
                   ) : (

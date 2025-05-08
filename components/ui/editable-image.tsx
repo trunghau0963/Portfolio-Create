@@ -1,29 +1,19 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/context/auth-context";
-// import EditImageButton from "./edit-image-button" // Will be removed
-import ResponsiveImage from "./responsive-image";
-import { getPlaceholderImage } from "@/utils/image-utils";
-import { Button } from "@/components/ui/button"; // For Save/Cancel
-import { Input } from "@/components/ui/input"; // For inline editing
-import { Label } from "@/components/ui/label"; // For input labels
-import { Pencil } from "lucide-react"; // For edit icon
+import { useState } from "react"
+import { useAuth } from "@/context/auth-context"
+import EditImageButton from "./edit-image-button"
+import ResponsiveImage from "./responsive-image"
+import { getPlaceholderImage } from "@/utils/image-utils"
 
 interface EditableImageProps {
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-  blockId: string; // Added blockId
-  onSave: (
-    blockId: string,
-    newData: { src?: string; alt?: string }
-  ) => Promise<void>; // Modified onSave
-  className?: string;
-  priority?: boolean;
-  sizes?: string;
-  isAdmin?: boolean; // Added isAdmin prop
+  src: string
+  alt: string
+  width: number
+  height: number
+  className?: string
+  priority?: boolean
+  sizes?: string
 }
 
 export default function EditableImage({
@@ -31,131 +21,50 @@ export default function EditableImage({
   alt,
   width,
   height,
-  blockId,
-  onSave,
   className = "",
   priority = false,
   sizes,
-  isAdmin: propIsAdmin, // Renamed to avoid conflict
 }: EditableImageProps) {
-  const { user } = useAuth();
-  const isAdmin = propIsAdmin !== undefined ? propIsAdmin : user?.isAdmin;
+  const { user } = useAuth()
+  const isAdmin = user?.isAdmin
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState(src);
-  const [currentAlt, setCurrentAlt] = useState(alt);
-  const [savedSrc, setSavedSrc] = useState(src);
-  const [savedAlt, setSavedAlt] = useState(alt);
+  // Use a placeholder image if src is empty or contains placeholder.svg
+  const defaultImage = src && !src.includes("placeholder.svg") ? src : getPlaceholderImage(width, height)
 
-  // To form a default image, ensure width and height are valid
-  const defaultImage = getPlaceholderImage(
-    width > 0 ? width : 300,
-    height > 0 ? height : 200
-  );
+  const [imageSrc, setImageSrc] = useState(defaultImage)
 
-  // Update current values if props change
-  useEffect(() => {
-    const newSrc = src && !src.includes("placeholder.svg") ? src : defaultImage;
-    setCurrentSrc(newSrc);
-    setSavedSrc(newSrc);
-  }, [src, width, height, defaultImage]);
+  const handleSave = (file: File) => {
+    // Create a temporary URL for the uploaded file
+    const newImageUrl = URL.createObjectURL(file)
+    setImageSrc(newImageUrl)
 
-  useEffect(() => {
-    setCurrentAlt(alt);
-    setSavedAlt(alt);
-  }, [alt]);
-
-  const handleSaveClick = async () => {
-    try {
-      await onSave(blockId, { src: currentSrc, alt: currentAlt });
-      setSavedSrc(currentSrc);
-      setSavedAlt(currentAlt);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Failed to save image block:", error);
-      // Optionally, handle error display
-    }
-  };
-
-  const handleCancelClick = () => {
-    setCurrentSrc(savedSrc);
-    setCurrentAlt(savedAlt);
-    setIsEditing(false);
-  };
+    // In the future, this is where you would upload to storage and save the URL to the database
+    console.log("Saving image:", file.name)
+  }
 
   const handleError = () => {
-    if (currentSrc !== defaultImage) {
-      setCurrentSrc(defaultImage);
-    }
-  };
-
-  if (isEditing) {
-    return (
-      <div className="w-full p-4 border rounded-md bg-gray-50 dark:bg-gray-800 space-y-3">
-        <div>
-          <Label
-            htmlFor={`image-src-${blockId}`}
-            className="text-sm font-medium"
-          >
-            Image URL
-          </Label>
-          <Input
-            id={`image-src-${blockId}`}
-            type="text"
-            value={currentSrc}
-            onChange={(e) => setCurrentSrc(e.target.value)}
-            className="w-full mt-1 dark:text-black"
-          />
-        </div>
-        <div>
-          <Label
-            htmlFor={`image-alt-${blockId}`}
-            className="text-sm font-medium"
-          >
-            Alt Text
-          </Label>
-          <Input
-            id={`image-alt-${blockId}`}
-            type="text"
-            value={currentAlt}
-            onChange={(e) => setCurrentAlt(e.target.value)}
-            className="w-full mt-1 dark:text-black"
-          />
-        </div>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" size="sm" onClick={handleCancelClick}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleSaveClick}>
-            Save Image
-          </Button>
-        </div>
-      </div>
-    );
+    // If image fails to load, use a fallback placeholder
+    console.error(`Failed to load image: ${imageSrc}`)
+    setImageSrc(`https://picsum.photos/${width}/${height}?random=${Math.floor(Math.random() * 1000)}`)
   }
 
   return (
     <div className="group relative">
       <ResponsiveImage
-        src={currentSrc} // Display currentSrc
-        alt={currentAlt} // Display currentAlt
+        src={imageSrc}
+        alt={alt}
         width={width}
         height={height}
         className={className}
-        onError={handleError} // Keep existing error handling
+        onError={handleError}
         priority={priority}
         sizes={sizes}
       />
-      {isAdmin && !isEditing && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-blue-500 hover:text-blue-700 bg-white/70 rounded-full p-1"
-          onClick={() => setIsEditing(true)}
-        >
-          <Pencil size={16} />
-        </Button>
+      {isAdmin && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <EditImageButton onSave={handleSave} />
+        </div>
       )}
     </div>
-  );
+  )
 }

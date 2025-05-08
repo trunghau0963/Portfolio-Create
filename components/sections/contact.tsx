@@ -322,15 +322,15 @@ export default function ContactSection({
                 initialText={section.title || "LET'S WORK TOGETHER"}
                 as="span"
                 initialFontSize={90}
-                blockId={`section-title-${section.id}`}
-                onSave={async (id, newTitle) => {
-                  console.log(
-                    "Section title save attempt (not implemented):",
-                    id,
-                    newTitle
-                  );
-                }}
-                isAdmin={isAdmin}
+                // blockId={`section-title-${section.id}`}
+                // onSave={async (id, newTitle) => {
+                //   console.log(
+                //     "Section title save attempt (not implemented):",
+                //     id,
+                //     newTitle
+                //   );
+                // }}
+                // isAdmin={isAdmin}
               />
             </h2>
             <div className="flex mt-4 ml-1">
@@ -373,10 +373,10 @@ export default function ContactSection({
                   {textBlock1 ? (
                     <EditableText
                       key={textBlock1.id}
-                      blockId={textBlock1.id}
+                      // blockId={textBlock1.id}
+                      // onSave={handleSaveTextBlock}
+                      // isAdmin={isAdmin}
                       initialText={textBlock1.content}
-                      onSave={handleSaveTextBlock}
-                      isAdmin={isAdmin}
                       className="text-sm mb-4 text-white"
                       initialFontSize={14}
                     />
@@ -393,13 +393,12 @@ export default function ContactSection({
                     {imageBlock1 ? (
                       <EditableImage
                         key={imageBlock1.id}
-                        blockId={imageBlock1.id}
                         src={imageBlock1.src}
                         alt={imageBlock1.alt || "Contact image"}
                         width={400}
                         height={300}
-                        onSave={handleSaveImageBlock}
-                        isAdmin={isAdmin}
+                        // onSave={handleSaveImageBlock}
+                        // isAdmin={isAdmin}
                         className="w-full h-auto object-cover rounded-lg shadow-md"
                       />
                     ) : isAdmin ? (

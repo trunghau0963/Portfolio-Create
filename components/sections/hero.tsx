@@ -177,9 +177,9 @@ export default function HeroSection({
                     initialText={leftTextBlock.content}
                     className="max-w-md"
                     initialFontSize={14}
-                    blockId={leftTextBlock.id}
-                    onSave={handleSaveTextBlock}
-                    isAdmin={isAdmin}
+                    // blockId={leftTextBlock.id}
+                    // onSave={handleSaveTextBlock}
+                    // isAdmin={isAdmin}
                   />
                 </div>
               </AnimatedSection>
@@ -194,9 +194,9 @@ export default function HeroSection({
                     initialText={rightTextBlock.content}
                     className="max-w-md"
                     initialFontSize={14}
-                    blockId={rightTextBlock.id}
-                    onSave={handleSaveTextBlock}
-                    isAdmin={isAdmin}
+                    // blockId={rightTextBlock.id}
+                    // onSave={handleSaveTextBlock}
+                    // isAdmin={isAdmin}
                   />
                   <motion.div
                     className="ml-4 mt-16"
@@ -217,7 +217,7 @@ export default function HeroSection({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="text-red-600"
+                      className="text-red-500"
                     >
                       <path d="M5 12h14"></path>
                       <path d="m12 5 7 7-7 7"></path>
