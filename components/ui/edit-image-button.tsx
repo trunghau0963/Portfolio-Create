@@ -1,119 +1,155 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useRef } from "react"
-import { ImageIcon } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { ImagePlus, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { motion } from "framer-motion";
 
 interface EditImageButtonProps {
-  onSave: (file: File) => void
-  className?: string
+  initialSrc: string;
+  initialAlt: string;
+  onSave: (newSrc?: string, newAlt?: string) => Promise<void>;
+  isSaving?: boolean;
 }
 
-export default function EditImageButton({ onSave, className = "" }: EditImageButtonProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+export default function EditImageButton({
+  initialSrc,
+  initialAlt,
+  onSave,
+  isSaving = false,
+}: EditImageButtonProps) {
+  const [open, setOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState(initialSrc);
+  const [imageAlt, setImageAlt] = useState(initialAlt);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setSelectedFile(file)
-
-      // Create preview URL
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreviewUrl(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        setImageSrc(loadEvent.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
-  const handleSave = () => {
-    if (selectedFile) {
-      onSave(selectedFile)
-      setIsOpen(false)
-      setSelectedFile(null)
-      setPreviewUrl(null)
+  const handleSave = async () => {
+    const srcChanged = imageSrc !== initialSrc;
+    const altChanged = imageAlt !== initialAlt;
+
+    if (srcChanged || altChanged) {
+      await onSave(
+        srcChanged ? imageSrc : undefined,
+        altChanged ? imageAlt : undefined
+      );
     }
-  }
+    setOpen(false);
+  };
 
-  // Function to use default image from picsum
-  const useDefaultImage = () => {
-    // Create a fetch request to get the image from picsum
-    fetch("https://picsum.photos/300/200")
-      .then((response) => {
-        // Convert the response to a blob
-        return response.blob()
-      })
-      .then((blob) => {
-        // Create a File object from the blob
-        const defaultFile = new File([blob], "default-image.jpg", { type: "image/jpeg" })
-
-        // Save the file
-        onSave(defaultFile)
-        setIsOpen(false)
-      })
-      .catch((error) => {
-        console.error("Error fetching default image:", error)
-      })
-  }
+  useEffect(() => {
+    if (open) {
+      setImageSrc(initialSrc);
+      setImageAlt(initialAlt);
+    }
+  }, [open, initialSrc, initialAlt]);
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`p-1 rounded-full bg-white/80 hover:bg-white text-gray-600 hover:text-gray-800 transition-colors ${className}`}
-        aria-label="Edit image"
-      >
-        <ImageIcon className="h-4 w-4" />
-      </button>
+      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-gray-400 hover:text-gray-600 bg-white/80 hover:bg-white/90 backdrop-blur-sm rounded-full p-1"
+          onClick={() => setOpen(true)}
+          disabled={isSaving}
+          title="Edit Image"
+        >
+          <ImagePlus size={16} />
+          <span className="sr-only">Edit image</span>
+        </Button>
+      </motion.div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Upload Image</DialogTitle>
+            <DialogTitle>Edit Image</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div
-              className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-              {previewUrl ? (
-                <img src={previewUrl || "/placeholder.svg"} alt="Preview" className="max-h-[200px] object-contain" />
-              ) : (
-                <>
-                  <ImageIcon className="h-10 w-10 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">Click to select an image or drag and drop</p>
-                </>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="img-src">Image URL or Upload</Label>
+              {imageSrc && (
+                <img
+                  src={imageSrc}
+                  alt="Current preview"
+                  className="max-w-full h-auto max-h-48 rounded border mb-2"
+                />
               )}
+              <div className="flex gap-2">
+                <Input
+                  id="img-src"
+                  value={imageSrc}
+                  onChange={(e) => setImageSrc(e.target.value)}
+                  placeholder="Enter image URL"
+                  className="flex-grow"
+                  disabled={isSaving}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSaving}
+                >
+                  Upload
+                </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isSaving}
+                />
+              </div>
             </div>
-            {selectedFile && (
-              <p className="text-sm text-gray-500">
-                Selected file: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
-              </p>
-            )}
-            <div className="flex justify-between items-center">
-              <Button variant="outline" onClick={useDefaultImage} className="text-sm">
-                Use Random Image
-              </Button>
-              <div className="text-xs text-gray-500">Or use a random image from Picsum Photos</div>
+            <div className="space-y-2">
+              <Label htmlFor="img-alt">Alt Text</Label>
+              <Input
+                id="img-alt"
+                value={imageAlt}
+                onChange={(e) => setImageAlt(e.target.value)}
+                placeholder="Descriptive text for accessibility"
+                disabled={isSaving}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!selectedFile}>
-              Save Changes
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

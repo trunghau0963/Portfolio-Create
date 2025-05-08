@@ -228,7 +228,7 @@ interface SkillsSectionProps {
     skillItems?: PrismaSkillItem[];
     skillImages?: PrismaSkillImage[];
   };
-  onDataChange?: () => void;
+  onDataChange: () => void;
 }
 
 export default function SkillsSection({
@@ -238,12 +238,21 @@ export default function SkillsSection({
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
   const introTextBlock = section.textBlocks?.[0];
-  const sectionId = section.id;
+  const sectionId = section.slug;
 
   const [skills, setSkills] = useState<Skill[]>([]);
   const [skillImages, setSkillImages] = useState<
     (PrismaSkillImage & { localPreviewUrl?: string })[]
   >([]);
+
+  // Loading states
+  const [isAddingSkill, setIsAddingSkill] = useState(false);
+  const [isDeletingSkill, setIsDeletingSkill] = useState(false);
+  const [isReorderingSkills, setIsReorderingSkills] = useState(false);
+  const [isAddingSkillImage, setIsAddingSkillImage] = useState(false);
+  const [isDeletingSkillImageById, setIsDeletingSkillImageById] = useState<
+    string | null
+  >(null);
 
   // State for Skill Detail Dialog
   const [isSkillDetailDialogOpen, setIsSkillDetailDialogOpen] = useState(false);
@@ -257,14 +266,24 @@ export default function SkillsSection({
 
   const handleSaveSectionTextBlock = async (
     blockId: string,
-    newContent: string
+    newContent: string,
+    newFontSize?: number,
+    newFontFamily?: string
   ) => {
     try {
       setIsSavingSectionText(true);
+      const payload: {
+        content: string;
+        fontSize?: number;
+        fontFamily?: string;
+      } = { content: newContent };
+      if (newFontSize !== undefined) payload.fontSize = newFontSize;
+      if (newFontFamily !== undefined) payload.fontFamily = newFontFamily;
+
       const res = await fetch(`/api/textblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newContent }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -355,7 +374,9 @@ export default function SkillsSection({
 
   // State for image management dialog
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
-  const [imageToDelete, setImageToDelete] = useState<number | null>(null);
+  const [skillImageIdToDelete, setSkillImageIdToDelete] = useState<
+    string | null
+  >(null);
   const [imageDeleteDialogOpen, setImageDeleteDialogOpen] = useState(false);
 
   // Set up sensors for drag and drop
@@ -370,35 +391,72 @@ export default function SkillsSection({
     })
   );
 
-  // Function to handle drag end
-  const handleDragEnd = (event: DragEndEvent) => {
+  // Function to handle drag end for skills
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
-      setSkills((items) => {
-        const oldIndex = items.findIndex(
-          (item) => String(item.id) === String(active.id)
-        );
-        const newIndex = items.findIndex(
-          (item) => String(item.id) === String(over.id)
-        );
-        if (oldIndex === -1 || newIndex === -1) return items;
-        console.log("Reordering skills (API Call needed)");
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      const oldIndex = skills.findIndex(
+        (s) => String(s.id) === String(active.id)
+      );
+      const newIndex = skills.findIndex(
+        (s) => String(s.id) === String(over.id)
+      );
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reorderedItems = arrayMove(skills, oldIndex, newIndex);
+      const orderedIds = reorderedItems.map((item) => item.id);
+
+      setSkills(reorderedItems); // Optimistic UI update
+      setIsReorderingSkills(true);
+
+      try {
+        const response = await fetch(`/api/skills/reorder`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderedIds }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to reorder skills");
+        }
+        toast.success("Skills reordered!");
+        if (onDataChange) onDataChange();
+      } catch (error) {
+        console.error("Reordering skills failed:", error);
+        toast.error(`Reordering skills failed: ${(error as Error).message}`);
+        if (onDataChange) onDataChange(); // Revert optimistic update on error
+      } finally {
+        setIsReorderingSkills(false);
+      }
     }
   };
 
   // Function to add a new skill
-  const addNewSkill = () => {
-    console.log("Add new skill (API Call needed)");
-    const newSkillId = `new-skill-${Date.now().toString()}`;
-    const newSkill: Skill = {
-      id: newSkillId,
+  const addNewSkill = async () => {
+    setIsAddingSkill(true);
+    const newSkillData = {
+      sectionId: section.id,
       title: "NEW SKILL",
       description: "Add your skill description here.",
+      level: 0, // Default level
     };
-    setSkills([...skills, newSkill]);
+    try {
+      const response = await fetch("/api/skills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSkillData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to add new skill");
+      }
+      toast.success("New skill added!");
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error("Adding skill failed:", error);
+      toast.error(`Adding skill failed: ${(error as Error).message}`);
+    } finally {
+      setIsAddingSkill(false);
+    }
   };
 
   // Function to open delete confirmation dialog
@@ -408,12 +466,29 @@ export default function SkillsSection({
   };
 
   // Function to delete a skill
-  const deleteSkill = () => {
-    if (skillToDelete !== null) {
-      console.log("Delete skill (API Call needed):", skillToDelete);
-      setSkills(skills.filter((skill) => skill.id !== skillToDelete));
-      setDeleteDialogOpen(false);
-      setSkillToDelete(null);
+  const deleteSkill = async () => {
+    if (skillToDelete === null) return;
+    const idToDelete = skillToDelete;
+    setIsDeletingSkill(true);
+    setDeleteDialogOpen(false);
+    setSkillToDelete(null);
+
+    try {
+      const response = await fetch(`/api/skills/${idToDelete}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete skill");
+      }
+      toast.success("Skill deleted!");
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error("Deleting skill failed:", error);
+      toast.error(`Deleting skill failed: ${(error as Error).message}`);
+      if (onDataChange) onDataChange(); // Re-fetch for consistency
+    } finally {
+      setIsDeletingSkill(false);
     }
   };
 
@@ -462,7 +537,7 @@ export default function SkillsSection({
     // For now, if onDataChange is not called, this optimistic update might lack DB ID.
     // setSkillImages((prev) => [...prev, optimisticImageObject]);
     // Decided against optimistic update for images for now to simplify until API returns full object
-
+    setIsAddingSkillImage(true);
     try {
       const response = await fetch("/api/skill-images", {
         method: "POST",
@@ -479,6 +554,7 @@ export default function SkillsSection({
         onDataChange(); // Re-fetch to get the complete list with new image from DB
       } else {
         // If no onDataChange, update local state with API response for better type safety
+        // This path should ideally not be taken if onDataChange is mandatory and passed.
         setSkillImages((prev) => [
           ...prev,
           {
@@ -486,6 +562,9 @@ export default function SkillsSection({
             localPreviewUrl: file ? localPreviewUrl : undefined,
           },
         ]);
+        console.warn(
+          "SkillsSection: addSkillImage - onDataChange not provided. Manual state update performed."
+        );
       }
     } catch (error) {
       console.error("Adding skill image failed:", error);
@@ -493,26 +572,53 @@ export default function SkillsSection({
       // If optimistic update was used, revert it here:
       // setSkillImages((prev) => prev.filter(img => img.id !== optimisticImageObject.id));
     } finally {
-      setImageDialogOpen(false);
+      setImageDialogOpen(false); // Close specific dialog for adding by selection
+      setIsAddingSkillImage(false);
     }
   };
 
   // Function to confirm image deletion
-  const confirmDeleteImage = (index: number) => {
-    setImageToDelete(index);
+  const confirmDeleteImage = (imageId: string) => {
+    setSkillImageIdToDelete(imageId);
     setImageDeleteDialogOpen(true);
   };
 
   // Function to delete a skill image
-  const deleteSkillImage = () => {
-    if (imageToDelete !== null) {
-      console.log(
-        "Delete skill image (API Call needed):",
-        skillImages[imageToDelete].src
+  const deleteSkillImage = async () => {
+    if (skillImageIdToDelete === null) return;
+    const idToDelete = skillImageIdToDelete;
+
+    setIsDeletingSkillImageById(idToDelete);
+    setImageDeleteDialogOpen(false);
+    setSkillImageIdToDelete(null);
+
+    try {
+      const response = await fetch(`/api/skill-images/${idToDelete}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete skill image");
+      }
+      toast.success("Skill image deleted!");
+      // Optimistic update for skillImages state
+      setSkillImages((prevImages) =>
+        prevImages.filter((img) => img.id !== idToDelete)
       );
-      setSkillImages(skillImages.filter((_, i) => i !== imageToDelete));
-      setImageDeleteDialogOpen(false);
-      setImageToDelete(null);
+
+      if (onDataChange) {
+        onDataChange(); // Sync with server state
+      } else {
+        console.warn(
+          "SkillsSection: deleteSkillImage - onDataChange not provided. Optimistic update applied."
+        );
+      }
+    } catch (error) {
+      console.error("Deleting skill image failed:", error);
+      toast.error(`Deleting image failed: ${(error as Error).message}`);
+      if (onDataChange) onDataChange(); // Re-fetch for consistency on error
+    } finally {
+      setIsDeletingSkillImageById(null);
     }
   };
 
@@ -527,40 +633,22 @@ export default function SkillsSection({
     if (!currentEditingSkill) return;
     setIsSavingSkillDetails(true);
     try {
-      // Call API to update title
-      const titleUpdatePromise = fetch(
-        `/api/skills/${currentEditingSkill.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: editedSkillTitle }),
-        }
-      );
-      // Call API to update description
-      const descriptionUpdatePromise = fetch(
-        `/api/skills/${currentEditingSkill.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ description: editedSkillDescription }),
-        }
-      );
+      // Call API to update title and description in one request
+      const updatePayload = {
+        title: editedSkillTitle,
+        description: editedSkillDescription,
+      };
 
-      const [titleResponse, descriptionResponse] = await Promise.all([
-        titleUpdatePromise,
-        descriptionUpdatePromise,
-      ]);
+      const response = await fetch(`/api/skills/${currentEditingSkill.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatePayload),
+      });
 
-      if (!titleResponse.ok || !descriptionResponse.ok) {
+      if (!response.ok) {
         let errorMsg = "Failed to save skill details.";
-        if (!titleResponse.ok) {
-          const titleError = await titleResponse.json().catch(() => ({}));
-          errorMsg = titleError.message || "Failed to save title.";
-        }
-        if (!descriptionResponse.ok) {
-          const descError = await descriptionResponse.json().catch(() => ({}));
-          errorMsg += ` ${descError.message || "Failed to save description."}`;
-        }
+        const errorData = await response.json().catch(() => ({}));
+        errorMsg = errorData.message || errorMsg;
         throw new Error(errorMsg.trim());
       }
 
@@ -592,9 +680,14 @@ export default function SkillsSection({
             />
             {introTextBlock && (
               <EditableText
+                key={introTextBlock.id}
+                blockId={introTextBlock.id}
                 initialText={introTextBlock.content}
+                initialFontSize={introTextBlock.fontSize || undefined}
+                initialFontFamily={introTextBlock.fontFamily || undefined}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
                 as="p"
+                onCommitText={handleSaveSectionTextBlock}
               />
             )}
             {!introTextBlock && isAdmin && (
@@ -648,9 +741,14 @@ export default function SkillsSection({
                       onClick={addNewSkill}
                       variant="secondary"
                       className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      disabled={isAddingSkill}
                     >
-                      <PlusCircle size={16} />
-                      Add Skill
+                      {isAddingSkill ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <PlusCircle size={16} />
+                      )}
+                      {isAddingSkill ? "Adding..." : "Add Skill"}
                     </Button>
                   </motion.div>
                 </motion.div>
@@ -672,6 +770,7 @@ export default function SkillsSection({
                         size="sm"
                         className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
                         onClick={() => setImageDialogOpen(true)}
+                        disabled={isAddingSkillImage}
                       >
                         <ImagePlus size={16} />
                         Add Image
@@ -686,9 +785,16 @@ export default function SkillsSection({
                         size="sm"
                         className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
                         onClick={() => addSkillImage()}
+                        disabled={isAddingSkillImage}
                       >
-                        <PlusCircle size={16} />
-                        Add Random Image
+                        {isAddingSkillImage && !imageDialogOpen ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <PlusCircle size={16} />
+                        )}
+                        {isAddingSkillImage && !imageDialogOpen
+                          ? "Adding..."
+                          : "Add Random Image"}
                       </Button>
                     </motion.div>
                   </div>
@@ -707,7 +813,7 @@ export default function SkillsSection({
                 <AnimatePresence>
                   {skillImages.map((image, index) => (
                     <motion.div
-                      key={`${image.src}-${index}`}
+                      key={image.id}
                       className="relative group"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -732,9 +838,14 @@ export default function SkillsSection({
                             variant="ghost"
                             size="icon"
                             className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
-                            onClick={() => confirmDeleteImage(index)}
+                            onClick={() => confirmDeleteImage(image.id)}
+                            disabled={!!isDeletingSkillImageById}
                           >
-                            <X size={14} />
+                            {isDeletingSkillImageById ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <X size={14} />
+                            )}
                             <span className="sr-only">Remove image</span>
                           </Button>
                         </motion.div>

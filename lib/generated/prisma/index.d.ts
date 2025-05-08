@@ -5742,6 +5742,7 @@ export namespace Prisma {
     theme: string | null
     showPortrait: boolean | null
     resumeUrl: string | null
+    globalFontFamily: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5752,6 +5753,7 @@ export namespace Prisma {
     theme: string | null
     showPortrait: boolean | null
     resumeUrl: string | null
+    globalFontFamily: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5762,6 +5764,7 @@ export namespace Prisma {
     theme: number
     showPortrait: number
     resumeUrl: number
+    globalFontFamily: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -5774,6 +5777,7 @@ export namespace Prisma {
     theme?: true
     showPortrait?: true
     resumeUrl?: true
+    globalFontFamily?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5784,6 +5788,7 @@ export namespace Prisma {
     theme?: true
     showPortrait?: true
     resumeUrl?: true
+    globalFontFamily?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5794,6 +5799,7 @@ export namespace Prisma {
     theme?: true
     showPortrait?: true
     resumeUrl?: true
+    globalFontFamily?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -5877,6 +5883,7 @@ export namespace Prisma {
     theme: string
     showPortrait: boolean
     resumeUrl: string
+    globalFontFamily: string
     createdAt: Date
     updatedAt: Date
     _count: SettingCountAggregateOutputType | null
@@ -5904,6 +5911,7 @@ export namespace Prisma {
     theme?: boolean
     showPortrait?: boolean
     resumeUrl?: boolean
+    globalFontFamily?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["setting"]>
@@ -5916,11 +5924,12 @@ export namespace Prisma {
     theme?: boolean
     showPortrait?: boolean
     resumeUrl?: boolean
+    globalFontFamily?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type SettingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "siteTitle" | "theme" | "showPortrait" | "resumeUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["setting"]>
+  export type SettingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "siteTitle" | "theme" | "showPortrait" | "resumeUrl" | "globalFontFamily" | "createdAt" | "updatedAt", ExtArgs["result"]["setting"]>
 
   export type $SettingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Setting"
@@ -5931,6 +5940,7 @@ export namespace Prisma {
       theme: string
       showPortrait: boolean
       resumeUrl: string
+      globalFontFamily: string
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["setting"]>
@@ -6330,6 +6340,7 @@ export namespace Prisma {
     readonly theme: FieldRef<"Setting", 'String'>
     readonly showPortrait: FieldRef<"Setting", 'Boolean'>
     readonly resumeUrl: FieldRef<"Setting", 'String'>
+    readonly globalFontFamily: FieldRef<"Setting", 'String'>
     readonly createdAt: FieldRef<"Setting", 'DateTime'>
     readonly updatedAt: FieldRef<"Setting", 'DateTime'>
   }
@@ -6694,10 +6705,12 @@ export namespace Prisma {
 
   export type TextBlockAvgAggregateOutputType = {
     order: number | null
+    fontSize: number | null
   }
 
   export type TextBlockSumAggregateOutputType = {
     order: number | null
+    fontSize: number | null
   }
 
   export type TextBlockMinAggregateOutputType = {
@@ -6705,6 +6718,8 @@ export namespace Prisma {
     content: string | null
     order: number | null
     sectionId: string | null
+    fontSize: number | null
+    fontFamily: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -6714,6 +6729,8 @@ export namespace Prisma {
     content: string | null
     order: number | null
     sectionId: string | null
+    fontSize: number | null
+    fontFamily: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -6723,6 +6740,8 @@ export namespace Prisma {
     content: number
     order: number
     sectionId: number
+    fontSize: number
+    fontFamily: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -6731,10 +6750,12 @@ export namespace Prisma {
 
   export type TextBlockAvgAggregateInputType = {
     order?: true
+    fontSize?: true
   }
 
   export type TextBlockSumAggregateInputType = {
     order?: true
+    fontSize?: true
   }
 
   export type TextBlockMinAggregateInputType = {
@@ -6742,6 +6763,8 @@ export namespace Prisma {
     content?: true
     order?: true
     sectionId?: true
+    fontSize?: true
+    fontFamily?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -6751,6 +6774,8 @@ export namespace Prisma {
     content?: true
     order?: true
     sectionId?: true
+    fontSize?: true
+    fontFamily?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -6760,6 +6785,8 @@ export namespace Prisma {
     content?: true
     order?: true
     sectionId?: true
+    fontSize?: true
+    fontFamily?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -6856,6 +6883,8 @@ export namespace Prisma {
     content: string
     order: number
     sectionId: string
+    fontSize: number | null
+    fontFamily: string | null
     createdAt: Date
     updatedAt: Date
     _count: TextBlockCountAggregateOutputType | null
@@ -6884,6 +6913,8 @@ export namespace Prisma {
     content?: boolean
     order?: boolean
     sectionId?: boolean
+    fontSize?: boolean
+    fontFamily?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     section?: boolean | SectionDefaultArgs<ExtArgs>
@@ -6896,11 +6927,13 @@ export namespace Prisma {
     content?: boolean
     order?: boolean
     sectionId?: boolean
+    fontSize?: boolean
+    fontFamily?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type TextBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "content" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["textBlock"]>
+  export type TextBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "content" | "order" | "sectionId" | "fontSize" | "fontFamily" | "createdAt" | "updatedAt", ExtArgs["result"]["textBlock"]>
   export type TextBlockInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
   }
@@ -6915,6 +6948,8 @@ export namespace Prisma {
       content: string
       order: number
       sectionId: string
+      fontSize: number | null
+      fontFamily: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["textBlock"]>
@@ -7314,6 +7349,8 @@ export namespace Prisma {
     readonly content: FieldRef<"TextBlock", 'String'>
     readonly order: FieldRef<"TextBlock", 'Int'>
     readonly sectionId: FieldRef<"TextBlock", 'String'>
+    readonly fontSize: FieldRef<"TextBlock", 'Int'>
+    readonly fontFamily: FieldRef<"TextBlock", 'String'>
     readonly createdAt: FieldRef<"TextBlock", 'DateTime'>
     readonly updatedAt: FieldRef<"TextBlock", 'DateTime'>
   }
@@ -20467,6 +20504,7 @@ export namespace Prisma {
     theme: 'theme',
     showPortrait: 'showPortrait',
     resumeUrl: 'resumeUrl',
+    globalFontFamily: 'globalFontFamily',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -20479,6 +20517,8 @@ export namespace Prisma {
     content: 'content',
     order: 'order',
     sectionId: 'sectionId',
+    fontSize: 'fontSize',
+    fontFamily: 'fontFamily',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -20985,6 +21025,7 @@ export namespace Prisma {
     theme?: StringFilter<"Setting"> | string
     showPortrait?: BoolFilter<"Setting"> | boolean
     resumeUrl?: StringFilter<"Setting"> | string
+    globalFontFamily?: StringFilter<"Setting"> | string
     createdAt?: DateTimeFilter<"Setting"> | Date | string
     updatedAt?: DateTimeFilter<"Setting"> | Date | string
   }
@@ -20995,6 +21036,7 @@ export namespace Prisma {
     theme?: SortOrder
     showPortrait?: SortOrder
     resumeUrl?: SortOrder
+    globalFontFamily?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -21008,6 +21050,7 @@ export namespace Prisma {
     theme?: StringFilter<"Setting"> | string
     showPortrait?: BoolFilter<"Setting"> | boolean
     resumeUrl?: StringFilter<"Setting"> | string
+    globalFontFamily?: StringFilter<"Setting"> | string
     createdAt?: DateTimeFilter<"Setting"> | Date | string
     updatedAt?: DateTimeFilter<"Setting"> | Date | string
   }, "id">
@@ -21018,6 +21061,7 @@ export namespace Prisma {
     theme?: SortOrder
     showPortrait?: SortOrder
     resumeUrl?: SortOrder
+    globalFontFamily?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: SettingCountOrderByAggregateInput
@@ -21034,6 +21078,7 @@ export namespace Prisma {
     theme?: StringWithAggregatesFilter<"Setting"> | string
     showPortrait?: BoolWithAggregatesFilter<"Setting"> | boolean
     resumeUrl?: StringWithAggregatesFilter<"Setting"> | string
+    globalFontFamily?: StringWithAggregatesFilter<"Setting"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Setting"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Setting"> | Date | string
   }
@@ -21046,6 +21091,8 @@ export namespace Prisma {
     content?: StringFilter<"TextBlock"> | string
     order?: IntFilter<"TextBlock"> | number
     sectionId?: StringFilter<"TextBlock"> | string
+    fontSize?: IntNullableFilter<"TextBlock"> | number | null
+    fontFamily?: StringNullableFilter<"TextBlock"> | string | null
     createdAt?: DateTimeFilter<"TextBlock"> | Date | string
     updatedAt?: DateTimeFilter<"TextBlock"> | Date | string
     section?: XOR<SectionScalarRelationFilter, SectionWhereInput>
@@ -21056,6 +21103,8 @@ export namespace Prisma {
     content?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
+    fontSize?: SortOrder
+    fontFamily?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     section?: SectionOrderByWithRelationInput
@@ -21069,6 +21118,8 @@ export namespace Prisma {
     content?: StringFilter<"TextBlock"> | string
     order?: IntFilter<"TextBlock"> | number
     sectionId?: StringFilter<"TextBlock"> | string
+    fontSize?: IntNullableFilter<"TextBlock"> | number | null
+    fontFamily?: StringNullableFilter<"TextBlock"> | string | null
     createdAt?: DateTimeFilter<"TextBlock"> | Date | string
     updatedAt?: DateTimeFilter<"TextBlock"> | Date | string
     section?: XOR<SectionScalarRelationFilter, SectionWhereInput>
@@ -21079,6 +21130,8 @@ export namespace Prisma {
     content?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
+    fontSize?: SortOrder
+    fontFamily?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: TextBlockCountOrderByAggregateInput
@@ -21096,6 +21149,8 @@ export namespace Prisma {
     content?: StringWithAggregatesFilter<"TextBlock"> | string
     order?: IntWithAggregatesFilter<"TextBlock"> | number
     sectionId?: StringWithAggregatesFilter<"TextBlock"> | string
+    fontSize?: IntNullableWithAggregatesFilter<"TextBlock"> | number | null
+    fontFamily?: StringNullableWithAggregatesFilter<"TextBlock"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"TextBlock"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"TextBlock"> | Date | string
   }
@@ -22276,6 +22331,7 @@ export namespace Prisma {
     theme?: string
     showPortrait?: boolean
     resumeUrl?: string
+    globalFontFamily?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22286,6 +22342,7 @@ export namespace Prisma {
     theme?: string
     showPortrait?: boolean
     resumeUrl?: string
+    globalFontFamily?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22295,6 +22352,7 @@ export namespace Prisma {
     theme?: StringFieldUpdateOperationsInput | string
     showPortrait?: BoolFieldUpdateOperationsInput | boolean
     resumeUrl?: StringFieldUpdateOperationsInput | string
+    globalFontFamily?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22304,6 +22362,7 @@ export namespace Prisma {
     theme?: StringFieldUpdateOperationsInput | string
     showPortrait?: BoolFieldUpdateOperationsInput | boolean
     resumeUrl?: StringFieldUpdateOperationsInput | string
+    globalFontFamily?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22314,6 +22373,7 @@ export namespace Prisma {
     theme?: string
     showPortrait?: boolean
     resumeUrl?: string
+    globalFontFamily?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22323,6 +22383,7 @@ export namespace Prisma {
     theme?: StringFieldUpdateOperationsInput | string
     showPortrait?: BoolFieldUpdateOperationsInput | boolean
     resumeUrl?: StringFieldUpdateOperationsInput | string
+    globalFontFamily?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22332,6 +22393,7 @@ export namespace Prisma {
     theme?: StringFieldUpdateOperationsInput | string
     showPortrait?: BoolFieldUpdateOperationsInput | boolean
     resumeUrl?: StringFieldUpdateOperationsInput | string
+    globalFontFamily?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22340,6 +22402,8 @@ export namespace Prisma {
     id?: string
     content: string
     order?: number
+    fontSize?: number | null
+    fontFamily?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     section: SectionCreateNestedOneWithoutTextBlocksInput
@@ -22350,6 +22414,8 @@ export namespace Prisma {
     content: string
     order?: number
     sectionId: string
+    fontSize?: number | null
+    fontFamily?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22357,6 +22423,8 @@ export namespace Prisma {
   export type TextBlockUpdateInput = {
     content?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontFamily?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     section?: SectionUpdateOneRequiredWithoutTextBlocksNestedInput
@@ -22366,6 +22434,8 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontFamily?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22375,6 +22445,8 @@ export namespace Prisma {
     content: string
     order?: number
     sectionId: string
+    fontSize?: number | null
+    fontFamily?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22382,6 +22454,8 @@ export namespace Prisma {
   export type TextBlockUpdateManyMutationInput = {
     content?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontFamily?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22390,6 +22464,8 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontFamily?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -23671,6 +23747,7 @@ export namespace Prisma {
     theme?: SortOrder
     showPortrait?: SortOrder
     resumeUrl?: SortOrder
+    globalFontFamily?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -23681,6 +23758,7 @@ export namespace Prisma {
     theme?: SortOrder
     showPortrait?: SortOrder
     resumeUrl?: SortOrder
+    globalFontFamily?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -23691,48 +23769,21 @@ export namespace Prisma {
     theme?: SortOrder
     showPortrait?: SortOrder
     resumeUrl?: SortOrder
+    globalFontFamily?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
-  export type SectionScalarRelationFilter = {
-    is?: SectionWhereInput
-    isNot?: SectionWhereInput
-  }
-
-  export type TextBlockCountOrderByAggregateInput = {
-    id?: SortOrder
-    content?: SortOrder
-    order?: SortOrder
-    sectionId?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type TextBlockAvgOrderByAggregateInput = {
-    order?: SortOrder
-  }
-
-  export type TextBlockMaxOrderByAggregateInput = {
-    id?: SortOrder
-    content?: SortOrder
-    order?: SortOrder
-    sectionId?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type TextBlockMinOrderByAggregateInput = {
-    id?: SortOrder
-    content?: SortOrder
-    order?: SortOrder
-    sectionId?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type TextBlockSumOrderByAggregateInput = {
-    order?: SortOrder
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+    isSet?: boolean
   }
 
   export type StringNullableFilter<$PrismaModel = never> = {
@@ -23748,6 +23799,90 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     mode?: QueryMode
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+    isSet?: boolean
+  }
+
+  export type SectionScalarRelationFilter = {
+    is?: SectionWhereInput
+    isNot?: SectionWhereInput
+  }
+
+  export type TextBlockCountOrderByAggregateInput = {
+    id?: SortOrder
+    content?: SortOrder
+    order?: SortOrder
+    sectionId?: SortOrder
+    fontSize?: SortOrder
+    fontFamily?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TextBlockAvgOrderByAggregateInput = {
+    order?: SortOrder
+    fontSize?: SortOrder
+  }
+
+  export type TextBlockMaxOrderByAggregateInput = {
+    id?: SortOrder
+    content?: SortOrder
+    order?: SortOrder
+    sectionId?: SortOrder
+    fontSize?: SortOrder
+    fontFamily?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TextBlockMinOrderByAggregateInput = {
+    id?: SortOrder
+    content?: SortOrder
+    order?: SortOrder
+    sectionId?: SortOrder
+    fontSize?: SortOrder
+    fontFamily?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TextBlockSumOrderByAggregateInput = {
+    order?: SortOrder
+    fontSize?: SortOrder
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+    isSet?: boolean
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
     isSet?: boolean
   }
 
@@ -23790,25 +23925,6 @@ export namespace Prisma {
 
   export type ImageBlockSumOrderByAggregateInput = {
     order?: SortOrder
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
-    isSet?: boolean
   }
 
   export type HeroSectionContentCountOrderByAggregateInput = {
@@ -23935,18 +24051,6 @@ export namespace Prisma {
     order?: SortOrder
   }
 
-  export type IntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
-    isSet?: boolean
-  }
-
   export type SkillItemCountOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
@@ -23988,23 +24092,6 @@ export namespace Prisma {
   export type SkillItemSumOrderByAggregateInput = {
     level?: SortOrder
     order?: SortOrder
-  }
-
-  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedIntNullableFilter<$PrismaModel>
-    _max?: NestedIntNullableFilter<$PrismaModel>
-    isSet?: boolean
   }
 
   export type SkillImageCountOrderByAggregateInput = {
@@ -24865,6 +24952,20 @@ export namespace Prisma {
     connect?: SectionWhereUniqueInput
   }
 
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+    unset?: boolean
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+    unset?: boolean
+  }
+
   export type SectionUpdateOneRequiredWithoutTextBlocksNestedInput = {
     create?: XOR<SectionCreateWithoutTextBlocksInput, SectionUncheckedCreateWithoutTextBlocksInput>
     connectOrCreate?: SectionCreateOrConnectWithoutTextBlocksInput
@@ -24877,11 +24978,6 @@ export namespace Prisma {
     create?: XOR<SectionCreateWithoutImageBlocksInput, SectionUncheckedCreateWithoutImageBlocksInput>
     connectOrCreate?: SectionCreateOrConnectWithoutImageBlocksInput
     connect?: SectionWhereUniqueInput
-  }
-
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
-    unset?: boolean
   }
 
   export type SectionUpdateOneRequiredWithoutImageBlocksNestedInput = {
@@ -24980,15 +25076,6 @@ export namespace Prisma {
     create?: XOR<SectionCreateWithoutSkillItemsInput, SectionUncheckedCreateWithoutSkillItemsInput>
     connectOrCreate?: SectionCreateOrConnectWithoutSkillItemsInput
     connect?: SectionWhereUniqueInput
-  }
-
-  export type NullableIntFieldUpdateOperationsInput = {
-    set?: number | null
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-    unset?: boolean
   }
 
   export type SectionUpdateOneRequiredWithoutSkillItemsNestedInput = {
@@ -25263,6 +25350,18 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+    isSet?: boolean
+  }
+
   export type NestedStringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -25275,36 +25374,6 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
-    isSet?: boolean
-  }
-
-  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
-    isSet?: boolean
-  }
-
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
     isSet?: boolean
   }
 
@@ -25337,6 +25406,24 @@ export namespace Prisma {
     isSet?: boolean
   }
 
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+    isSet?: boolean
+  }
+
   export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | FloatFieldRefInput<$PrismaModel>
     in?: number[] | ListFloatFieldRefInput<$PrismaModel>
@@ -25357,6 +25444,8 @@ export namespace Prisma {
     id?: string
     content: string
     order?: number
+    fontSize?: number | null
+    fontFamily?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -25365,6 +25454,8 @@ export namespace Prisma {
     id?: string
     content: string
     order?: number
+    fontSize?: number | null
+    fontFamily?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -25720,6 +25811,8 @@ export namespace Prisma {
     content?: StringFilter<"TextBlock"> | string
     order?: IntFilter<"TextBlock"> | number
     sectionId?: StringFilter<"TextBlock"> | string
+    fontSize?: IntNullableFilter<"TextBlock"> | number | null
+    fontFamily?: StringNullableFilter<"TextBlock"> | string | null
     createdAt?: DateTimeFilter<"TextBlock"> | Date | string
     updatedAt?: DateTimeFilter<"TextBlock"> | Date | string
   }
@@ -27361,6 +27454,8 @@ export namespace Prisma {
     id?: string
     content: string
     order?: number
+    fontSize?: number | null
+    fontFamily?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -27474,6 +27569,8 @@ export namespace Prisma {
   export type TextBlockUpdateWithoutSectionInput = {
     content?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontFamily?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27481,6 +27578,8 @@ export namespace Prisma {
   export type TextBlockUncheckedUpdateWithoutSectionInput = {
     content?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontFamily?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27488,6 +27587,8 @@ export namespace Prisma {
   export type TextBlockUncheckedUpdateManyWithoutSectionInput = {
     content?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontFamily?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

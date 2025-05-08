@@ -1,28 +1,38 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// POST /api/education - Create a new education item
+// POST /api/skills - Create a new skill item
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      sectionId,
-      institution,
-      period,
+      sectionId, // Expect sectionId (should be the ID of the 'skills' section)
+      title,
       description,
-      degree,
-      // images are handled separately
+      level,
     } = body;
 
-    if (!sectionId || !institution || !period) {
+    // Validate required skill fields
+    if (!sectionId || !title) {
       return NextResponse.json(
-        { message: "Missing required fields (sectionId, institution, period)" },
+        { message: "Missing required fields (sectionId, title)" },
         { status: 400 }
       );
     }
 
+    // Find the section document to connect to (ensure sectionId is valid)
+    const section = await prisma.section.findUnique({
+      where: { id: sectionId },
+    });
+    if (!section) {
+      return NextResponse.json(
+        { message: `Section with ID ${sectionId} not found` },
+        { status: 404 }
+      );
+    }
+
     // Find the current max order for items in this section
-    const maxOrderResult = await prisma.educationItem.aggregate({
+    const maxOrderResult = await prisma.skillItem.aggregate({
       _max: {
         order: true,
       },
@@ -32,26 +42,24 @@ export async function POST(request: Request) {
     });
     const newOrder = (maxOrderResult._max.order ?? -1) + 1;
 
-    const newEducationItem = await prisma.educationItem.create({
+    const newSkillItem = await prisma.skillItem.create({
       data: {
-        institution,
-        period,
-        description: description || "",
-        degree: degree || "",
+        title,
+        description: description || "", // Default description if not provided
+        level: typeof level === "number" ? level : 0, // Default level if not provided/invalid
         order: newOrder,
         section: {
           connect: { id: sectionId },
         },
-        // images: [], // Images relation handled separately
       },
     });
 
-    return NextResponse.json(newEducationItem, { status: 201 });
+    return NextResponse.json(newSkillItem, { status: 201 });
   } catch (error) {
-    console.error("Error creating education item:", error);
+    console.error("Error creating skill item:", error);
     return NextResponse.json(
       {
-        message: "Error creating education item",
+        message: "Error creating skill item",
         error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }

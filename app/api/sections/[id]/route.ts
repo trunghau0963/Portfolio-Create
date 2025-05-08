@@ -1,22 +1,58 @@
-import { NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
-import { ObjectId } from "mongodb"
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const id = params.id
-    const client = await clientPromise
-    const db = client.db("portfolio")
+    const id = params.id;
 
-    const result = await db.collection("sections").deleteOne({ _id: new ObjectId(id) })
+    await prisma.section.delete({
+      where: { id: id },
+    });
 
-    if (result.deletedCount === 1) {
-      return NextResponse.json({ success: true })
-    } else {
-      return NextResponse.json({ error: "Section not found" }, { status: 404 })
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Error deleting section:", error);
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "Section not found" }, { status: 404 });
     }
-  } catch (error) {
-    console.error("Error deleting section:", error)
-    return NextResponse.json({ error: "Failed to delete section" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to delete section", details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const id = params.id;
+    const body = await request.json();
+
+    const updatedSection = await prisma.section.update({
+      where: { id: id },
+      data: {
+        ...(typeof body.title !== "undefined" && { title: body.title }),
+        ...(typeof body.slug !== "undefined" && { slug: body.slug }),
+        ...(typeof body.type !== "undefined" && { type: body.type }),
+        ...(typeof body.visible !== "undefined" && { visible: body.visible }),
+        ...(typeof body.order !== "undefined" && { order: body.order }),
+      },
+    });
+
+    return NextResponse.json(updatedSection);
+  } catch (error: any) {
+    console.error("Error updating section:", error);
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "Section not found" }, { status: 404 });
+    }
+    return NextResponse.json(
+      { error: "Failed to update section", details: error.message },
+      { status: 500 }
+    );
   }
 }

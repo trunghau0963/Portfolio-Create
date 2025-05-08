@@ -27,7 +27,7 @@ export default function CustomSection({
 }: CustomSectionProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
-
+  const sectionId = section.title;
   const introTextBlocks = section.textBlocks || [];
   const introImageBlocks = section.imageBlocks || [];
 
@@ -72,7 +72,7 @@ export default function CustomSection({
 
   return (
     <section
-      id={section.id}
+      id={sectionId}
       className="py-16 md:py-20 lg:py-24 bg-gray-100 dark:bg-gray-900"
     >
       <div className="max-w-6xl mx-auto px-4">

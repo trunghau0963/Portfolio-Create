@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,22 +8,22 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Tag, Plus } from "lucide-react"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Tag, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface ProjectCategoryDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  projectId: number
-  projectName: string
-  allCategories: string[]
-  selectedCategories: string[]
-  onSave: (projectId: number, categories: string[]) => void
-  onAddCategory: (category: string) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projectId: string;
+  projectName: string;
+  allCategories: string[];
+  selectedCategories: string[];
+  onSave: (projectId: string, categories: string[]) => void;
+  onAddCategory: (category: string) => void;
 }
 
 export default function ProjectCategoryDialog({
@@ -36,41 +36,45 @@ export default function ProjectCategoryDialog({
   onSave,
   onAddCategory,
 }: ProjectCategoryDialogProps) {
-  const [categories, setCategories] = useState<string[]>([])
-  const [newCategory, setNewCategory] = useState("")
+  const [categories, setCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState("");
 
   // Initialize selected categories
   useEffect(() => {
-    setCategories([...selectedCategories])
-  }, [selectedCategories, open])
+    setCategories([...selectedCategories]);
+  }, [selectedCategories, open]);
 
   const handleCategoryToggle = (category: string) => {
     if (categories.includes(category)) {
-      setCategories(categories.filter((c) => c !== category))
+      setCategories(categories.filter((c) => c !== category));
     } else {
-      setCategories([...categories, category])
+      setCategories([...categories, category]);
     }
-  }
+  };
 
   const handleAddCategory = () => {
     if (newCategory.trim() && !allCategories.includes(newCategory.trim())) {
-      onAddCategory(newCategory.trim())
-      setCategories([...categories, newCategory.trim()])
-      setNewCategory("")
+      onAddCategory(newCategory.trim());
+      if (!categories.includes(newCategory.trim())) {
+        setCategories([...categories, newCategory.trim()]);
+      }
+      setNewCategory("");
     }
-  }
+  };
 
   const handleSave = () => {
-    onSave(projectId, categories)
-    onOpenChange(false)
-  }
+    onSave(projectId, categories);
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Project Categories</DialogTitle>
-          <DialogDescription>Select categories for "{projectName}"</DialogDescription>
+          <DialogDescription>
+            Select categories for "{projectName}"
+          </DialogDescription>
         </DialogHeader>
 
         <div className="py-4 space-y-4">
@@ -91,10 +95,15 @@ export default function ProjectCategoryDialog({
           {/* Category list */}
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
             {allCategories.length === 0 ? (
-              <p className="text-center text-gray-500 py-4">No categories yet. Add your first category above.</p>
+              <p className="text-center text-gray-500 py-4">
+                No categories yet. Add your first category above.
+              </p>
             ) : (
               allCategories.map((category) => (
-                <div key={category} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-md">
+                <div
+                  key={category}
+                  className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-md"
+                >
                   <Checkbox
                     id={`category-${category}`}
                     checked={categories.includes(category)}
@@ -121,5 +130,5 @@ export default function ProjectCategoryDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

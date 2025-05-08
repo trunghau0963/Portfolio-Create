@@ -12,10 +12,7 @@ import Contact from "@/components/sections/contact";
 import CustomSection from "@/components/sections/custom-section";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import {
-  type Section as ManagerSection,
-  default as SectionManager,
-} from "@/components/ui/section-manager";
+import SectionManager from "@/components/ui/section-manager";
 import ScrollProgress from "@/components/ui/scroll-progress";
 import ScrollToTop from "@/components/ui/scroll-to-top";
 import { useAuth } from "@/context/auth-context";
@@ -141,7 +138,11 @@ export default function Home() {
         return (
           <>
             <SectionTransition id="skills-transition" color="black" />
-            <Skills key={section.id} section={section} />
+            <Skills
+              key={section.id}
+              section={section}
+              onDataChange={fetchPageData}
+            />
           </>
         );
       case "experience":
@@ -162,6 +163,7 @@ export default function Home() {
             <Projects
               key={section.id}
               section={section}
+              onDataChange={fetchPageData}
               allCategoriesFromDB={allCategoriesFromDB}
             />
           </>
@@ -170,7 +172,11 @@ export default function Home() {
         return (
           <>
             <SectionTransition id="testimonials-transition" color="black" />
-            <Testimonials key={section.id} section={section} />
+            <Testimonials
+              key={section.id}
+              section={section}
+              onDataChange={fetchPageData}
+            />
           </>
         );
       case "contact":
@@ -233,7 +239,7 @@ export default function Home() {
       <Footer />
       <ScrollToTop />
       <AdminIndicator />
-      {isAdmin && <SectionManager />}
+      {isAdmin && <SectionManager onDataChange={fetchPageData} />}
     </motion.div>
   );
 }

@@ -252,6 +252,7 @@ export default function ExperienceSection({
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
   const introTextBlock = section.textBlocks?.[0];
+  const sectionId = section.slug;
 
   const [experiences, setExperiences] = useState<Experience[]>([]);
 
@@ -489,7 +490,6 @@ export default function ExperienceSection({
           "ExperienceSection: addDetailImage - onDataChange is not defined. UI might not update."
         );
       }
-      window.location.reload(); // Force reload
     } catch (error) {
       console.error("Adding detail image failed:", error);
       toast.error(`Adding image failed: ${(error as Error).message}`);
@@ -530,7 +530,6 @@ export default function ExperienceSection({
           "ExperienceSection: deleteDetailImage - onDataChange is not defined. UI might not update."
         );
       }
-      window.location.reload(); // Force reload
     } catch (error) {
       console.error("Deleting detail image failed:", error);
       toast.error(`Deleting image failed: ${(error as Error).message}`);
@@ -543,13 +542,24 @@ export default function ExperienceSection({
 
   const handleSaveSectionTextBlock = async (
     blockId: string,
-    newContent: string
+    newContent: string,
+    newFontSize?: number,
+    newFontFamily?: string
   ) => {
+    setIsSavingSectionText(true);
     try {
+      const payload: {
+        content: string;
+        fontSize?: number;
+        fontFamily?: string;
+      } = { content: newContent };
+      if (newFontSize !== undefined) payload.fontSize = newFontSize;
+      if (newFontFamily !== undefined) payload.fontFamily = newFontFamily;
+
       const res = await fetch(`/api/textblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newContent }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -561,6 +571,8 @@ export default function ExperienceSection({
       else console.warn("ExperienceSection: onDataChange not provided.");
     } catch (error) {
       console.error("Error saving section intro text:", error);
+    } finally {
+      setIsSavingSectionText(false);
     }
   };
 
@@ -584,8 +596,8 @@ export default function ExperienceSection({
   return (
     <AnimatedSection variant="fadeInUp">
       <section
-        id={section.id}
-        className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24"
+        id={sectionId}
+        className="shadow-sm bg-red-600 dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24"
       >
         <div className="max-w-6xl mx-auto px-4">
           {/* Section Title and Subtitle */}
@@ -593,13 +605,18 @@ export default function ExperienceSection({
             <EditableTextAutoResize
               initialText={section.title || "EXPERIENCE"}
               as="h1"
-              className="text-red-600 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter mb-2"
+              className="text-white text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter mb-2"
             />
             {introTextBlock && (
               <EditableText
+                key={introTextBlock.id}
+                blockId={introTextBlock.id}
                 initialText={introTextBlock.content}
-                className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
+                initialFontSize={introTextBlock.fontSize || undefined}
+                initialFontFamily={introTextBlock.fontFamily || undefined}
+                className="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto"
                 as="p"
+                onCommitText={handleSaveSectionTextBlock}
               />
             )}
             {!introTextBlock && isAdmin && (

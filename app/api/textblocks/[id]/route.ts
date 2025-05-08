@@ -24,18 +24,46 @@ export async function PUT(
   }
   try {
     const body = await request.json();
-    const { content } = body;
+    const { content, fontSize, fontFamily } = body;
 
-    if (content === undefined) {
+    // Construct updateData object selectively
+    const updateData: {
+      content?: string;
+      fontSize?: number;
+      fontFamily?: string;
+    } = {};
+
+    if (content !== undefined) {
+      updateData.content = String(content);
+    }
+
+    if (fontSize !== undefined) {
+      const parsedFontSize = parseInt(String(fontSize), 10);
+      if (!isNaN(parsedFontSize)) {
+        updateData.fontSize = parsedFontSize;
+      } else {
+        // Optional: return error if fontSize is provided but not a valid number
+        // console.warn(`Invalid fontSize value for text block ${id}: ${fontSize}`);
+      }
+    }
+
+    if (fontFamily !== undefined) {
+      updateData.fontFamily = String(fontFamily);
+    }
+
+    if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
-        { message: "Missing content field for update" },
+        {
+          message:
+            "No valid fields provided for update (content, fontSize, fontFamily)",
+        },
         { status: 400 }
       );
     }
 
     const updatedItem = await prisma.textBlock.update({
       where: { id: id },
-      data: { content: content },
+      data: updateData,
     });
     return NextResponse.json(updatedItem);
   } catch (error: any) {

@@ -104,12 +104,25 @@ export default function HeroSection({
   const showPortrait = showPortraitState;
 
   // Handler for saving TextBlocks in the Hero section
-  const handleSaveTextBlock = async (blockId: string, newContent: string) => {
+  const handleSaveTextBlock = async (
+    blockId: string,
+    newContent: string,
+    newFontSize?: number,
+    newFontFamily?: string
+  ) => {
     try {
+      const payload: {
+        content: string;
+        fontSize?: number;
+        fontFamily?: string;
+      } = { content: newContent };
+      if (newFontSize !== undefined) payload.fontSize = newFontSize;
+      if (newFontFamily !== undefined) payload.fontFamily = newFontFamily;
+
       const res = await fetch(`/api/textblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newContent }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -151,7 +164,7 @@ export default function HeroSection({
                   : "left-1/2 -translate-x-1/2"
               }`}
             >
-              <AnimatedSection variant="zoomIn" delay={0.3} duration={0.8}>
+              {/* <AnimatedSection variant="zoomIn" delay={0.3} duration={0.8}>
                 <EditablePortrait
                   initialSrc={
                     section.heroContent?.portraitImageSrc ||
@@ -163,7 +176,7 @@ export default function HeroSection({
                   onPositionChange={setPortraitPosition}
                   currentPosition={portraitPosition}
                 />
-              </AnimatedSection>
+              </AnimatedSection> */}
             </div>
           )}
 
@@ -176,10 +189,10 @@ export default function HeroSection({
                     key={leftTextBlock.id}
                     initialText={leftTextBlock.content}
                     className="max-w-md"
-                    initialFontSize={14}
-                    // blockId={leftTextBlock.id}
-                    // onSave={handleSaveTextBlock}
-                    // isAdmin={isAdmin}
+                    initialFontSize={leftTextBlock.fontSize || 14}
+                    initialFontFamily={leftTextBlock.fontFamily || "font-sans"}
+                    blockId={leftTextBlock.id}
+                    onCommitText={handleSaveTextBlock}
                   />
                 </div>
               </AnimatedSection>
@@ -193,10 +206,10 @@ export default function HeroSection({
                     key={rightTextBlock.id}
                     initialText={rightTextBlock.content}
                     className="max-w-md"
-                    initialFontSize={14}
-                    // blockId={rightTextBlock.id}
-                    // onSave={handleSaveTextBlock}
-                    // isAdmin={isAdmin}
+                    initialFontSize={rightTextBlock.fontSize || 14}
+                    initialFontFamily={rightTextBlock.fontFamily || "font-sans"}
+                    blockId={rightTextBlock.id}
+                    onCommitText={handleSaveTextBlock}
                   />
                   <motion.div
                     className="ml-4 mt-16"
@@ -234,7 +247,7 @@ export default function HeroSection({
         {/* Controls Row */}
         <div className="mt-12 flex flex-wrap items-center gap-6">
           {/* Download Resume Button */}
-          {resumeFile && (
+          {/* {resumeFile && (
             <AnimatedSection variant="fadeIn" delay={0.9} duration={0.8}>
               <Button
                 onClick={handleDownload}
@@ -251,10 +264,10 @@ export default function HeroSection({
                 </span>
               </Button>
             </AnimatedSection>
-          )}
+          )} */}
 
           {/* Portrait Toggle Switch - Only visible for admin */}
-          {isAdmin && (
+          {/* {isAdmin && (
             <AnimatedSection variant="fadeIn" delay={1} duration={0.8}>
               <div className="flex items-center space-x-2">
                 <Switch
@@ -280,7 +293,7 @@ export default function HeroSection({
                 </Label>
               </div>
             </AnimatedSection>
-          )}
+          )} */}
         </div>
 
         {/* Dots */}

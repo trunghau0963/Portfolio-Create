@@ -65,13 +65,14 @@ model Category {
 // Model for settings, based on db-init.ts
 // Assuming a single document for global settings.
 model Setting {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  siteTitle    String   @default("PORTFOLIO") // Added siteTitle
-  theme        String   @default("dark") // Changed default to dark
-  showPortrait Boolean  @default(true)
-  resumeUrl    String   @default("/resume.pdf")
-  createdAt    DateTime @default(now()) // Added createdAt for consistency
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  siteTitle        String   @default("PORTFOLIO") // Added siteTitle
+  theme            String   @default("dark") // Changed default to dark
+  showPortrait     Boolean  @default(true)
+  resumeUrl        String   @default("/resume.pdf")
+  globalFontFamily String   @default("font-sans") // Added global font family
+  createdAt        DateTime @default(now()) // Added createdAt for consistency
+  updatedAt        DateTime @updatedAt
 }
 
 // Models from db-init.ts that were not in seed-data.ts
@@ -99,15 +100,15 @@ model Setting {
 
 // --- Generic Content Blocks ---
 model TextBlock {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  content   String
-  order     Int      @default(0)
-  sectionId String   @db.ObjectId
-  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  // Potential fields: style (e.g., "paragraph", "heading1"), fontFamily, fontSize, textAlign
-  // For simplicity, frontend can handle styling based on context or a 'type' field here.
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  content    String
+  order      Int      @default(0)
+  sectionId  String   @db.ObjectId
+  section    Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  fontSize   Int? // Added: Font size for the text block
+  fontFamily String? // Added: Font family for the text block
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model ImageBlock {

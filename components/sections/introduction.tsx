@@ -40,19 +40,32 @@ export default function IntroductionSection({
 }: IntroductionSectionProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
-  const sectionId = section.id;
+  const sectionId = section.slug;
 
   const [deleteConfirm, setDeleteConfirm] = useState<{
     type: "text" | "image";
     id: string;
   } | null>(null);
 
-  const handleSaveTextBlock = async (blockId: string, newContent: string) => {
+  const handleSaveTextBlock = async (
+    blockId: string,
+    newContent: string,
+    newFontSize?: number,
+    newFontFamily?: string
+  ) => {
     try {
+      const payload: {
+        content: string;
+        fontSize?: number;
+        fontFamily?: string;
+      } = { content: newContent };
+      if (newFontSize !== undefined) payload.fontSize = newFontSize;
+      if (newFontFamily !== undefined) payload.fontFamily = newFontFamily;
+
       const res = await fetch(`/api/textblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newContent }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -93,7 +106,7 @@ export default function IntroductionSection({
 
   return (
     <section
-      id={section.id}
+      id={sectionId}
       className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-gray-100"
     >
       <div className="max-w-6xl mx-auto px-4">
@@ -115,8 +128,11 @@ export default function IntroductionSection({
                   <EditableText
                     key={block.id}
                     initialText={block.content || ""}
-                    initialFontSize={14}
+                    initialFontSize={block.fontSize || 14}
+                    initialFontFamily={block.fontFamily || "font-sans"}
                     className="text-gray-700 dark:text-gray-300 leading-relaxed"
+                    blockId={block.id}
+                    onCommitText={handleSaveTextBlock}
                   />
                 ))}
               </div>
@@ -131,8 +147,13 @@ export default function IntroductionSection({
                     <EditableText
                       key={sideTextBlock.id}
                       initialText={sideTextBlock.content || ""}
-                      initialFontSize={14}
+                      initialFontSize={sideTextBlock.fontSize || 14}
+                      initialFontFamily={
+                        sideTextBlock.fontFamily || "font-sans"
+                      }
                       className="text-gray-700 dark:text-gray-300 leading-relaxed"
+                      blockId={sideTextBlock.id}
+                      onCommitText={handleSaveTextBlock}
                     />
                   )}
                 </div>

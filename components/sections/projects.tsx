@@ -15,6 +15,7 @@ import {
   EyeOff,
   Tag,
   Plus,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -56,6 +57,8 @@ import {
   Category as PrismaCategory,
 } from "../../lib/generated/prisma";
 import EditableTextAutoResize from "../ui/editable-text-auto-resize";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 // Define a project type for better type safety
 interface Project {
@@ -78,6 +81,12 @@ interface Project {
   mainImageBlockId?: string;
 }
 
+// Define a category type with ID for mapping
+interface CategoryWithId {
+  id: string;
+  name: string;
+}
+
 // Sortable Project Item Component
 function SortableProjectItem({
   project,
@@ -88,8 +97,8 @@ function SortableProjectItem({
   showImages,
   onEditCategories,
   isAdmin,
-  onSaveProjectText,
   onSaveProjectImage,
+  onViewDetails,
 }: {
   project: Project;
   index: number;
@@ -99,18 +108,12 @@ function SortableProjectItem({
   showImages: boolean;
   onEditCategories: (id: string) => void;
   isAdmin: boolean | undefined;
-  onSaveProjectText: (
-    projectId: string,
-    field: keyof Project,
-    newText: string,
-    blockId?: string
-  ) => Promise<void>;
   onSaveProjectImage: (
     projectId: string,
     field: "imageSrc",
-    newData: { src?: string; alt?: string },
-    blockId?: string
+    newData: { src?: string; alt?: string }
   ) => Promise<void>;
+  onViewDetails: (project: Project) => void;
 }) {
   const {
     attributes,
@@ -137,10 +140,15 @@ function SortableProjectItem({
     <motion.div
       ref={setNodeRef}
       style={style}
-      className={`sortable-item ${isDragging ? "dragging" : ""}`}
+      className={`sortable-item ${isAdmin ? "cursor-pointer" : ""} ${
+        isDragging ? "dragging" : ""
+      }`}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
+      onClick={() => {
+        if (isAdmin) onViewDetails(project);
+      }}
     >
       <div className={`${bgColorClass} rounded-lg p-6 md:p-12`}>
         {isLayout1 ? (
@@ -159,13 +167,8 @@ function SortableProjectItem({
                 <div className="text-white text-sm font-medium mb-1">
                   PROJECT
                 </div>
-                <div className="text-white font-bold tracking-tighter leading-none overflow-hidden">
-                  <EditableText
-                    initialText={project.number}
-                    as="span"
-                    initialFontSize={72}
-                    className="text-white"
-                  />
+                <div className="text-[72px] text-white font-bold tracking-tighter leading-none overflow-hidden">
+                  <span>{project.number}</span>
                 </div>
                 <div className="flex mt-4 ml-1">
                   <div className="w-2 h-2 rounded-full bg-white mr-2"></div>
@@ -196,7 +199,10 @@ function SortableProjectItem({
                       variant="ghost"
                       size="icon"
                       className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
-                      onClick={() => onEditCategories(project.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditCategories(project.id);
+                      }}
                       title="Edit Categories"
                     >
                       <Tag size={18} />
@@ -210,7 +216,10 @@ function SortableProjectItem({
                       variant="ghost"
                       size="icon"
                       className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
-                      onClick={() => onChangeLayout(project.id, "layout2")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onChangeLayout(project.id, "layout2");
+                      }}
                       title="Switch to Layout 2"
                     >
                       <LayoutList size={18} />
@@ -224,7 +233,10 @@ function SortableProjectItem({
                       variant="ghost"
                       size="icon"
                       className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
-                      onClick={() => confirmDelete(project.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        confirmDelete(project.id);
+                      }}
                     >
                       <Trash2 size={18} />
                     </Button>
@@ -234,32 +246,22 @@ function SortableProjectItem({
             </div>
             <div className="md:col-span-7 lg:col-span-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="min-h-[100px]">
-                  <EditableText
-                    initialText={project.title}
-                    as="h3"
-                    className="font-bold uppercase mb-2 text-white"
-                    initialFontSize={18}
-                  />
+                <div className="min-h-[100px] text-white relative">
+                  <h3 className="font-bold uppercase mb-2 text-base">
+                    {project.title}
+                  </h3>
                   {project.companyName && (
-                    <EditableText
-                      initialText={project.companyName}
-                      as="h4"
-                      className="font-medium uppercase mb-3 text-white/80"
-                      initialFontSize={15}
-                    />
+                    <h4 className="font-medium uppercase mb-3 text-sm text-white/80">
+                      {project.companyName}
+                    </h4>
                   )}
-                  <EditableText
-                    initialText={project.description1}
-                    className="text-white"
-                    initialFontSize={14}
-                  />
+                  <p className="text-sm mb-2 whitespace-pre-line">
+                    {project.description1}
+                  </p>
                   {project.description2 && (
-                    <EditableText
-                      initialText={project.description2}
-                      className="text-white mt-2"
-                      initialFontSize={14}
-                    />
+                    <p className="text-sm mt-2 whitespace-pre-line">
+                      {project.description2}
+                    </p>
                   )}
                 </div>
                 {showImages && project.imageSrc && (
@@ -284,32 +286,22 @@ function SortableProjectItem({
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
             <div className="md:col-span-7 lg:col-span-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="min-h-[100px]">
-                  <EditableText
-                    initialText={project.title}
-                    as="h3"
-                    className="font-bold uppercase mb-2 text-white"
-                    initialFontSize={18}
-                  />
+                <div className="min-h-[100px] text-white relative">
+                  <h3 className="font-bold uppercase mb-2 text-base">
+                    {project.title}
+                  </h3>
                   {project.companyName && (
-                    <EditableText
-                      initialText={project.companyName}
-                      as="h4"
-                      className="font-medium uppercase mb-3 text-white/80"
-                      initialFontSize={15}
-                    />
+                    <h4 className="font-medium uppercase mb-3 text-sm text-white/80">
+                      {project.companyName}
+                    </h4>
                   )}
-                  <EditableText
-                    initialText={project.description1}
-                    className="text-white mb-2"
-                    initialFontSize={14}
-                  />
+                  <p className="text-sm mb-2 whitespace-pre-line">
+                    {project.description1}
+                  </p>
                   {project.description2 && (
-                    <EditableText
-                      initialText={project.description2}
-                      className="text-white mt-2"
-                      initialFontSize={14}
-                    />
+                    <p className="text-sm mt-2 whitespace-pre-line">
+                      {project.description2}
+                    </p>
                   )}
                 </div>
                 {showImages && project.imageSrc && (
@@ -343,13 +335,8 @@ function SortableProjectItem({
                 <div className="text-white text-sm font-medium mb-1">
                   PROJECT
                 </div>
-                <div className="text-white font-bold tracking-tighter leading-none overflow-hidden">
-                  <EditableText
-                    initialText={project.number}
-                    as="span"
-                    initialFontSize={72}
-                    className="text-white"
-                  />
+                <div className="text-[72px] text-white font-bold tracking-tighter leading-none overflow-hidden">
+                  <span>{project.number}</span>
                 </div>
                 <div className="flex mt-4 ml-1 self-end">
                   <div className="w-2 h-2 rounded-full bg-white mr-2"></div>
@@ -380,7 +367,10 @@ function SortableProjectItem({
                       variant="ghost"
                       size="icon"
                       className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
-                      onClick={() => onEditCategories(project.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditCategories(project.id);
+                      }}
                       title="Edit Categories"
                     >
                       <Tag size={18} />
@@ -394,7 +384,10 @@ function SortableProjectItem({
                       variant="ghost"
                       size="icon"
                       className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
-                      onClick={() => onChangeLayout(project.id, "layout1")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onChangeLayout(project.id, "layout1");
+                      }}
                       title="Switch to Layout 1"
                     >
                       <LayoutGrid size={18} />
@@ -408,7 +401,10 @@ function SortableProjectItem({
                       variant="ghost"
                       size="icon"
                       className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
-                      onClick={() => confirmDelete(project.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        confirmDelete(project.id);
+                      }}
                     >
                       <Trash2 size={18} />
                     </Button>
@@ -428,8 +424,8 @@ interface ProjectsSectionProps {
     textBlocks: PrismaTextBlock[];
     projectItems?: PrismaProjectItem[];
   };
-  allCategoriesFromDB?: PrismaCategory[];
-  onDataChange?: () => void;
+  allCategoriesFromDB?: CategoryWithId[];
+  onDataChange: () => void;
 }
 
 export default function ProjectsSection({
@@ -440,6 +436,7 @@ export default function ProjectsSection({
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
   const introTextBlock = section.textBlocks?.[0];
+  const sectionId = section.slug;
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [allCategories, setAllCategories] = useState<string[]>([]);
@@ -454,15 +451,59 @@ export default function ProjectsSection({
     useState<Project | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
 
+  // Dialog State
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [currentProjectInDialog, setCurrentProjectInDialog] =
+    useState<Project | null>(null);
+  const [editedNumber, setEditedNumber] = useState("");
+  const [editedTitle, setEditedTitle] = useState("");
+  const [editedCompanyName, setEditedCompanyName] = useState("");
+  const [editedDescription1, setEditedDescription1] = useState("");
+  const [editedDescription2, setEditedDescription2] = useState("");
+
+  // Loading states
+  const [isAddingProject, setIsAddingProject] = useState(false);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
+  const [isReorderingProjects, setIsReorderingProjects] = useState(false);
+  const [isSavingProject, setIsSavingProject] = useState(false);
+  const [isChangingLayoutForId, setIsChangingLayoutForId] = useState<
+    string | null
+  >(null);
+  const [isSavingSectionText, setIsSavingSectionText] = useState(false);
+  // Category loading states
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [isDeletingCategoryId, setIsDeletingCategoryId] = useState<
+    string | null
+  >(null);
+  const [isSavingProjectCategories, setIsSavingProjectCategories] =
+    useState(false);
+
+  // Handler to fetch categories with IDs (if not passed via props initially)
+  // We need this mapping for delete and project assignment
+  const [allCategoriesWithId, setAllCategoriesWithId] = useState<
+    CategoryWithId[]
+  >([]);
+
   const handleSaveSectionTextBlock = async (
     blockId: string,
-    newContent: string
+    newContent: string,
+    newFontSize?: number,
+    newFontFamily?: string
   ) => {
+    setIsSavingSectionText(true);
     try {
+      const payload: {
+        content: string;
+        fontSize?: number;
+        fontFamily?: string;
+      } = { content: newContent };
+      if (newFontSize !== undefined) payload.fontSize = newFontSize;
+      if (newFontFamily !== undefined) payload.fontFamily = newFontFamily;
+
       const res = await fetch(`/api/textblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newContent }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -470,132 +511,114 @@ export default function ProjectsSection({
           errorData.message || "Failed to save text block for section"
         );
       }
+      toast.success("Section text block saved!");
       if (onDataChange) onDataChange();
-      else {
-        console.warn(
-          "onDataChange not provided to ProjectsSection, UI might not reflect save immediately for intro text."
-        );
-      }
     } catch (error) {
       console.error("Error saving section text block:", error);
-    }
-  };
-
-  const handleSaveProjectText = async (
-    projectId: string,
-    field: keyof Project,
-    newText: string,
-    blockId?: string
-  ) => {
-    console.log(
-      `Saving text for project ${projectId}, field ${field}, text: ${newText}, blockId: ${blockId}`
-    );
-    if (
-      blockId &&
-      (field === "title" ||
-        field === "companyName" ||
-        field === "description1" ||
-        field === "description2" ||
-        field === "number")
-    ) {
-      try {
-        const res = await fetch(`/api/textblocks/${blockId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: newText }),
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(
-            errorData.message ||
-              `Failed to save ${field} (TextBlock ${blockId}) for project ${projectId}`
-          );
-        }
-        if (onDataChange) onDataChange();
-        else {
-          setProjects((prev) =>
-            prev.map((p) =>
-              p.id === projectId ? { ...p, [field]: newText } : p
-            )
-          );
-        }
-      } catch (error) {
-        console.error(
-          `Error saving ${field} (TextBlock ${blockId}) for project ${projectId}:`,
-          error
-        );
-        throw error;
-      }
-    } else {
-      console.log(`Local update for project ${projectId}, field ${field}`);
-      setProjects((prev) =>
-        prev.map((p) => (p.id === projectId ? { ...p, [field]: newText } : p))
+      toast.error(
+        `Failed to save section text block: ${(error as Error).message}`
       );
+    } finally {
+      setIsSavingSectionText(false);
     }
   };
 
   const handleSaveProjectImage = async (
     projectId: string,
     field: "imageSrc",
-    newData: { src?: string; alt?: string },
-    blockId?: string
+    newData: { src?: string; alt?: string }
   ) => {
-    console.log(
-      `Saving image for project ${projectId}, field ${field}, data: ${JSON.stringify(
-        newData
-      )}, blockId: ${blockId}`
-    );
-    if (blockId) {
-      try {
-        const res = await fetch(`/api/imageblocks/${blockId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newData),
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(
-            errorData.message ||
-              `Failed to save image (ImageBlock ${blockId}) for project ${projectId}`
-          );
-        }
-        if (onDataChange) onDataChange();
-        else {
-          setProjects((prev) =>
-            prev.map((p) =>
-              p.id === projectId
-                ? { ...p, imageSrc: newData.src || p.imageSrc }
-                : p
-            )
-          );
-        }
-      } catch (error) {
-        console.error(
-          `Error saving image (ImageBlock ${blockId}) for project ${projectId}:`,
-          error
-        );
-        throw error;
+    setIsSavingProject(true);
+    try {
+      const updatePayload: { imageSrc?: string; imageAlt?: string } = {};
+      if (newData.src) updatePayload.imageSrc = newData.src;
+      if (newData.alt) updatePayload.imageAlt = newData.alt;
+
+      if (Object.keys(updatePayload).length === 0) {
+        toast.info("No image data to update.");
+        setIsSavingProject(false);
+        return;
       }
-    } else {
-      console.log(
-        `Local update for project ${projectId}, field ${field} (image)`
-      );
-      setProjects((prev) =>
-        prev.map((p) =>
-          p.id === projectId ? { ...p, imageSrc: newData.src || p.imageSrc } : p
-        )
-      );
+
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to save project image");
+      }
+      toast.success("Project image updated!");
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error(`Error saving image for project ${projectId}:`, error);
+      toast.error(`Failed to save project image: ${(error as Error).message}`);
+    } finally {
+      setIsSavingProject(false);
     }
   };
 
+  const handleSaveProjectDetailsFromDialog = async () => {
+    if (!currentProjectInDialog) return;
+    const projectId = currentProjectInDialog.id;
+
+    setIsSavingProject(true);
+    try {
+      const updatePayload = {
+        projectNumber: editedNumber,
+        title: editedTitle,
+        companyName: editedCompanyName || null,
+        description1: editedDescription1,
+        description2: editedDescription2 || null,
+      };
+
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to save project details");
+      }
+      toast.success("Project details saved!");
+      if (onDataChange) onDataChange();
+      setIsDetailDialogOpen(false);
+      setCurrentProjectInDialog(null);
+    } catch (error) {
+      console.error(`Error saving details for project ${projectId}:`, error);
+      toast.error(`Failed to save details: ${(error as Error).message}`);
+    } finally {
+      setIsSavingProject(false);
+    }
+  };
+
+  const viewProjectDetails = (project: Project) => {
+    setCurrentProjectInDialog(project);
+    setEditedNumber(project.number || "");
+    setEditedTitle(project.title || "");
+    setEditedCompanyName(project.companyName || "");
+    setEditedDescription1(project.description1 || "");
+    setEditedDescription2(project.description2 || "");
+    setIsDetailDialogOpen(true);
+  };
+
   useEffect(() => {
+    // Map the categories passed via props (which should include IDs)
+    const initialCategoriesWithId = allCategoriesFromDB || [];
+    setAllCategoriesWithId(initialCategoriesWithId);
+    setAllCategories(initialCategoriesWithId.map((c) => c.name).sort());
+
+    // Map projects (includes mapping category IDs to names for display)
     const categoryMap = new Map<string, string>(
-      allCategoriesFromDB?.map((cat: PrismaCategory) => [cat.id, cat.name]) ||
-        []
+      initialCategoriesWithId.map((cat) => [cat.id, cat.name])
     );
 
     const mappedProjects: Project[] =
-      section.projectItems?.map((item: PrismaProjectItem): Project => {
+      section.projectItems?.map((item): Project => {
         const findBlockId = (purpose: string): string | undefined => undefined;
         const findImageBlockId = (purpose: string): string | undefined =>
           undefined;
@@ -616,8 +639,8 @@ export default function ProjectsSection({
               : "layout1",
           categories:
             item.categoryIds
-              ?.map((id: string) => categoryMap.get(id) || id)
-              .filter((name): name is string => !!name) || [],
+              ?.map((id) => categoryMap.get(id) || `Missing:${id}`)
+              .filter((name) => !!name) || [],
           projectNumberBlockId: findBlockId("projectNumber"),
           titleBlockId: findBlockId("title"),
           companyNameBlockId: findBlockId("companyName"),
@@ -627,59 +650,81 @@ export default function ProjectsSection({
         };
       }) || [];
     setProjects(mappedProjects);
-
-    const uniqueCategoryNames = new Set<string>();
-    mappedProjects.forEach((p: Project) =>
-      p.categories.forEach((catName: string) =>
-        uniqueCategoryNames.add(catName)
-      )
-    );
-    allCategoriesFromDB?.forEach((cat: PrismaCategory) =>
-      uniqueCategoryNames.add(cat.name)
-    );
-    setAllCategories(Array.from(uniqueCategoryNames).sort());
-  }, [section.projectItems, allCategoriesFromDB, section.textBlocks]);
+  }, [section.projectItems, allCategoriesFromDB]); // Depend on the initial DB categories
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && String(active.id) !== String(over.id)) {
-      setProjects((items) => {
-        const oldIndex = items.findIndex(
-          (item) => String(item.id) === String(active.id)
+      const oldIndex = projects.findIndex(
+        (item) => String(item.id) === String(active.id)
+      );
+      const newIndex = projects.findIndex(
+        (item) => String(item.id) === String(over.id)
+      );
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reorderedItems = arrayMove(projects, oldIndex, newIndex);
+      const orderedIds = reorderedItems.map((item) => item.id);
+
+      setProjects(reorderedItems);
+      setIsReorderingProjects(true);
+
+      try {
+        const response = await fetch(
+          `/api/sections/${section.id}/projects/reorder`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderedIds }),
+          }
         );
-        const newIndex = items.findIndex(
-          (item) => String(item.id) === String(over.id)
-        );
-        if (oldIndex === -1 || newIndex === -1) return items;
-        console.log(
-          "Reordering projects (API call needed)",
-          items[oldIndex].title,
-          "to",
-          newIndex
-        );
-        return arrayMove(items, oldIndex, newIndex);
-      });
+        if (!response.ok) {
+          throw new Error("Failed to reorder projects");
+        }
+        toast.success("Projects reordered!");
+        if (onDataChange) onDataChange();
+      } catch (error) {
+        console.error("Reordering projects failed:", error);
+        toast.error(`Reordering projects failed: ${(error as Error).message}`);
+        if (onDataChange) onDataChange();
+      } finally {
+        setIsReorderingProjects(false);
+      }
     }
   };
 
-  const addNewProject = () => {
-    console.log("Add new project (API call needed)");
-    const newProjectId = `new-project-${Date.now().toString()}`;
-    const newProjectData: Project = {
-      id: newProjectId,
-      number: String(projects.length + 1).padStart(2, "0"),
+  const addNewProject = async () => {
+    setIsAddingProject(true);
+    const newProjectPayload = {
+      sectionId: section.id,
       title: "NEW PROJECT",
       description1: "Enter project description here.",
-      imageSrc: `https://picsum.photos/400/300?random=new${newProjectId}`,
+      imageSrc: `https://picsum.photos/400/300?random=new${Date.now()}`,
       layout: "layout1",
-      categories: [],
     };
-    setProjects((prev) => [...prev, newProjectData]);
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProjectPayload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to add new project");
+      }
+      toast.success("New project added!");
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error("Adding project failed:", error);
+      toast.error(`Adding project failed: ${(error as Error).message}`);
+    } finally {
+      setIsAddingProject(false);
+    }
   };
 
   const confirmDelete = (projectId: string) => {
@@ -687,46 +732,120 @@ export default function ProjectsSection({
     setDeleteDialogOpen(true);
   };
 
-  const deleteProject = () => {
-    if (projectToDelete !== null) {
-      console.log(`Deleting project ${projectToDelete} (API call needed)`);
-      setProjects(projects.filter((project) => project.id !== projectToDelete));
-      setDeleteDialogOpen(false);
-      setProjectToDelete(null);
+  const deleteProject = async () => {
+    if (projectToDelete === null) return;
+    const idToDelete = projectToDelete;
+    setIsDeletingProject(true);
+    setDeleteDialogOpen(false);
+    setProjectToDelete(null);
+
+    try {
+      const response = await fetch(`/api/projects/${idToDelete}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete project");
+      }
+      toast.success("Project deleted!");
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error(`Deleting project ${idToDelete} failed:`, error);
+      toast.error(`Deleting project failed: ${(error as Error).message}`);
+      if (onDataChange) onDataChange();
+    } finally {
+      setIsDeletingProject(false);
     }
   };
 
-  const changeProjectLayout = (
+  const changeProjectLayout = async (
     projectId: string,
     layout: "layout1" | "layout2"
   ) => {
-    console.log(
-      `Changing layout for project ${projectId} to ${layout} (API call needed)`
-    );
-    setProjects(
-      projects.map((project) =>
-        project.id === projectId ? { ...project, layout } : project
-      )
-    );
+    setIsChangingLayoutForId(projectId);
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ layout }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to change project layout");
+      }
+      toast.success("Project layout changed!");
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error(`Changing layout for project ${projectId} failed:`, error);
+      toast.error(`Changing layout failed: ${(error as Error).message}`);
+    } finally {
+      setIsChangingLayoutForId(null);
+    }
   };
 
   const openGlobalCategoryDialog = () => setCategoryDialogOpen(true);
-  const handleAddGlobalCategory = () => {
-    console.log("Add global category (API call needed):", newCategoryName);
-    if (
-      newCategoryName.trim() &&
-      !allCategories.includes(newCategoryName.trim())
-    ) {
-      setAllCategories((prev) => [...prev, newCategoryName.trim()].sort());
+
+  const handleAddGlobalCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    setIsAddingCategory(true);
+    try {
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCategoryName.trim() }),
+      });
+      const addedCategory = await response.json();
+      if (!response.ok) {
+        throw new Error(addedCategory.message || "Failed to add category");
+      }
+      toast.success(`Category "${addedCategory.name}" added!`);
+      setNewCategoryName("");
+      if (onDataChange) onDataChange(); // Re-fetch all data including categories
+      // Optimistic update locally (optional, as onDataChange handles it)
+      // setAllCategoriesWithId(prev => [...prev, addedCategory].sort((a, b) => a.name.localeCompare(b.name)))
+      // setAllCategories(prev => [...prev, addedCategory.name].sort());
+    } catch (error) {
+      console.error("Error adding global category:", error);
+      toast.error(`Adding category failed: ${(error as Error).message}`);
+    } finally {
+      setIsAddingCategory(false);
     }
-    setNewCategoryName("");
   };
-  const handleDeleteGlobalCategory = (catName: string) => {
-    console.log("Delete global category (API call needed):", catName);
-    setAllCategories((prev) => prev.filter((c) => c !== catName));
+
+  const handleDeleteGlobalCategory = async (catName: string) => {
+    const categoryToDelete = allCategoriesWithId.find(
+      (c) => c.name === catName
+    );
+    if (!categoryToDelete) {
+      toast.error(`Could not find category ID for "${catName}"`);
+      return;
+    }
+    const categoryIdToDelete = categoryToDelete.id;
+    setIsDeletingCategoryId(categoryIdToDelete);
+    try {
+      const response = await fetch(`/api/categories/${categoryIdToDelete}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete category");
+      }
+      toast.success(`Category "${catName}" deleted!`);
+      if (onDataChange) onDataChange(); // Re-fetch all data
+      // Optimistic update locally (optional)
+      // setAllCategoriesWithId(prev => prev.filter(c => c.id !== categoryIdToDelete));
+      // setAllCategories(prev => prev.filter(name => name !== catName));
+    } catch (error) {
+      console.error("Error deleting global category:", error);
+      toast.error(`Deleting category failed: ${(error as Error).message}`);
+    } finally {
+      setIsDeletingCategoryId(null);
+    }
   };
 
   const openProjectSpecificCategoriesDialog = (projectId: string) => {
+    // Ensure project data includes original category IDs if needed,
+    // otherwise rely on the mapping from names back to IDs
     const projectToEdit = projects.find((p) => p.id === projectId);
     if (projectToEdit) {
       setCurrentProjectForCategories(projectToEdit);
@@ -734,37 +853,49 @@ export default function ProjectsSection({
     }
   };
 
-  const handleSaveProjectCategoriesForDialog = (
-    projectIdAsNumber: number,
+  const handleSaveProjectCategoriesForDialog = async (
+    projectId: string, // Changed ProjectCategoryDialog to pass string ID back
     updatedCategoryNames: string[]
   ) => {
-    const projectIdAsString = String(projectIdAsNumber);
-    console.log(
-      "Save project categories (API call needed):",
-      projectIdAsString,
-      updatedCategoryNames
-    );
-    setProjects(
-      projects.map((project) =>
-        project.id === projectIdAsString
-          ? { ...project, categories: updatedCategoryNames }
-          : project
-      )
-    );
-    setProjectCategoriesDialogOpen(false);
-    const newUniqueCategories = new Set(allCategories);
-    updatedCategoryNames.forEach((catName) => newUniqueCategories.add(catName));
-    setAllCategories(Array.from(newUniqueCategories).sort());
+    setIsSavingProjectCategories(true);
+    const nameToIdMap = new Map(allCategoriesWithId.map((c) => [c.name, c.id]));
+    const updatedCategoryIds = updatedCategoryNames
+      .map((name) => nameToIdMap.get(name))
+      .filter((id): id is string => !!id);
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categoryIds: updatedCategoryIds }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || "Failed to update project categories"
+        );
+      }
+      toast.success("Project categories updated!");
+      if (onDataChange) onDataChange();
+      setProjectCategoriesDialogOpen(false);
+      setCurrentProjectForCategories(null);
+    } catch (error) {
+      console.error(`Error saving categories for project ${projectId}:`, error);
+      toast.error(`Updating categories failed: ${(error as Error).message}`);
+    } finally {
+      setIsSavingProjectCategories(false);
+    }
   };
 
-  const handleAddNewCategoryFromProjectDialog = (categoryName: string) => {
-    console.log(
-      "Add new category from project dialog (API call needed):",
-      categoryName
-    );
-    if (categoryName.trim() && !allCategories.includes(categoryName.trim())) {
-      setAllCategories([...allCategories, categoryName.trim()].sort());
-    }
+  // This function might be redundant if ProjectCategoryDialog uses handleAddGlobalCategory
+  // Or it can be kept if adding a category from project context should behave differently
+  const handleAddNewCategoryFromProjectDialog = async (
+    categoryName: string
+  ) => {
+    // Re-use global add logic
+    setNewCategoryName(categoryName); // Set the name
+    await handleAddGlobalCategory(); // Call the existing handler
+    // No need to update allCategories locally if onDataChange re-fetches
   };
 
   const filteredProjects = selectedCategory
@@ -774,7 +905,7 @@ export default function ProjectsSection({
   return (
     <AnimatedSection variant="fadeInUp">
       <section
-        id={section.id}
+        id={sectionId}
         className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-black dark:bg-red-700"
       >
         <div className="max-w-6xl mx-auto px-4">
@@ -782,13 +913,17 @@ export default function ProjectsSection({
             <EditableTextAutoResize
               initialText={section.title || "PROJECTS"}
               as="h1"
-              className="text-red-600 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter mb-2"
+              className="text-red-700 text-5xl sm:text-[80px] md:text-[100px] lg:text-[135px] font-bold leading-none tracking-tighter mb-2"
             />
             {introTextBlock && (
               <EditableText
+                key={introTextBlock.id}
+                blockId={introTextBlock.id}
                 initialText={introTextBlock.content}
+                initialFontSize={introTextBlock.fontSize || 14}
+                initialFontFamily={introTextBlock.fontFamily || "font-sans"}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
-                initialFontSize={14}
+                onCommitText={handleSaveSectionTextBlock}
               />
             )}
             {!introTextBlock && isAdmin && (
@@ -863,8 +998,8 @@ export default function ProjectsSection({
                     showImages={showImages}
                     onEditCategories={openProjectSpecificCategoriesDialog}
                     isAdmin={isAdmin}
-                    onSaveProjectText={handleSaveProjectText}
                     onSaveProjectImage={handleSaveProjectImage}
+                    onViewDetails={viewProjectDetails}
                   />
                 ))}
               </div>
@@ -886,8 +1021,14 @@ export default function ProjectsSection({
                   onClick={addNewProject}
                   variant="outline"
                   className="dark:text-white bg-white hover:bg-gray-100 text-red-600"
+                  disabled={isAddingProject}
                 >
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add Project
+                  {isAddingProject ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                  )}
+                  {isAddingProject ? "Adding..." : "Add Project"}
                 </Button>
               </motion.div>
             </motion.div>
@@ -919,8 +1060,14 @@ export default function ProjectsSection({
                   type="button"
                   variant="destructive"
                   onClick={deleteProject}
+                  disabled={isDeletingProject}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                  {isDeletingProject ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                  )}
+                  {isDeletingProject ? "Deleting..." : "Delete"}
                 </Button>
                 <Button
                   type="button"
@@ -954,29 +1101,49 @@ export default function ProjectsSection({
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     placeholder="New category name"
+                    disabled={isAddingCategory} // Disable input while adding
                   />
-                  <Button onClick={handleAddGlobalCategory}>
-                    <Plus className="mr-2 h-4 w-4" /> Add
+                  <Button
+                    onClick={handleAddGlobalCategory}
+                    disabled={isAddingCategory || !newCategoryName.trim()}
+                  >
+                    {isAddingCategory ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="mr-2 h-4 w-4" />
+                    )}
+                    {isAddingCategory ? "Adding..." : "Add"}
                   </Button>
                 </div>
                 <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
                   {allCategories.length > 0 ? (
-                    allCategories.map((cat) => (
-                      <div
-                        key={cat}
-                        className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-700 rounded"
-                      >
-                        <span>{cat}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteGlobalCategory(cat)}
-                          title="Delete category"
+                    allCategories.map((cat) => {
+                      const catId = allCategoriesWithId.find(
+                        (c) => c.name === cat
+                      )?.id;
+                      const isDeletingThis = isDeletingCategoryId === catId;
+                      return (
+                        <div
+                          key={cat}
+                          className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-700 rounded"
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    ))
+                          <span>{cat}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteGlobalCategory(cat)}
+                            title="Delete category"
+                            disabled={isDeletingThis} // Disable button while deleting this category
+                          >
+                            {isDeletingThis ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            )}
+                          </Button>
+                        </div>
+                      );
+                    })
                   ) : (
                     <p className="text-sm text-gray-500">
                       No categories added yet.
@@ -1001,14 +1168,157 @@ export default function ProjectsSection({
         <ProjectCategoryDialog
           open={projectCategoriesDialogOpen}
           onOpenChange={setProjectCategoriesDialogOpen}
-          projectId={Number(currentProjectForCategories.id)}
+          projectId={currentProjectForCategories.id} // Pass string ID directly
           projectName={currentProjectForCategories.title}
-          allCategories={allCategories}
-          selectedCategories={currentProjectForCategories.categories}
-          onSave={handleSaveProjectCategoriesForDialog}
-          onAddCategory={handleAddNewCategoryFromProjectDialog}
+          allCategories={allCategories} // Pass names
+          selectedCategories={currentProjectForCategories.categories} // Pass names
+          onSave={handleSaveProjectCategoriesForDialog} // Pass handler directly
+          onAddCategory={handleAddNewCategoryFromProjectDialog} // Add handler
         />
       )}
+
+      {/* Project Detail Dialog */}
+      <AnimatePresence>
+        {isDetailDialogOpen && currentProjectInDialog && (
+          <Dialog
+            open={isDetailDialogOpen}
+            onOpenChange={setIsDetailDialogOpen}
+          >
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <DialogHeader>
+                  <DialogTitle className="text-lg sm:text-xl font-bold">
+                    Project Details
+                  </DialogTitle>
+                  <DialogDescription>
+                    Viewing details for "{currentProjectInDialog.title}".
+                    {isAdmin && " You can edit the fields below."}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="py-4 space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="projNumber">Project Number</Label>
+                      {isAdmin ? (
+                        <Input
+                          id="projNumber"
+                          value={editedNumber}
+                          onChange={(e) => setEditedNumber(e.target.value)}
+                          className="mt-1"
+                          disabled={isSavingProject}
+                        />
+                      ) : (
+                        <p className="mt-1 font-semibold">
+                          {currentProjectInDialog.number}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="projTitle">Title</Label>
+                      {isAdmin ? (
+                        <Input
+                          id="projTitle"
+                          value={editedTitle}
+                          onChange={(e) => setEditedTitle(e.target.value)}
+                          className="mt-1"
+                          disabled={isSavingProject}
+                        />
+                      ) : (
+                        <p className="mt-1 font-semibold">
+                          {currentProjectInDialog.title}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="projCompany">
+                        Company Name (Optional)
+                      </Label>
+                      {isAdmin ? (
+                        <Input
+                          id="projCompany"
+                          value={editedCompanyName}
+                          onChange={(e) => setEditedCompanyName(e.target.value)}
+                          className="mt-1"
+                          disabled={isSavingProject}
+                        />
+                      ) : (
+                        <p className="mt-1">
+                          {currentProjectInDialog.companyName || "N/A"}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="projDesc1">Description 1</Label>
+                      {isAdmin ? (
+                        <Textarea
+                          id="projDesc1"
+                          value={editedDescription1}
+                          onChange={(e) =>
+                            setEditedDescription1(e.target.value)
+                          }
+                          className="mt-1 min-h-[100px]"
+                          disabled={isSavingProject}
+                        />
+                      ) : (
+                        <p className="mt-1 whitespace-pre-line">
+                          {currentProjectInDialog.description1}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="projDesc2">
+                        Description 2 (Optional)
+                      </Label>
+                      {isAdmin ? (
+                        <Textarea
+                          id="projDesc2"
+                          value={editedDescription2}
+                          onChange={(e) =>
+                            setEditedDescription2(e.target.value)
+                          }
+                          className="mt-1 min-h-[60px]"
+                          disabled={isSavingProject}
+                        />
+                      ) : (
+                        <p className="mt-1 whitespace-pre-line">
+                          {currentProjectInDialog.description2 || "N/A"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter className="mt-6">
+                  {isAdmin && (
+                    <Button
+                      onClick={handleSaveProjectDetailsFromDialog}
+                      disabled={isSavingProject}
+                    >
+                      {isSavingProject ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      {isSavingProject ? "Saving..." : "Save Changes"}
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDetailDialogOpen(false)}
+                    disabled={isSavingProject}
+                  >
+                    Close
+                  </Button>
+                </DialogFooter>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </AnimatedSection>
   );
 }

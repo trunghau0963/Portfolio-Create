@@ -16,6 +16,7 @@ async function main() {
         siteTitle: "PORTFOLIO",
         showPortrait: true,
         resumeUrl: "/resume.pdf",
+        globalFontFamily: "font-sans",
       },
     });
   } else {
@@ -25,6 +26,7 @@ async function main() {
         siteTitle: "PORTFOLIO",
         showPortrait: true,
         resumeUrl: "/resume.pdf",
+        globalFontFamily: "font-sans",
       },
     });
   }
@@ -179,11 +181,15 @@ async function main() {
           sectionId: sections.hero.id,
           content: "Welcome to My Portfolio. I build amazing things.",
           order: 0,
+          fontSize: 16,
+          fontFamily: "font-sans",
         },
         {
           sectionId: sections.hero.id,
           content: "You can see anything about me in this way.",
           order: 1,
+          fontSize: 14,
+          fontFamily: "font-sans",
         },
       ],
     });
@@ -203,12 +209,16 @@ async function main() {
           sectionId: sections.introduction.id,
           content: "This is the introduction to my work and passion.",
           order: 0,
+          fontSize: 16,
+          fontFamily: "font-sans",
         },
         {
           sectionId: sections.introduction.id,
           content:
             "I focus on creating intuitive and engaging digital experiences.",
           order: 1,
+          fontSize: 14,
+          fontFamily: "font-sans",
         },
       ],
     });
@@ -240,6 +250,8 @@ async function main() {
           sectionId: sections.projects.id,
           content: "A selection of my featured works.",
           order: 0,
+          fontSize: 18,
+          fontFamily: "font-serif",
         },
       ],
     });
@@ -257,6 +269,8 @@ async function main() {
           sectionId: sections.education.id,
           content: "My academic journey and qualifications.",
           order: 0,
+          fontSize: 18,
+          fontFamily: "font-serif",
         },
       ],
     });
@@ -372,6 +386,8 @@ async function main() {
           sectionId: sections.skills.id,
           content: "A showcase of my technical and creative abilities.",
           order: 0,
+          fontSize: 18,
+          fontFamily: "font-serif",
         },
       ],
     });
@@ -434,6 +450,8 @@ async function main() {
           sectionId: sections.experience.id,
           content: "My professional journey and key roles.",
           order: 0,
+          fontSize: 18,
+          fontFamily: "font-serif",
         },
       ],
     });
@@ -551,6 +569,8 @@ async function main() {
           content:
             "Hear what our clients have to say about their experience working with us. We take pride in delivering exceptional results and building lasting relationships.",
           order: 0,
+          fontSize: 16,
+          fontFamily: "font-sans",
         },
       ],
     });
@@ -589,12 +609,16 @@ async function main() {
           content:
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi egestas mollis sem nec consectetur. Etiam pellentesque turpis lorem, nec dapibus libero viverra vel. Nulla facilisi.",
           order: 0,
+          fontSize: 14,
+          fontFamily: "font-sans",
         },
         {
           sectionId: sections.contact.id,
           content:
             "Nunc aliquam justo et nibh venenatis aliquet. Morbi mollis risus dignissim sapien commodo, in venenatis felis tristique.",
           order: 1,
+          fontSize: 14,
+          fontFamily: "font-sans",
         },
       ],
     });

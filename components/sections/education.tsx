@@ -241,7 +241,7 @@ export default function EducationSection({
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
   const introTextBlock = section.textBlocks?.[0];
-  const sectionId = section.id;
+  const sectionId = section.slug;
 
   const [educationItems, setEducationItems] = useState<EducationItem[]>([]);
 
@@ -257,14 +257,24 @@ export default function EducationSection({
 
   const handleSaveSectionTextBlock = async (
     blockId: string,
-    newContent: string
+    newContent: string,
+    newFontSize?: number,
+    newFontFamily?: string
   ) => {
     try {
       setIsSavingSectionText(true);
+      const payload: {
+        content: string;
+        fontSize?: number;
+        fontFamily?: string;
+      } = { content: newContent };
+      if (newFontSize !== undefined) payload.fontSize = newFontSize;
+      if (newFontFamily !== undefined) payload.fontFamily = newFontFamily;
+
       const res = await fetch(`/api/textblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newContent }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -362,7 +372,7 @@ export default function EducationSection({
 
   const addNewEducationItem = async () => {
     const newItemData = {
-      sectionId: sectionId,
+      sectionId: section.id,
       institution: "NEW INSTITUTION",
       period: `${new Date().getFullYear()}-Present`,
       description: "Add details about this education here.",
@@ -542,8 +552,8 @@ export default function EducationSection({
   return (
     <AnimatedSection variant="fadeInUp">
       <section
-        id={section.id}
-        className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24"
+        id={sectionId}
+        className="shadow-sm bg-gray-100 dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24"
       >
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12 md:mb-16">
@@ -554,9 +564,14 @@ export default function EducationSection({
             />
             {introTextBlock && (
               <EditableText
+                key={introTextBlock.id}
+                blockId={introTextBlock.id}
                 initialText={introTextBlock.content}
+                initialFontSize={introTextBlock.fontSize || undefined}
+                initialFontFamily={introTextBlock.fontFamily || undefined}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
                 as="p"
+                onCommitText={handleSaveSectionTextBlock}
               />
             )}
             {!introTextBlock && isAdmin && (
