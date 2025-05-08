@@ -12,6 +12,7 @@ import {
   ImagePlus,
   X,
   Upload,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -46,6 +47,7 @@ import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
 import EditableTextAutoResize from "../ui/editable-text-auto-resize";
+import { toast } from "sonner";
 import {
   Section as PrismaSection,
   TextBlock as PrismaTextBlock,
@@ -240,12 +242,20 @@ export default function EducationSection({
 
   const [educationItems, setEducationItems] = useState<EducationItem[]>([]);
 
+  // Loading states
+  const [isAdding, setIsAdding] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingDetails, setIsSavingDetails] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  const [isSavingSectionText, setIsSavingSectionText] = useState(false);
+
   // Handler for saving the section's intro TextBlock
   const handleSaveSectionTextBlock = async (
     blockId: string,
     newContent: string
   ) => {
     try {
+      setIsSavingSectionText(true);
       const res = await fetch(`/api/textblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -258,8 +268,12 @@ export default function EducationSection({
         );
       }
       onDataChange(); // Refresh data
+      toast.success("Section intro text saved!");
     } catch (error) {
       console.error("Error saving section intro text:", error);
+      toast.error(`Failed to save intro text: ${(error as Error).message}`);
+    } finally {
+      setIsSavingSectionText(false);
     }
   };
 
@@ -322,6 +336,7 @@ export default function EducationSection({
 
       const reorderedItems = arrayMove(educationItems, oldIndex, newIndex);
       setEducationItems(reorderedItems); // Optimistic UI update
+      setIsReordering(true);
 
       const orderedIds = reorderedItems.map((item) => item.id);
 
@@ -338,10 +353,13 @@ export default function EducationSection({
           throw new Error("Failed to reorder items");
         }
         onDataChange(); // Refresh data from server to confirm order
+        toast.success("Education items reordered!");
       } catch (error) {
         console.error("Reordering failed:", error);
-        // Optional: Rollback optimistic update here if needed by re-fetching
+        toast.error(`Reordering failed: ${(error as Error).message}`);
         onDataChange(); // Re-fetch to get original order on error
+      } finally {
+        setIsReordering(false);
       }
     }
   };
@@ -358,6 +376,7 @@ export default function EducationSection({
     };
 
     try {
+      setIsAdding(true);
       const response = await fetch("/api/education", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -369,9 +388,12 @@ export default function EducationSection({
       }
       // const addedItem = await response.json(); // Can use this if needed
       onDataChange(); // Trigger parent re-fetch to get the new item list
+      toast.success("New education item added!");
     } catch (error) {
       console.error("Adding education item failed:", error);
-      // Handle error display to user if necessary
+      toast.error(`Adding item failed: ${(error as Error).message}`);
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -392,6 +414,7 @@ export default function EducationSection({
     setItemToDelete(null);
 
     try {
+      setIsDeleting(true);
       const response = await fetch(`/api/education/${idToDelete}`, {
         method: "DELETE",
       });
@@ -400,11 +423,13 @@ export default function EducationSection({
         throw new Error(errorData.message || "Failed to delete education item");
       }
       onDataChange(); // Trigger parent re-fetch
+      toast.success("Education item deleted!");
     } catch (error) {
       console.error("Deleting education item failed:", error);
-      // Optional: Rollback optimistic update if used
-      // Handle error display
+      toast.error(`Deleting item failed: ${(error as Error).message}`);
       onDataChange(); // Re-fetch even on error to ensure UI consistency
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -425,6 +450,7 @@ export default function EducationSection({
   const saveEducationDetails = async () => {
     if (!currentEducation) return;
 
+    setIsSavingDetails(true);
     const updatedData = {
       institution: editedInstitution,
       period: editedPeriod,
@@ -445,9 +471,12 @@ export default function EducationSection({
       setDetailDialogOpen(false); // Close dialog on success
       setIsEditing(false); // Assuming edit mode is toggled elsewhere or based on dialog state
       onDataChange(); // Trigger parent re-fetch
+      toast.success("Education details saved!");
     } catch (error) {
       console.error("Updating education details failed:", error);
-      // Handle error display
+      toast.error(`Saving details failed: ${(error as Error).message}`);
+    } finally {
+      setIsSavingDetails(false);
     }
   };
 
@@ -519,9 +548,6 @@ export default function EducationSection({
                 initialText={introTextBlock.content}
                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
                 as="p"
-                // blockId={introTextBlock.id}
-                // onSave={handleSaveSectionTextBlock}
-                // isAdmin={isAdmin}
               />
             )}
             {!introTextBlock && isAdmin && (
@@ -575,9 +601,14 @@ export default function EducationSection({
                     onClick={addNewEducationItem}
                     variant="secondary"
                     className="border-red-600 text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    disabled={isAdding}
                   >
-                    <PlusCircle size={16} />
-                    Add Education
+                    {isAdding ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <PlusCircle size={16} />
+                    )}
+                    {isAdding ? "Adding..." : "Add Education"}
                   </Button>
                 </motion.div>
               </motion.div>
@@ -612,8 +643,15 @@ export default function EducationSection({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Button variant="destructive" onClick={deleteEducationItem}>
-                      Delete
+                    <Button
+                      variant="destructive"
+                      onClick={deleteEducationItem}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      {isDeleting ? "Deleting..." : "Delete"}
                     </Button>
                   </motion.div>
                   <motion.div
@@ -709,8 +747,14 @@ export default function EducationSection({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <Button onClick={saveEducationDetails}>
-                          Save Details
+                        <Button
+                          onClick={saveEducationDetails}
+                          disabled={isSavingDetails}
+                        >
+                          {isSavingDetails ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : null}
+                          {isSavingDetails ? "Saving..." : "Save Details"}
                         </Button>
                       </motion.div>
                     </div>

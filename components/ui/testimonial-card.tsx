@@ -1,34 +1,48 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Star, StarHalf, Edit, Trash2, Quote } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Image from "next/image"
-import type { Testimonial } from "../sections/testimonials"
+import { motion } from "framer-motion";
+import { Star, StarHalf, Edit, Trash2, Quote } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import type { Testimonial } from "../sections/testimonials";
 
 interface TestimonialCardProps {
-  testimonial: Testimonial
-  onEdit?: () => void
-  onDelete?: () => void
+  testimonial: Testimonial;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-export default function TestimonialCard({ testimonial, onEdit, onDelete }: TestimonialCardProps) {
+export default function TestimonialCard({
+  testimonial,
+  onEdit,
+  onDelete,
+}: TestimonialCardProps) {
   // Render star rating
   const renderRating = (rating: number) => {
-    const stars = []
-    const fullStars = Math.floor(rating)
-    const hasHalfStar = rating % 1 !== 0
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
 
     for (let i = 0; i < fullStars; i++) {
-      stars.push(<Star key={`star-${i}`} className="h-4 w-4 fill-current text-yellow-400" />)
+      stars.push(
+        <Star
+          key={`star-${i}`}
+          className="h-4 w-4 fill-current text-yellow-400"
+        />
+      );
     }
 
     if (hasHalfStar) {
-      stars.push(<StarHalf key="half-star" className="h-4 w-4 fill-current text-yellow-400" />)
+      stars.push(
+        <StarHalf
+          key="half-star"
+          className="h-4 w-4 fill-current text-yellow-400"
+        />
+      );
     }
 
-    return stars
-  }
+    return stars;
+  };
 
   return (
     <div className="bg-gray-50 rounded-lg p-6 md:p-8 shadow-sm relative group opacity-90">
@@ -89,13 +103,17 @@ export default function TestimonialCard({ testimonial, onEdit, onDelete }: Testi
             <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow-md">
               <Image
                 src={testimonial.imageSrc || "/placeholder.svg"}
-                alt={testimonial.name}
+                alt={
+                  `Portrait of ${testimonial.clientName}` || "Client portrait"
+                }
                 fill
                 className="object-cover"
               />
             </div>
             <div className="text-center md:text-right">
-              <h4 className="font-bold text-gray-900">{testimonial.name}</h4>
+              <h4 className="font-bold text-gray-900">
+                {testimonial.clientName}
+              </h4>
               <p className="text-sm text-gray-600">
                 {testimonial.role}, {testimonial.company}
               </p>
@@ -104,5 +122,5 @@ export default function TestimonialCard({ testimonial, onEdit, onDelete }: Testi
         </div>
       </div>
     </div>
-  )
+  );
 }
