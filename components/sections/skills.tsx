@@ -100,39 +100,35 @@ function SortableSkillItem({
   };
 
   return (
-    <motion.div
+    <motion.li
       ref={setNodeRef}
       style={style}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
+      className={`flex items-start mb-6 sortable-item ${
+        isAdmin ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700" : ""
+      } ${isDragging ? "dragging" : ""}`}
       onClick={() => {
         if (isAdmin) {
           onViewDetails(skill);
         }
       }}
-      className={`flex items-start mb-6 sortable-item ${
-        isAdmin ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700" : ""
-      } ${isDragging ? "dragging" : ""}`}
     >
       {isAdmin && (
         <div
-          className="mr-2 sortable-handle mt-1"
+          className="mr-2 sortable-handle mt-1 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700/20 transition-colors"
           {...attributes}
           {...listeners}
+          title="Drag to reorder"
         >
-          <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+          <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300" />
         </div>
       )}
-      <motion.div
-        className="w-3 h-3 rounded-full bg-red-600 mt-1 mr-3 flex-shrink-0"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.3, delay: index * 0.1 + 0.2 }}
-      ></motion.div>
+      <span className={`mt-1.5 mr-3 w-3 h-3 rounded-full bg-red-600 flex-shrink-0 ${isAdmin ? "ml-0" : "ml-0"}`}></span>
       <div className="flex-grow">
         <div className="flex justify-between items-start">
-          <h3 className="font-bold uppercase mb-2 text-base text-gray-800 dark:text-gray-200">
+          <h3 className="font-bold text-gray-900 dark:text-white uppercase text-base mb-1">
             {skill.title}
           </h3>
           {isAdmin && (
@@ -140,23 +136,23 @@ function SortableSkillItem({
               <Button
                 variant="ghost"
                 size="icon"
-                className="ml-2 text-gray-400 hover:text-red-600 hover:bg-transparent"
+                className="ml-2 text-gray-400 hover:text-red-600 hover:bg-transparent h-7 w-7 p-1"
                 onClick={(e) => {
                   e.stopPropagation();
                   confirmDelete(skill.id);
                 }}
+                title="Delete Skill"
               >
                 <Trash2 size={16} />
-                <span className="sr-only">Delete skill</span>
               </Button>
             </motion.div>
           )}
         </div>
-        <p className="text-sm text-gray-700 dark:text-gray-400 whitespace-pre-line mt-1">
+        <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">
           {skill.description}
-        </p>
+        </div>
       </div>
-    </motion.div>
+    </motion.li>
   );
 }
 
@@ -485,19 +481,26 @@ export default function SkillsSection({
                   No skills listed yet.
                 </p>
               )}
-              <ul className="space-y-6">
-                {skills.map((skill, idx) => (
-                  <li key={skill.id} className="flex items-start">
-                    <span className="mt-2 mr-3 w-3 h-3 rounded-full bg-red-600 flex-shrink-0"></span>
-                    <div>
-                      <div className="font-bold text-gray-900 dark:text-white uppercase text-base mb-1">{skill.title}</div>
-                      <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-                        {skill.description}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={skills.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                  <ul className="space-y-0">
+                    {skills.map((skillItem, index) => (
+                      <SortableSkillItem
+                        key={skillItem.id}
+                        skill={skillItem}
+                        confirmDelete={confirmDeleteSkillAction}
+                        index={index}
+                        isAdmin={isAdmin}
+                        onViewDetails={openSkillDetailDialog}
+                      />
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
               {isAdmin && (
                 <div className="mt-8 flex justify-end">
                   <Button
