@@ -454,7 +454,7 @@ export default function SkillsSection({
     <AnimatedSection variant="fadeInUp">
       <section
         id={section.slug}
-        className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-white dark:bg-gray-800"
+        className="shadow-sm dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24 bg-gray-100 dark:bg-gray-900"
       >
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12 md:mb-16">
@@ -476,115 +476,30 @@ export default function SkillsSection({
             )}
           </div>
 
-          {isAdmin && (
-            <div className="mb-12 p-6 border rounded-lg dark:border-gray-700">
-              <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
-                Manage Skill Icons/Logos
-              </h3>
-              <CldUploadWidget
-                uploadPreset="portfolio_unsigned"
-                onSuccess={handleSkillImageUploadSuccess}
-                onUpload={() => setIsAddingImage(true)}
-                onError={() => {
-                  setIsAddingImage(false);
-                  // Optionally, add a toast error or console log here if the error callback is triggered
-                  // toast.error("Image upload failed to initialize.");
-                }}
-                options={{
-                  sources: ["local"],
-                  multiple: false,
-                  folder: "skill_images",
-                }}
-              >
-                {({ open }) => (
-                  <Button
-                    variant="outline"
-                    disabled={isAddingImage}
-                    className="mb-4 dark:text-white"
-                    onClick={() => open && open()} // Call open function on click
-                  >
-                    {isAddingImage ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <ImagePlus className="mr-2 h-4 w-4" />
-                    )}
-                    {isAddingImage ? "Uploading..." : "Add New Skill Image"}
-                  </Button>
-                )}
-              </CldUploadWidget>
-
-              {skillImages.length > 0 ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                  {skillImages.map((image) => (
-                    <div
-                      key={image.id}
-                      className="relative group aspect-square bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center p-2"
-                    >
-                      <Image
-                        src={image.src}
-                        alt={image.alt || "Skill image"}
-                        width={80}
-                        height={80}
-                        className="object-contain max-h-full max-w-full"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() =>
-                          confirmDeleteImageAction(String(image.id))
-                        }
-                        disabled={
-                          isDeletingImage &&
-                          imageToDeleteId === String(image.id)
-                        }
-                        title="Delete image"
-                      >
-                        {isDeletingImage &&
-                        imageToDeleteId === String(image.id) ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <X className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  No skill images added yet.
+          {/* Grid 2 card layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Card trái: danh sách skill */}
+            <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col justify-center">
+              {skills.length === 0 && !isAdmin && (
+                <p className="text-center text-gray-500 dark:text-gray-400">
+                  No skills listed yet.
                 </p>
               )}
-            </div>
-          )}
-          {!isAdmin && skillImages.length > 0 && (
-            <div className="mb-12">
-              <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8">
-                {skillImages.map((image) => (
-                  <div
-                    key={image.id}
-                    className="relative aspect-square h-16 w-16 md:h-20 md:w-20 p-2 bg-gray-100 dark:bg-gray-700/50 rounded-lg flex items-center justify-center"
-                  >
-                    <Image
-                      src={image.src}
-                      alt={image.alt || "Skill technology logo"}
-                      width={60}
-                      height={60}
-                      className="object-contain max-h-full max-w-full"
-                    />
-                  </div>
+              <ul className="space-y-6">
+                {skills.map((skill, idx) => (
+                  <li key={skill.id} className="flex items-start">
+                    <span className="mt-2 mr-3 w-3 h-3 rounded-full bg-red-600 flex-shrink-0"></span>
+                    <div>
+                      <div className="font-bold text-gray-900 dark:text-white uppercase text-base mb-1">{skill.title}</div>
+                      <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                        {skill.description}
+                      </div>
+                    </div>
+                  </li>
                 ))}
-              </div>
-            </div>
-          )}
-
-          <div className="max-w-3xl mx-auto">
-            {isAdmin && (
-              <motion.div className="mb-8 flex justify-end">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
+              </ul>
+              {isAdmin && (
+                <div className="mt-8 flex justify-end">
                   <Button
                     onClick={addNewSkill}
                     variant="outline"
@@ -598,35 +513,80 @@ export default function SkillsSection({
                     )}
                     {isAddingSkill ? "Adding..." : "Add Skill Item"}
                   </Button>
-                </motion.div>
-              </motion.div>
-            )}
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={skills.map((s) => s.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {skills.map((skillItem, index) => (
-                  <SortableSkillItem
-                    key={skillItem.id}
-                    skill={skillItem}
-                    confirmDelete={confirmDeleteSkillAction}
-                    index={index}
-                    isAdmin={isAdmin}
-                    onViewDetails={openSkillDetailDialog}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-            {skills.length === 0 && !isAdmin && (
-              <p className="text-center text-gray-500 dark:text-gray-400">
-                No skills listed yet.
-              </p>
-            )}
+                </div>
+              )}
+            </div>
+            {/* Card phải: Skill Images */}
+            <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col">
+              <div className="font-semibold text-gray-800 dark:text-white mb-4 text-lg">Skill Images</div>
+              {isAdmin && (
+                <CldUploadWidget
+                  uploadPreset="portfolio_unsigned"
+                  onSuccess={handleSkillImageUploadSuccess}
+                  onUpload={() => setIsAddingImage(true)}
+                  onError={() => setIsAddingImage(false)}
+                  options={{
+                    sources: ["local"],
+                    multiple: false,
+                    folder: "skill_images",
+                  }}
+                >
+                  {({ open }) => (
+                    <Button
+                      variant="outline"
+                      disabled={isAddingImage}
+                      className="mb-4 dark:text-white"
+                      onClick={() => open && open()}
+                    >
+                      {isAddingImage ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <ImagePlus className="mr-2 h-4 w-4" />
+                      )}
+                      {isAddingImage ? "Uploading..." : "Add New Skill Image"}
+                    </Button>
+                  )}
+                </CldUploadWidget>
+              )}
+              {skillImages.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 gap-4 mt-2">
+                  {skillImages.map((image) => (
+                    <div
+                      key={image.id}
+                      className="relative aspect-square bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center p-2"
+                    >
+                      <Image
+                        src={image.src}
+                        alt={image.alt || "Skill image"}
+                        width={160}
+                        height={160}
+                        className="object-cover w-full h-full rounded-md"
+                      />
+                      {isAdmin && (
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => confirmDeleteImageAction(String(image.id))}
+                          disabled={isDeletingImage && imageToDeleteId === String(image.id)}
+                          title="Delete image"
+                        >
+                          {isDeletingImage && imageToDeleteId === String(image.id) ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <X className="h-3 w-3" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  No skill images added yet.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </section>

@@ -13,6 +13,9 @@ import {
   X,
   Upload,
   Loader2,
+  Pencil,
+  Images,
+  GalleryHorizontal,
 } from "lucide-react";
 import {
   Dialog,
@@ -75,15 +78,26 @@ function SortableEducationItem({
   index,
   items,
   confirmDelete,
-  onView,
+  onViewDetails,
+  onManageImages,
   isAdmin,
+  onDirectImageUpload,
+  isAddingImageForItem,
+  setIsAddingImageForItemDirectly,
 }: {
   item: EducationItem;
   index: number;
   items: EducationItem[];
   confirmDelete: (id: string) => void;
-  onView: (id: string) => void;
+  onViewDetails: (id: string) => void;
+  onManageImages: (id: string) => void;
   isAdmin: boolean | undefined;
+  onDirectImageUpload: (
+    results: CloudinaryUploadWidgetResults,
+    itemId: string
+  ) => void;
+  isAddingImageForItem: string | null;
+  setIsAddingImageForItemDirectly: (itemId: string | null) => void;
 }) {
   const {
     attributes,
@@ -109,18 +123,21 @@ function SortableEducationItem({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
-      onClick={() => onView(item.id)}
-      className={`cursor-pointer hover:bg-gray-50 transition-colors sortable-item ${
+      className={`transition-colors sortable-item ${
         isDragging ? "dragging" : ""
-      }`}
+      } ${isAdmin ? "hover:bg-gray-50 dark:hover:bg-gray-700/50" : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50"}`}
+      onClick={() => {
+        if (!isAdmin && onViewDetails) {
+          onViewDetails(item.id);
+        }
+      }}
     >
-      <div className="grid grid-cols-12 gap-2 items-center py-3 border-b border-gray-200">
+      <div className="grid grid-cols-12 gap-2 items-center py-3 border-b border-gray-200 dark:border-gray-700">
         {isAdmin && (
           <div
-            className="col-span-1 sortable-handle"
+            className="col-span-1 sortable-handle cursor-grab active:cursor-grabbing"
             {...attributes}
             {...listeners}
-            onClick={(e) => e.stopPropagation()} // Prevent opening dialog when grabbing
           >
             <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
           </div>
@@ -128,7 +145,7 @@ function SortableEducationItem({
 
         <div
           className={
-            isAdmin ? "col-span-7 md:col-span-8" : "col-span-8 md:col-span-9"
+            isAdmin ? "col-span-5 md:col-span-6" : "col-span-8 md:col-span-9"
           }
         >
           <div className="font-bold uppercase">{item.institution}</div>
@@ -139,22 +156,129 @@ function SortableEducationItem({
         </div>
 
         {isAdmin && (
-          <div className="col-span-1">
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent opening dialog when deleting
-                confirmDelete(item.id);
+          <div className="col-span-3 flex justify-end space-x-1">
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-blue-600 hover:bg-transparent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails(item.id);
+                }}
+                title="Edit Details"
+              >
+                <Pencil size={16} />
+              </Button>
+            </motion.div>
+
+            <CldUploadWidget
+              uploadPreset={
+                process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
+                "portfolio_unsigned"
+              }
+              options={{
+                sources: ["local", "url"],
+                multiple: false,
+                folder: "education_details",
+                clientAllowedFormats: ["png", "jpeg", "jpg", "gif", "webp"],
+              }}
+              onSuccess={(results) => {
+                onDirectImageUpload(results, item.id);
+                setIsAddingImageForItemDirectly(null);
+              }}
+              onUpload={() => setIsAddingImageForItemDirectly(item.id)}
+              onError={(error) => {
+                console.error("Direct upload error:", error);
+                let message = "Unknown upload error";
+                if (
+                  typeof error === "object" &&
+                  error !== null &&
+                  "message" in error &&
+                  typeof error.message === "string"
+                ) {
+                  message = error.message;
+                } else if (typeof error === "string") {
+                  message = error;
+                }
+                toast.error(`Direct upload failed: ${message}`);
+                setIsAddingImageForItemDirectly(null);
               }}
             >
+              {(widgetApi) => {
+                if (!widgetApi || typeof widgetApi.open !== "function") {
+                  return (
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400"
+                        disabled={true}
+                        title="Upload Detail Image (Initializing...)"
+                      >
+                        <Loader2 className="animate-spin" size={16} />
+                      </Button>
+                    </motion.div>
+                  );
+                }
+                const { open } = widgetApi;
+                return (
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-gray-400 hover:text-green-600 hover:bg-transparent"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        open();
+                      }}
+                      disabled={isAddingImageForItem === item.id}
+                      title="Upload Detail Image"
+                    >
+                      {isAddingImageForItem === item.id ? (
+                        <Loader2 className="animate-spin" size={16} />
+                      ) : (
+                        <Images size={16} />
+                      )}
+                    </Button>
+                  </motion.div>
+                );
+              }}
+            </CldUploadWidget>
+
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-purple-600 hover:bg-transparent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onManageImages(item.id);
+                }}
+                title="Manage All Detail Images"
+              >
+                <GalleryHorizontal size={16} />
+              </Button>
+            </motion.div>
+
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-gray-400 hover:text-red-600 hover:bg-transparent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  confirmDelete(item.id);
+                }}
+                title="Delete Item"
               >
                 <Trash2 size={16} />
-                <span className="sr-only">Delete education</span>
               </Button>
             </motion.div>
           </div>
@@ -191,6 +315,9 @@ export default function EducationSection({
   const [isReordering, setIsReordering] = useState(false);
   const [isSavingSectionText, setIsSavingSectionText] = useState(false);
   const [isAddingImage, setIsAddingImage] = useState(false);
+  const [isAddingImageForItem, setIsAddingImageForItem] = useState<
+    string | null
+  >(null);
   const [isDeletingImageById, setIsDeletingImageById] = useState<string | null>(
     null
   );
@@ -288,7 +415,7 @@ export default function EducationSection({
 
       try {
         const response = await fetch(
-          `/api/sections/${sectionId}/education/reorder`,
+          `/api/sections/${section.id}/education/reorder`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -381,6 +508,7 @@ export default function EducationSection({
       setEditedDescription(education.description);
       setEditedDegree(education.degree);
       setDetailDialogOpen(true);
+      setImageManagerOpen(false);
     }
   };
 
@@ -416,8 +544,29 @@ export default function EducationSection({
     }
   };
 
-  const addEducationImage = async (results: CloudinaryUploadWidgetResults) => {
-    if (!currentEducation) return;
+  const [imageManagerOpen, setImageManagerOpen] = useState(false);
+  const [currentItemIdForImages, setCurrentItemIdForImages] = useState<
+    string | null
+  >(null);
+
+  const openImageManager = (educationId: string) => {
+    const education = educationItems.find((item) => item.id === educationId);
+    if (education) {
+      setCurrentEducation(education);
+      setCurrentItemIdForImages(educationId);
+      setImageManagerOpen(true);
+      setDetailDialogOpen(false);
+    }
+  };
+
+  const addEducationImage = async (
+    results: CloudinaryUploadWidgetResults,
+    educationItemId: string | null
+  ) => {
+    if (!educationItemId) {
+      toast.error("Cannot add image: Education item ID is missing.");
+      return;
+    }
 
     if (
       results?.info &&
@@ -428,11 +577,9 @@ export default function EducationSection({
       setIsAddingImage(true);
 
       const imageData = {
-        educationItemId: currentEducation.id,
+        educationItemId: educationItemId,
         src: secure_url,
-        alt:
-          original_filename ||
-          `Detail image for ${currentEducation.institution}`,
+        alt: original_filename || `Detail image`,
         imagePublicId: public_id,
       };
 
@@ -544,8 +691,12 @@ export default function EducationSection({
                       index={index}
                       items={educationItems}
                       confirmDelete={confirmDelete}
-                      onView={viewEducationDetails}
+                      onViewDetails={viewEducationDetails}
+                      onManageImages={openImageManager}
                       isAdmin={isAdmin}
+                      onDirectImageUpload={addEducationImage}
+                      isAddingImageForItem={isAddingImageForItem}
+                      setIsAddingImageForItemDirectly={setIsAddingImageForItem}
                     />
                   ))}
                 </AnimatePresence>
@@ -674,12 +825,24 @@ export default function EducationSection({
                           className="mt-1"
                         />
                       </div>
+                      <div>
+                        <Label htmlFor="degree">Degree (Optional)</Label>
+                        <Input
+                          id="degree"
+                          value={editedDegree}
+                          onChange={(e) => setEditedDegree(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-2">
                       <h3 className="text-lg font-bold">
                         {currentEducation.institution}
                       </h3>
+                      <p className="text-base font-medium">
+                        {currentEducation.degree}
+                      </p>
                       <p className="text-sm text-gray-500">
                         {currentEducation.period}
                       </p>
@@ -693,7 +856,7 @@ export default function EducationSection({
                         id="description"
                         value={editedDescription}
                         onChange={(e) => setEditedDescription(e.target.value)}
-                        className="min-h-[150px] mt-1"
+                        className="min-h-[100px] mt-1"
                       />
                     ) : (
                       <p className="text-sm text-gray-700 whitespace-pre-line mt-1">
@@ -701,6 +864,47 @@ export default function EducationSection({
                       </p>
                     )}
                   </div>
+
+                  {/* Image display for non-admins */}
+                  {!isAdmin &&
+                    currentEducation &&
+                    currentEducation.images &&
+                    currentEducation.images.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-md font-semibold mb-2">
+                          Associated Images:
+                        </h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {currentEducation.images.map((image) => (
+                            <motion.div
+                              key={image.id}
+                              className="relative aspect-square"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Image
+                                src={
+                                  image.src || "https://picsum.photos/300/300"
+                                }
+                                alt={image.alt || "Education detail image"}
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-md shadow-md"
+                              />
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  {!isAdmin &&
+                    currentEducation &&
+                    (!currentEducation.images ||
+                      currentEducation.images.length === 0) && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        No associated images.
+                      </p>
+                    )}
 
                   {isAdmin && (
                     <div className="flex justify-end">
@@ -720,116 +924,6 @@ export default function EducationSection({
                       </motion.div>
                     </div>
                   )}
-
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-semibold">Education Images</h3>
-                      {isAdmin && (
-                        <CldUploadWidget
-                          uploadPreset="portfolio_unsigned"
-                          options={{
-                            sources: ["local", "url"],
-                            multiple: true,
-                            folder: "education_details",
-                          }}
-                          onSuccess={(results) => addEducationImage(results)}
-                          onUpload={() => setIsAddingImage(true)}
-                          onError={(error) => {
-                            // Check if error is an object with a message property
-                            const errorMessage =
-                              typeof error === "object" &&
-                              error !== null &&
-                              "message" in error
-                                ? String(error.message)
-                                : typeof error === "string"
-                                  ? error
-                                  : "Unknown upload error";
-                            toast.error(`Upload failed: ${errorMessage}`);
-                            setIsAddingImage(false); // Reset loading state on error
-                          }}
-                        >
-                          {({ open }) => (
-                            <motion.div
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-1"
-                                onClick={() => open && open()}
-                                disabled={isAddingImage}
-                              >
-                                {isAddingImage ? (
-                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                                ) : (
-                                  <ImagePlus size={14} />
-                                )}
-                                {isAddingImage ? "Uploading..." : "Add Images"}
-                              </Button>
-                            </motion.div>
-                          )}
-                        </CldUploadWidget>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <AnimatePresence>
-                        {currentEducation.images.map((image, index) => (
-                          <motion.div
-                            key={image.id}
-                            className="relative group"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.3 }}
-                            whileHover={{ scale: 1.03 }}
-                          >
-                            <Image
-                              src={image.src || "https://picsum.photos/600/400"}
-                              alt={
-                                image.alt ||
-                                `${currentEducation.institution} image ${
-                                  index + 1
-                                }`
-                              }
-                              width={600}
-                              height={400}
-                              className="w-full h-auto rounded-md shadow-md"
-                            />
-                            {isAdmin && (
-                              <motion.div
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
-                                  onClick={() => deleteEducationImage(image.id)}
-                                  disabled={isDeletingImageById === image.id}
-                                >
-                                  {isDeletingImageById === image.id ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <X size={14} />
-                                  )}
-                                  <span className="sr-only">Remove image</span>
-                                </Button>
-                              </motion.div>
-                            )}
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-
-                      {currentEducation.images.length === 0 && (
-                        <div className="col-span-2 text-center py-8 border border-dashed rounded-md text-gray-400">
-                          No education images available
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
 
                 <DialogFooter>
@@ -846,6 +940,122 @@ export default function EducationSection({
                   </motion.div>
                 </DialogFooter>
               </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {currentEducation && imageManagerOpen && currentItemIdForImages && (
+          <Dialog open={imageManagerOpen} onOpenChange={setImageManagerOpen}>
+            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-lg sm:text-xl font-bold">
+                  Manage Images for {currentEducation.institution}
+                </DialogTitle>
+                <DialogDescription>
+                  Add or remove detail images for this education entry.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                <CldUploadWidget
+                  uploadPreset="portfolio_unsigned"
+                  options={{
+                    sources: ["local", "url"],
+                    multiple: true,
+                    folder: "education_details",
+                  }}
+                  onSuccess={(results) =>
+                    addEducationImage(results, currentItemIdForImages)
+                  }
+                  onUpload={() => setIsAddingImage(true)}
+                  onError={(error) => {
+                    const errorMessage =
+                      typeof error === "object" &&
+                      error !== null &&
+                      "message" in error
+                        ? String(error.message)
+                        : typeof error === "string"
+                          ? error
+                          : "Unknown upload error";
+                    toast.error(`Upload failed: ${errorMessage}`);
+                    setIsAddingImage(false);
+                  }}
+                >
+                  {({ open }) => (
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="mb-4"
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1"
+                        onClick={() => open && open()}
+                        disabled={isAddingImage}
+                      >
+                        {isAddingImage ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                        ) : (
+                          <ImagePlus size={14} />
+                        )}
+                        {isAddingImage ? "Uploading..." : "Add Images"}
+                      </Button>
+                    </motion.div>
+                  )}
+                </CldUploadWidget>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <AnimatePresence>
+                    {currentEducation.images?.map((image) => (
+                      <motion.div key={image.id} className="relative group">
+                        <Image
+                          src={image.src || "https://picsum.photos/600/400"}
+                          alt={image.alt || `Education image`}
+                          width={300}
+                          height={200}
+                          className="w-full h-auto rounded-md shadow-md aspect-video object-cover"
+                        />
+                        <motion.div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-white bg-red-600/70 hover:bg-red-600 rounded-full h-6 w-6 p-1"
+                            onClick={() => deleteEducationImage(image.id)}
+                            disabled={isDeletingImageById === image.id}
+                          >
+                            {isDeletingImageById === image.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <X size={12} />
+                            )}
+                          </Button>
+                        </motion.div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                  {currentEducation.images?.length === 0 && (
+                    <div className="col-span-full text-center py-8 border border-dashed rounded-md text-gray-400">
+                      No images added yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    variant="outline"
+                    onClick={() => setImageManagerOpen(false)}
+                  >
+                    {" "}
+                    Close{" "}
+                  </Button>
+                </motion.div>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         )}
