@@ -140,14 +140,14 @@ export default function LoginPage() {
               </motion.div>
             )}
 
-            <motion.div
+            {/* <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
               className="text-xs text-gray-500 dark:text-gray-400"
             >
               Demo credentials: admin@portfolio.com / admin123
-            </motion.div>
+            </motion.div> */}
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
               <Button type="submit" disabled={isLoading} className="w-full">

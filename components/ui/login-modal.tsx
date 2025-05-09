@@ -71,7 +71,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
-            <p className="text-xs text-muted-foreground">Demo credentials: admin@portfolio.com / admin123</p>
+            {/* <p className="text-xs text-muted-foreground">Demo credentials: admin@portfolio.com / admin123</p> */}
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
