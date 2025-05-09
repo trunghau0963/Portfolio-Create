@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import EditableText from "../ui/editable-text";
 import EditableImage from "../ui/editable-image";
 import { Button } from "@/components/ui/button";
@@ -506,6 +506,7 @@ export default function ProjectsSection({
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [allCategoriesWithId, setAllCategoriesWithId] = useState<CategoryWithId[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
@@ -544,48 +545,20 @@ export default function ProjectsSection({
   const [isSavingProjectCategories, setIsSavingProjectCategories] =
     useState(false);
 
-  // Handler to fetch categories with IDs (if not passed via props initially)
-  // We need this mapping for delete and project assignment
-  const [allCategoriesWithId, setAllCategoriesWithId] = useState<
-    CategoryWithId[]
-  >([]);
-
-  const handleSaveSectionTextBlock = async (
-    blockId: string,
-    newContent: string,
-    newFontSize?: number,
-    newFontFamily?: string
-  ) => {
-    setIsSavingProjectText(true);
+  // Function handlers for text blocks and project details
+  const handleSaveSectionTextBlock = async (blockId: string, content: string) => {
     try {
-      const payload: {
-        content: string;
-        fontSize?: number;
-        fontFamily?: string;
-      } = { content: newContent };
-      if (newFontSize !== undefined) payload.fontSize = newFontSize;
-      if (newFontFamily !== undefined) payload.fontFamily = newFontFamily;
-
-      const res = await fetch(`/api/textblocks/${blockId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const response = await fetch(`/api/text-blocks/${blockId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
       });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(
-          errorData.message || "Failed to save text block for section"
-        );
-      }
-      toast.success("Section text block saved!");
+      if (!response.ok) throw new Error('Failed to update text block');
       if (onDataChange) onDataChange();
+      toast.success('Text updated successfully');
     } catch (error) {
-      console.error("Error saving section text block:", error);
-      toast.error(
-        `Failed to save section text block: ${(error as Error).message}`
-      );
-    } finally {
-      setIsSavingProjectText(false);
+      console.error('Error updating text block:', error);
+      toast.error('Failed to update text');
     }
   };
 
@@ -593,129 +566,130 @@ export default function ProjectsSection({
     projectId: string,
     imageData: { public_id: string; secure_url: string }
   ) => {
-    setIsSavingProject(true);
     try {
-      const updatePayload = {
-        imageSrc: imageData.secure_url,
-        imagePublicId: imageData.public_id,
-      };
       const response = await fetch(`/api/projects/${projectId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatePayload),
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageSrc: imageData.secure_url,
+          imagePublicId: imageData.public_id,
+        }),
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to save project image");
-      }
-      toast.success("Project image updated!");
+      if (!response.ok) throw new Error('Failed to update project image');
       if (onDataChange) onDataChange();
+      toast.success('Image updated successfully');
     } catch (error) {
-      console.error(`Error saving image for project ${projectId}:`, error);
-      toast.error(`Failed to save project image: ${(error as Error).message}`);
-    } finally {
-      setIsSavingProject(false);
-    }
-  };
-
-  const handleSaveProjectDetailsFromDialog = async () => {
-    if (!currentProjectInDialog) return;
-    const projectId = currentProjectInDialog.id;
-
-    setIsSavingProjectText(true);
-    try {
-      const updatePayload: {
-        projectNumber?: string;
-        title?: string;
-        companyName?: string | null;
-        description1?: string;
-        description2?: string | null;
-      } = {
-        projectNumber: editedNumber,
-        title: editedTitle,
-        companyName: editedCompanyName || null,
-        description1: editedDescription1,
-        description2: editedDescription2 || null,
-      };
-
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatePayload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to save project details");
-      }
-      toast.success("Project details saved!");
-      if (onDataChange) onDataChange();
-      setIsDetailDialogOpen(false);
-      setCurrentProjectInDialog(null);
-    } catch (error) {
-      console.error(`Error saving details for project ${projectId}:`, error);
-      toast.error(`Failed to save details: ${(error as Error).message}`);
-    } finally {
-      setIsSavingProjectText(false);
+      console.error('Error updating project image:', error);
+      toast.error('Failed to update image');
     }
   };
 
   const viewProjectDetails = (project: Project) => {
     setCurrentProjectInDialog(project);
-    setEditedNumber(project.number || "");
-    setEditedTitle(project.title || "");
-    setEditedCompanyName(project.companyName || "");
-    setEditedDescription1(project.description1 || "");
-    setEditedDescription2(project.description2 || "");
+    setEditedNumber(project.number);
+    setEditedTitle(project.title);
+    setEditedCompanyName(project.companyName || '');
+    setEditedDescription1(project.description1);
+    setEditedDescription2(project.description2 || '');
     setIsDetailDialogOpen(true);
   };
 
-  useEffect(() => {
-    // Map the categories passed via props (which should include IDs)
-    const initialCategoriesWithId = allCategoriesFromDB || [];
-    setAllCategoriesWithId(initialCategoriesWithId);
-    setAllCategories(initialCategoriesWithId.map((c) => c.name).sort());
+  const handleSaveProjectDetailsFromDialog = async () => {
+    if (!currentProjectInDialog) return;
+    setIsSavingProjectText(true);
+    try {
+      const response = await fetch(`/api/projects/${currentProjectInDialog.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectNumber: editedNumber,
+          title: editedTitle,
+          companyName: editedCompanyName || null,
+          description1: editedDescription1,
+          description2: editedDescription2 || null,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to update project details');
+      if (onDataChange) onDataChange();
+      toast.success('Project details updated successfully');
+      setIsDetailDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating project details:', error);
+      toast.error('Failed to update project details');
+    } finally {
+      setIsSavingProjectText(false);
+    }
+  };
 
-    // Map projects (includes mapping category IDs to names for display)
+  // Fetch categories function
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+      const categories = await response.json();
+      setAllCategoriesWithId(categories);
+      setAllCategories(categories.map((c: CategoryWithId) => c.name).sort());
+      
+      // Reset selected category if it no longer exists
+      if (selectedCategory && !categories.some((c: CategoryWithId) => c.name === selectedCategory)) {
+        setSelectedCategory(null);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast.error('Failed to fetch categories');
+    }
+  }, [selectedCategory]);
+
+  // Initial data load
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  // Update projects when section data changes
+  useEffect(() => {
+    if (!section.projectItems || !allCategoriesWithId.length) return;
+
     const categoryMap = new Map<string, string>(
-      initialCategoriesWithId.map((cat) => [cat.id, cat.name])
+      allCategoriesWithId.map((cat) => [cat.id, cat.name])
     );
 
-    const mappedProjects: Project[] =
-      section.projectItems?.map((item): Project => {
-        const findBlockId = (purpose: string): string | undefined => undefined;
-        const findImageBlockId = (purpose: string): string | undefined =>
-          undefined;
+    const mappedProjects: Project[] = section.projectItems.map((item): Project => {
+      const findBlockId = (purpose: string): string | undefined => undefined;
+      const findImageBlockId = (purpose: string): string | undefined =>
+        undefined;
 
-        return {
-          id: String(item.id),
-          number: item.projectNumber || String(item.order + 1).padStart(2, "0"),
-          title: item.title || "Untitled Project",
-          companyName: item.companyName || undefined,
-          description1: item.description1 || "",
-          description2: item.description2 || undefined,
-          imageSrc: item.imageSrc || "",
-          imagePublicId: item.imagePublicId || undefined,
-          liveLink: item.liveLink || undefined,
-          sourceLink: item.sourceLink || undefined,
-          layout:
-            item.layout === "layout1" || item.layout === "layout2"
-              ? item.layout
-              : "layout1",
-          categories:
-            item.categoryIds
-              ?.map((id) => categoryMap.get(id) || `Missing:${id}`)
-              .filter((name) => !!name) || [],
-          projectNumberBlockId: findBlockId("projectNumber"),
-          titleBlockId: findBlockId("title"),
-          companyNameBlockId: findBlockId("companyName"),
-          description1BlockId: findBlockId("description1"),
-          description2BlockId: findBlockId("description2"),
-          mainImageBlockId: findImageBlockId("mainProjectImage"),
-        };
-      }) || [];
+      return {
+        id: String(item.id),
+        number: item.projectNumber || String(item.order + 1).padStart(2, "0"),
+        title: item.title || "Untitled Project",
+        companyName: item.companyName || undefined,
+        description1: item.description1 || "",
+        description2: item.description2 || undefined,
+        imageSrc: item.imageSrc || "",
+        imagePublicId: item.imagePublicId || undefined,
+        liveLink: item.liveLink || undefined,
+        sourceLink: item.sourceLink || undefined,
+        layout:
+          item.layout === "layout1" || item.layout === "layout2"
+            ? item.layout
+            : "layout1",
+        categories:
+          item.categoryIds
+            ?.map((id) => categoryMap.get(id) || `Missing:${id}`)
+            .filter((name) => !!name) || [],
+        projectNumberBlockId: findBlockId("projectNumber"),
+        titleBlockId: findBlockId("title"),
+        companyNameBlockId: findBlockId("companyName"),
+        description1BlockId: findBlockId("description1"),
+        description2BlockId: findBlockId("description2"),
+        mainImageBlockId: findImageBlockId("mainProjectImage"),
+      };
+    });
+
     setProjects(mappedProjects);
-  }, [section.projectItems, allCategoriesFromDB]); // Depend on the initial DB categories
+  }, [section.projectItems, allCategoriesWithId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -765,19 +739,16 @@ export default function ProjectsSection({
 
   const addNewProject = async () => {
     setIsAddingProject(true);
-
-    // Get the ID of the first category, if available
-    const firstCategoryId =
-      allCategoriesWithId.length > 0 ? allCategoriesWithId[0].id : undefined;
+    const firstCategoryId = allCategoriesWithId.length > 0 ? allCategoriesWithId[0].id : undefined;
 
     const newProjectPayload = {
       sectionId: section.id,
       title: "NEW PROJECT",
       description1: "Enter project description here.",
-      imageSrc: "", // Will be uploaded later
+      imageSrc: "",
       imagePublicId: null,
       layout: "layout1" as "layout1" | "layout2",
-      categoryIds: firstCategoryId ? [firstCategoryId] : [], // Assign first category or empty array
+      categoryIds: firstCategoryId ? [firstCategoryId] : [],
     };
     try {
       const response = await fetch("/api/projects", {
@@ -790,7 +761,11 @@ export default function ProjectsSection({
         throw new Error(errorData.message || "Failed to add new project");
       }
       toast.success("New project added! You can now upload an image.");
-      if (onDataChange) onDataChange();
+      
+      // Ensure data is refreshed after successful creation
+      if (onDataChange) {
+        await onDataChange();
+      }
     } catch (error) {
       console.error("Adding project failed:", error);
       toast.error(`Adding project failed: ${(error as Error).message}`);
@@ -820,11 +795,14 @@ export default function ProjectsSection({
         throw new Error(errorData.message || "Failed to delete project");
       }
       toast.success("Project deleted!");
-      if (onDataChange) onDataChange();
+      
+      // Ensure data is refreshed after successful deletion
+      if (onDataChange) {
+        await onDataChange();
+      }
     } catch (error) {
       console.error(`Deleting project ${idToDelete} failed:`, error);
       toast.error(`Deleting project failed: ${(error as Error).message}`);
-      if (onDataChange) onDataChange();
     } finally {
       setIsDeletingProject(false);
     }
@@ -870,9 +848,17 @@ export default function ProjectsSection({
       if (!response.ok) {
         throw new Error(addedCategory.message || "Failed to add category");
       }
+      
       toast.success(`Category "${addedCategory.name}" added!`);
       setNewCategoryName("");
-      if (onDataChange) onDataChange(); // Re-fetch all data including categories
+      
+      // Fetch fresh categories
+      await fetchCategories();
+      
+      // Update parent component
+      if (onDataChange) {
+        await onDataChange();
+      }
     } catch (error) {
       console.error("Error adding global category:", error);
       toast.error(`Adding category failed: ${(error as Error).message}`);
@@ -882,15 +868,15 @@ export default function ProjectsSection({
   };
 
   const handleDeleteGlobalCategory = async (catName: string) => {
-    const categoryToDelete = allCategoriesWithId.find(
-      (c) => c.name === catName
-    );
+    const categoryToDelete = allCategoriesWithId.find((c) => c.name === catName);
     if (!categoryToDelete) {
       toast.error(`Could not find category ID for "${catName}"`);
       return;
     }
+    
     const categoryIdToDelete = categoryToDelete.id;
     setIsDeletingCategoryId(categoryIdToDelete);
+    
     try {
       const response = await fetch(`/api/categories/${categoryIdToDelete}`, {
         method: "DELETE",
@@ -899,8 +885,16 @@ export default function ProjectsSection({
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to delete category");
       }
+      
       toast.success(`Category "${catName}" deleted!`);
-      if (onDataChange) onDataChange(); // Re-fetch all data
+      
+      // Fetch fresh categories
+      await fetchCategories();
+      
+      // Update parent component
+      if (onDataChange) {
+        await onDataChange();
+      }
     } catch (error) {
       console.error("Error deleting global category:", error);
       toast.error(`Deleting category failed: ${(error as Error).message}`);
@@ -920,7 +914,7 @@ export default function ProjectsSection({
   };
 
   const handleSaveProjectCategoriesForDialog = async (
-    projectId: string, // Changed ProjectCategoryDialog to pass string ID back
+    projectId: string,
     updatedCategoryNames: string[]
   ) => {
     setIsSavingProjectCategories(true);
@@ -937,14 +931,20 @@ export default function ProjectsSection({
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Failed to update project categories"
-        );
+        throw new Error(errorData.message || "Failed to update project categories");
       }
+      
       toast.success("Project categories updated!");
-      if (onDataChange) onDataChange();
       setProjectCategoriesDialogOpen(false);
       setCurrentProjectForCategories(null);
+      
+      // Fetch fresh categories
+      await fetchCategories();
+      
+      // Update parent component
+      if (onDataChange) {
+        await onDataChange();
+      }
     } catch (error) {
       console.error(`Error saving categories for project ${projectId}:`, error);
       toast.error(`Updating categories failed: ${(error as Error).message}`);

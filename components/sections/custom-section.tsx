@@ -153,70 +153,6 @@ export default function CustomSection({
     }
   };
 
-  // Hàm xử lý khi layout thay đổi (thêm/sửa/xóa/sắp xếp lại các content blocks)
-  const handleLayoutChange = useCallback(async (title: string, rows: ContentRow[]) => {
-    // Tránh các lần gọi lại không cần thiết
-    if (isSavingLayout) return;
-    
-    setIsSavingLayout(true);
-    console.log("CustomSection: Layout changed, updating database...", rows);
-
-    try {
-      // 1. Chuyển đổi rows thành danh sách các content blocks cần cập nhật
-      const contentBlockUpdates: Array<{
-        id: string;
-        order: number;
-      }> = [];
-
-      // Tạo một danh sách mới từ các rows, với order được tính lại
-      const MAX_ITEMS_PER_ROW = 3;
-      rows.forEach((row, rowIndex) => {
-        row.items.forEach((item, itemIndex) => {
-          // Tính order mới dựa trên vị trí trong grid
-          const calculatedOrder = rowIndex * MAX_ITEMS_PER_ROW + itemIndex;
-          
-          // Chỉ cập nhật các block đã tồn tại trong database (có id không bắt đầu bằng kí tự ngẫu nhiên)
-          if (item.id && !item.id.startsWith('row-')) {
-            contentBlockUpdates.push({
-              id: item.id,
-              order: calculatedOrder,
-            });
-          }
-        });
-      });
-      
-      // 2. Cập nhật thứ tự vị trí của các blocks trong database
-      if (contentBlockUpdates.length > 0) {
-        // Sử dụng Promise.all để thực hiện các yêu cầu cập nhật đồng thời
-        await Promise.all(
-          contentBlockUpdates.map(async (update) => {
-            const response = await fetch(`/api/custom-section-content-blocks/${update.id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ order: update.order }),
-            });
-            
-            if (!response.ok) {
-              const errorData = await response.json();
-              console.error(`Failed to update block ${update.id} order:`, errorData);
-              // Chúng ta không ném lỗi ở đây để tiếp tục với các cập nhật khác
-            }
-          })
-        );
-      }
-      
-      // 3. Thông báo với component cha rằng dữ liệu đã thay đổi (để refresh dữ liệu nếu cần)
-      if (onDataChange) {
-        onDataChange();
-      }
-    } catch (error) {
-      console.error("Error updating content block layout:", error);
-      toast.error(`Failed to update layout: ${(error as Error).message}`);
-    } finally {
-      setIsSavingLayout(false);
-    }
-  }, [isSavingLayout, onDataChange]);
-
   // Thêm hàm xử lý cập nhật nội dung
   const handleContentUpdate = useCallback(async (blockId: string, newContent: string) => {
     try {
@@ -231,15 +167,62 @@ export default function CustomSection({
         throw new Error(errorData.message || "Failed to update content");
       }
 
-      // Gọi onDataChange sau khi cập nhật nội dung thành công
+      // Trigger re-fetch data from parent
       if (onDataChange) {
-        onDataChange();
+        await onDataChange();
       }
+
+      toast.success("Content updated successfully!");
     } catch (error) {
       console.error("Error updating content:", error);
       toast.error(`Failed to update content: ${(error as Error).message}`);
     }
   }, [onDataChange]);
+
+  // Thêm hàm xử lý cập nhật layout
+  const handleLayoutChange = useCallback(async (title: string, rows: ContentRow[]) => {
+    if (isSavingLayout) return;
+    
+    setIsSavingLayout(true);
+    
+    try {
+      // Cập nhật thứ tự vị trí của các blocks trong database
+      const MAX_ITEMS_PER_ROW = 3;
+      const contentBlockUpdates = rows.flatMap((row, rowIndex) =>
+        row.items.map((item, itemIndex) => ({
+          id: item.id,
+          order: rowIndex * MAX_ITEMS_PER_ROW + itemIndex,
+        }))
+      ).filter(update => !update.id.startsWith('row-'));
+
+      if (contentBlockUpdates.length > 0) {
+        await Promise.all(
+          contentBlockUpdates.map(async (update) => {
+            const response = await fetch(`/api/custom-section-content-blocks/${update.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ order: update.order }),
+            });
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error(`Failed to update block ${update.id} order:`, errorData);
+            }
+          })
+        );
+      }
+      
+      // Trigger re-fetch data from parent
+      if (onDataChange) {
+        await onDataChange();
+      }
+    } catch (error) {
+      console.error("Error updating content block layout:", error);
+      toast.error(`Failed to update layout: ${(error as Error).message}`);
+    } finally {
+      setIsSavingLayout(false);
+    }
+  }, [isSavingLayout, onDataChange]);
 
   // Function to transform PrismaCustomSectionContentBlock[] to ContentRow[]
   const transformContentBlocksToRows = (

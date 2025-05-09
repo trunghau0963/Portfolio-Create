@@ -732,22 +732,15 @@ export default function GridLayoutManager({
       return;
     }
 
-    // Chuẩn hóa type cho database (chữ hoa)
-    const databaseType = itemToEdit.type === "image" ? "IMAGE" : itemToEdit.type.toUpperCase();
-
     const apiPayload: any = {
-      type: itemToEdit.type.toLowerCase(), // Normalize to lowercase
+      type: itemToEdit.type.toLowerCase(),
       content: editItemContent,
-      // Only include styling if it's not an image type
       ...(itemToEdit.type !== "image" && {
         fontSize: Number.parseInt(editItemFontSize),
         fontWeight: editItemFontWeight,
         fontStyle: editItemFontStyle,
         textAlign: editItemTextAlign,
       }),
-      // If it's an image, we might want to update alt text here if the dialog supports it
-      // For now, imageSrc (content for image type) is handled by EditableImage and onGridImageSave
-      // alt: itemToEdit.type === "image" ? editItemAlt : undefined, // Assuming editItemAlt exists in state
     };
 
     try {
@@ -768,50 +761,22 @@ export default function GridLayoutManager({
         );
       }
 
-      const updatedBlockFromServer = await response.json();
-
-      // Update local state with data from server to ensure consistency
-      const updatedRows = rows.map((row, rIndex) => {
-        if (rIndex === currentRowIndex) {
-          return {
-            ...row,
-            items: row.items.map((item, iIndex) => {
-              if (iIndex === currentItemIndex) {
-                return {
-                  ...item, // Spread existing item properties first
-                  id: updatedBlockFromServer.id, // Ensure ID is from server
-                  type: updatedBlockFromServer.type as ContentItemType,
-                  content: updatedBlockFromServer.type === 'IMAGE' ? (updatedBlockFromServer.imageSrc || '') : (updatedBlockFromServer.content || ''),
-                  fontSize: updatedBlockFromServer.fontSize,
-                  fontWeight: updatedBlockFromServer.fontWeight,
-                  fontStyle: updatedBlockFromServer.fontStyle,
-                  textAlign: updatedBlockFromServer.textAlign as ContentItem['textAlign'],
-                  alt: updatedBlockFromServer.imageAlt || item.alt, // Preserve existing alt or use from server
-                  imagePublicId: updatedBlockFromServer.imagePublicId, // Use from server
-                };
-              }
-              return item;
-            }),
-          };
-        }
-        return row;
-      });
-
-      setRows(updatedRows);
-      toast.success("Content updated successfully!");
-
+      // Close dialog first
       setEditItemDialogOpen(false);
       setItemToEdit(null);
       setCurrentRowIndex(null);
       setCurrentItemIndex(null);
 
+      // Then notify parent to trigger re-fetch and re-render
       if (onLayoutChange) {
-        onLayoutChange(title, updatedRows);
+        await onLayoutChange(title, rows);
       }
+
+      // Show success message
+      toast.success("Content updated successfully!");
     } catch (error) {
       console.error("Error updating item via API:", error);
       toast.error(`Update failed: ${(error as Error).message}`);
-      // Dialog can remain open for user to retry or cancel, or you can choose to close it.
     }
   };
 
@@ -920,28 +885,66 @@ export default function GridLayoutManager({
     const handleGridItemImageUpload = async (itemId: string, cloudinaryData: { public_id: string; secure_url: string; }) => {
       if (onGridImageSave) {
         try {
-          // Call the callback passed from CustomSection (which is handleSaveImageBlock)
           await onGridImageSave(itemId, { 
             src: cloudinaryData.secure_url, 
-            imagePublicId: cloudinaryData.public_id, 
-            // alt: item.alt // Alt is managed by the edit dialog for now, or could be passed if EditableImage returns it
+            imagePublicId: cloudinaryData.public_id,
           });
-          
-          // Optimistically update the local state for immediate UI feedback
-          setRows(prevRows => 
-            prevRows.map(row => ({
-              ...row,
-              items: row.items.map(i => 
-                i.id === itemId 
-                  ? { ...i, content: cloudinaryData.secure_url, imagePublicId: cloudinaryData.public_id } 
-                  : i
-              ),
-            }))
-          );
         } catch (error) {
           console.error("Error saving grid image item:", error);
-          // Potentially show a toastr error message here
+          toast.error("Failed to save image");
         }
+      }
+    };
+
+    // Handler for text content updates
+    const handleTextUpdate = async (newContent: string) => {
+      try {
+        const response = await fetch(
+          `/api/custom-section-content-blocks/${item.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              content: newContent,
+              type: item.type.toLowerCase(),
+              fontSize: item.fontSize,
+              fontWeight: item.fontWeight,
+              fontStyle: item.fontStyle,
+              textAlign: item.textAlign,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to update content");
+        }
+
+        // Update local state
+        const updatedRows = rows.map((row, rIndex) => {
+          if (rIndex === rowIndex) {
+            return {
+              ...row,
+              items: row.items.map((i, iIndex) => {
+                if (iIndex === itemIndex) {
+                  return { ...i, content: newContent };
+                }
+                return i;
+              }),
+            };
+          }
+          return row;
+        });
+        setRows(updatedRows);
+
+        // Notify parent
+        if (onLayoutChange) {
+          onLayoutChange(title, updatedRows);
+        }
+
+        toast.success("Content updated successfully!");
+      } catch (error) {
+        console.error("Error updating content:", error);
+        toast.error(`Failed to update content: ${(error as Error).message}`);
       }
     };
 
@@ -954,8 +957,8 @@ export default function GridLayoutManager({
               as="h2"
               className="font-bold tracking-tighter leading-tight"
               initialFontSize={item.fontSize}
-              onCommitText={(newText) => updateItemContent(rowIndex, itemIndex, newText)}
-              isLockButton={true}
+              blockId={item.id}
+              onCommitText={(blockId, newContent) => handleTextUpdate(newContent)}
             />
           );
         case "text":
@@ -964,9 +967,9 @@ export default function GridLayoutManager({
               initialText={item.content}
               as="p"
               className="mb-0"
-              initialFontSize={item.fontSize} 
-              onCommitText={(newText) => updateItemContent(rowIndex, itemIndex, newText)}
-              isLockButton={true}
+              initialFontSize={item.fontSize}
+              blockId={item.id}
+              onCommitText={(blockId, newContent) => handleTextUpdate(newContent)}
             />
           );
         case "image":
@@ -995,17 +998,6 @@ export default function GridLayoutManager({
 
           {isAdmin && (
             <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
-              {item.type !== "image" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => openEditItemDialog(rowIndex, itemIndex)}
-                  className="h-8 w-8 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800"
-                  title="Edit item"
-                >
-                  <Edit size={14} />
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="icon"
