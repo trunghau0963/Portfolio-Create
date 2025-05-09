@@ -29,12 +29,31 @@ import {
   AlertCircle,
   Layers,
   Loader2,
+  GripVertical,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/auth-context";
 import { useSections, type AppSection } from "@/context/section-context";
 import { useSettings } from "@/context/settings-context";
 import { toast } from "sonner";
+
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // Define section types
 export type SectionType =
@@ -49,6 +68,100 @@ export type SectionType =
   | "custom";
 
 interface SectionManagerProps {}
+
+// SortableItem component
+function SortableSectionItem({
+  section,
+  isTogglingVisibility,
+  toggleSectionVisibility,
+  openEditSection,
+  confirmDeleteSection,
+}: {
+  section: AppSection;
+  isTogglingVisibility: string | null;
+  toggleSectionVisibility: (section: AppSection) => void;
+  openEditSection: (section: AppSection) => void;
+  confirmDeleteSection: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined, // Ensure dragging item is on top
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className={`flex items-center justify-between p-3 border rounded-md ${
+        section.visible
+          ? "bg-white dark:bg-gray-800"
+          : "bg-gray-100 dark:bg-gray-700 opacity-70"
+      } ${isDragging ? "shadow-xl scale-105" : "shadow-sm"}`}
+    >
+      <div className="flex items-center space-x-3">
+        <button
+          {...listeners} // Spread listeners for drag handle
+          className="cursor-grab touch-none p-1"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical size={18} className="text-gray-400 dark:text-gray-500" />
+        </button>
+        <div className="w-3 h-3 rounded-full bg-gray-400 dark:bg-gray-500" />
+        <div className="font-medium text-gray-900 dark:text-gray-100">
+          {section.title}
+        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          ({section.type})
+        </div>
+      </div>
+      <div className="flex items-center space-x-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => toggleSectionVisibility(section)}
+          title={section.visible ? "Hide section" : "Show section"}
+          disabled={isTogglingVisibility === section.id}
+        >
+          {isTogglingVisibility === section.id ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : section.visible ? (
+            <Eye size={16} />
+          ) : (
+            <EyeOff size={16} className="text-gray-400" />
+          )}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => openEditSection(section)}
+          title="Edit section"
+        >
+          <Settings size={16} />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => confirmDeleteSection(section.id)}
+          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/50"
+          title="Delete section"
+        >
+          <Trash2 size={16} />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function SectionManager({}: SectionManagerProps) {
   const { user } = useAuth();
@@ -92,6 +205,20 @@ export default function SectionManager({}: SectionManagerProps) {
   const [isDeletingSection, setIsDeletingSection] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
 
+  // Sensors for dnd-kit
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        // Small delay to allow clicking buttons within the draggable item
+        delay: 100,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const [selectedFont, setSelectedFont] = useState<string>("");
   const [isSavingFont, setIsSavingFont] = useState(false);
 
@@ -132,45 +259,44 @@ export default function SectionManager({}: SectionManagerProps) {
 
   const handleReorder = async (newOrderedSections: AppSection[]) => {
     setIsReordering(true);
-    const orderedIds = newOrderedSections.map(s => s.id);
+    const orderedIds = newOrderedSections.map((s) => s.id);
     try {
       await contextReorderSections(orderedIds);
+      // No toast here, contextReorderSections should handle it or handleDragEnd will
     } catch (error) {
       console.error("Error reordering sections (SectionManager):", error);
+      toast.error("Failed to save new section order."); // Toast on failure
+      // Potentially revert optimistic update if contextReorderSections doesn't
     } finally {
       setIsReordering(false);
     }
   };
 
-  const moveSectionUp = (sectionId: string) => {
-    const currentIndex = contextSections.findIndex((s) => s.id === sectionId);
-    if (currentIndex > 0) {
-      const newSections = Array.from(contextSections);
-      const sectionToMove = newSections[currentIndex];
-      const sectionToSwap = newSections[currentIndex - 1];
-      newSections[currentIndex] = sectionToSwap;
-      newSections[currentIndex - 1] = sectionToMove;
-      const updatedSectionsWithNewOrder = newSections.map((s, index) => ({
-        ...s,
-        order: index,
-      }));
-      handleReorder(updatedSectionsWithNewOrder as AppSection[]);
-    }
-  };
+  // Removed moveSectionUp and moveSectionDown functions
 
-  const moveSectionDown = (sectionId: string) => {
-    const currentIndex = contextSections.findIndex((s) => s.id === sectionId);
-    if (currentIndex < contextSections.length - 1 && currentIndex !== -1) {
-      const newSections = Array.from(contextSections);
-      const sectionToMove = newSections[currentIndex];
-      const sectionToSwap = newSections[currentIndex + 1];
-      newSections[currentIndex] = sectionToSwap;
-      newSections[currentIndex + 1] = sectionToMove;
-      const updatedSectionsWithNewOrder = newSections.map((s, index) => ({
-        ...s,
-        order: index,
-      }));
-      handleReorder(updatedSectionsWithNewOrder as AppSection[]);
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = contextSections.findIndex((s) => s.id === active.id);
+      const newIndex = contextSections.findIndex((s) => s.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedForContext = arrayMove(
+          contextSections,
+          oldIndex,
+          newIndex
+        );
+        // Optimistically update UI in SectionManager state if needed,
+        // or rely on SectionProvider to update and re-render.
+        // For now, we let SectionProvider handle the state update after API call.
+        const updatedSectionsWithNewOrder = reorderedForContext.map(
+          (s, index) => ({
+            ...s,
+            order: index,
+          })
+        );
+        handleReorder(updatedSectionsWithNewOrder as AppSection[]);
+      }
     }
   };
 
@@ -352,114 +478,29 @@ export default function SectionManager({}: SectionManagerProps) {
             </div>
 
             <div className="space-y-4">
-              {contextSections
-                .sort((a, b) => a.order - b.order)
-                .map((section) => (
-                  <div
-                    key={section.id}
-                    className={`flex items-center justify-between p-3 border rounded-md ${
-                      section.visible
-                        ? "bg-white dark:bg-gray-800"
-                        : "bg-gray-100 dark:bg-gray-700 opacity-70"
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 rounded-full bg-gray-400 dark:bg-gray-500" />
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        {section.title}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        ({section.type})
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => toggleSectionVisibility(section)}
-                        title={
-                          section.visible ? "Hide section" : "Show section"
-                        }
-                        disabled={isTogglingVisibility === section.id}
-                      >
-                        {isTogglingVisibility === section.id ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : section.visible ? (
-                          <Eye size={16} />
-                        ) : (
-                          <EyeOff size={16} className="text-gray-400" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => moveSectionUp(section.id)}
-                        disabled={
-                          isReordering ||
-                          section.order === 0 ||
-                          contextSections.length <= 1
-                        }
-                        title="Move up"
-                      >
-                        {isReordering &&
-                        (contextSections.findIndex(
-                          (s) => s.id === section.id
-                        ) === section.order ||
-                          contextSections.findIndex(
-                            (s) => s.id === section.id
-                          ) -
-                            1 ===
-                            section.order) ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <ArrowUp size={16} />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => moveSectionDown(section.id)}
-                        disabled={
-                          isReordering ||
-                          section.order === contextSections.length - 1 ||
-                          contextSections.length <= 1
-                        }
-                        title="Move down"
-                      >
-                        {isReordering &&
-                        (contextSections.findIndex(
-                          (s) => s.id === section.id
-                        ) === section.order ||
-                          contextSections.findIndex(
-                            (s) => s.id === section.id
-                          ) +
-                            1 ===
-                            section.order) ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <ArrowDown size={16} />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditSection(section)}
-                        title="Edit section"
-                      >
-                        <Settings size={16} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => confirmDeleteSection(section.id)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/50"
-                        title="Delete section"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={contextSections.map((s) => s.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {contextSections
+                    .sort((a, b) => a.order - b.order) // Keep sorting by order for initial render
+                    .map((section) => (
+                      <SortableSectionItem
+                        key={section.id}
+                        section={section}
+                        isTogglingVisibility={isTogglingVisibility}
+                        toggleSectionVisibility={toggleSectionVisibility}
+                        openEditSection={openEditSection}
+                        confirmDeleteSection={confirmDeleteSection}
+                      />
+                    ))}
+                </SortableContext>
+              </DndContext>
             </div>
 
             <div className="mt-6 flex justify-center">
