@@ -132,10 +132,10 @@ function SortableEducationItem({
         }
       }}
     >
-      <div className="grid grid-cols-12 gap-2 items-center py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-start py-4 px-3 border-b border-gray-200 dark:border-gray-700 space-x-3">
         {isAdmin && (
           <div
-            className="col-span-1 sortable-handle cursor-grab active:cursor-grabbing"
+            className="sortable-handle cursor-grab active:cursor-grabbing pt-1 flex-shrink-0"
             {...attributes}
             {...listeners}
           >
@@ -143,70 +143,94 @@ function SortableEducationItem({
           </div>
         )}
 
-        <div
-          className={
-            isAdmin ? "col-span-5 md:col-span-6" : "col-span-8 md:col-span-9"
-          }
-        >
-          <div className="font-bold uppercase">{item.institution}</div>
+        <div className="flex-grow min-w-0">
+          <div className={`font-bold uppercase text-lg md:text-xl ${!isAdmin ? 'cursor-pointer' : ''}`}>{item.institution}</div>
+          {item.degree && (
+            <p className="text-lg text-gray-700 dark:text-gray-300 mt-0.5">
+              {item.degree}
+            </p>
+          )}
+          {item.description && (
+            <p className="text-md text-gray-500 dark:text-gray-400 mt-1 truncate">
+              {item.description}
+            </p>
+          )}
         </div>
 
-        <div className="col-span-3 md:col-span-2 text-right">
-          <div className="text-sm italic">{item.period}</div>
-        </div>
+        <div className="flex flex-col items-end space-y-1 ml-auto flex-shrink-0">
+          <div className="text-xl italic whitespace-nowrap text-gray-500 dark:text-gray-400">
+            {item.period}
+          </div>
+          {isAdmin && (
+            <div className="flex items-center space-x-0.5 mt-1">
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-400 hover:text-blue-600 hover:bg-transparent h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewDetails(item.id);
+                  }}
+                  title="Edit Details"
+                >
+                  <Pencil size={14} />
+                </Button>
+              </motion.div>
 
-        {isAdmin && (
-          <div className="col-span-3 flex justify-end space-x-1">
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-gray-400 hover:text-blue-600 hover:bg-transparent"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewDetails(item.id);
-                }}
-                title="Edit Details"
-              >
-                <Pencil size={16} />
-              </Button>
-            </motion.div>
-
-            <CldUploadWidget
-              uploadPreset={
-                process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
-                "portfolio_unsigned"
-              }
-              options={{
-                sources: ["local", "url"],
-                multiple: false,
-                folder: "education_details",
-                clientAllowedFormats: ["png", "jpeg", "jpg", "gif", "webp"],
-              }}
-              onSuccess={(results) => {
-                onDirectImageUpload(results, item.id);
-                setIsAddingImageForItemDirectly(null);
-              }}
-              onUpload={() => setIsAddingImageForItemDirectly(item.id)}
-              onError={(error) => {
-                console.error("Direct upload error:", error);
-                let message = "Unknown upload error";
-                if (
-                  typeof error === "object" &&
-                  error !== null &&
-                  "message" in error &&
-                  typeof error.message === "string"
-                ) {
-                  message = error.message;
-                } else if (typeof error === "string") {
-                  message = error;
+              <CldUploadWidget
+                uploadPreset={
+                  process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
+                  "portfolio_unsigned"
                 }
-                toast.error(`Direct upload failed: ${message}`);
-                setIsAddingImageForItemDirectly(null);
-              }}
-            >
-              {(widgetApi) => {
-                if (!widgetApi || typeof widgetApi.open !== "function") {
+                options={{
+                  sources: ["local", "url"],
+                  multiple: false,
+                  folder: "education_details",
+                  clientAllowedFormats: ["png", "jpeg", "jpg", "gif", "webp"],
+                }}
+                onSuccess={(results) => {
+                  onDirectImageUpload(results, item.id);
+                  setIsAddingImageForItemDirectly(null);
+                }}
+                onUpload={() => setIsAddingImageForItemDirectly(item.id)}
+                onError={(error) => {
+                  console.error("Direct upload error:", error);
+                  let message = "Unknown upload error";
+                  if (
+                    typeof error === "object" &&
+                    error !== null &&
+                    "message" in error &&
+                    typeof error.message === "string"
+                  ) {
+                    message = error.message;
+                  } else if (typeof error === "string") {
+                    message = error;
+                  }
+                  toast.error(`Direct upload failed: ${message}`);
+                  setIsAddingImageForItemDirectly(null);
+                }}
+              >
+                {(widgetApi) => {
+                  if (!widgetApi || typeof widgetApi.open !== "function") {
+                    return (
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-gray-400 h-7 w-7"
+                          disabled={true}
+                          title="Upload Detail Image (Initializing...)"
+                        >
+                          <Loader2 className="animate-spin" size={14} />
+                        </Button>
+                      </motion.div>
+                    );
+                  }
+                  const { open } = widgetApi;
                   return (
                     <motion.div
                       whileHover={{ scale: 1.1 }}
@@ -215,74 +239,57 @@ function SortableEducationItem({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400"
-                        disabled={true}
-                        title="Upload Detail Image (Initializing...)"
+                        className="text-gray-400 hover:text-green-600 hover:bg-transparent h-7 w-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          open();
+                        }}
+                        disabled={isAddingImageForItem === item.id}
+                        title="Upload Detail Image"
                       >
-                        <Loader2 className="animate-spin" size={16} />
+                        {isAddingImageForItem === item.id ? (
+                          <Loader2 className="animate-spin" size={14} />
+                        ) : (
+                          <Images size={14} />
+                        )}
                       </Button>
                     </motion.div>
                   );
-                }
-                const { open } = widgetApi;
-                return (
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-green-600 hover:bg-transparent"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        open();
-                      }}
-                      disabled={isAddingImageForItem === item.id}
-                      title="Upload Detail Image"
-                    >
-                      {isAddingImageForItem === item.id ? (
-                        <Loader2 className="animate-spin" size={16} />
-                      ) : (
-                        <Images size={16} />
-                      )}
-                    </Button>
-                  </motion.div>
-                );
-              }}
-            </CldUploadWidget>
-
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-gray-400 hover:text-purple-600 hover:bg-transparent"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onManageImages(item.id);
                 }}
-                title="Manage All Detail Images"
-              >
-                <GalleryHorizontal size={16} />
-              </Button>
-            </motion.div>
+              </CldUploadWidget>
 
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-gray-400 hover:text-red-600 hover:bg-transparent"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  confirmDelete(item.id);
-                }}
-                title="Delete Item"
-              >
-                <Trash2 size={16} />
-              </Button>
-            </motion.div>
-          </div>
-        )}
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-400 hover:text-purple-600 hover:bg-transparent h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onManageImages(item.id);
+                  }}
+                  title="Manage All Detail Images"
+                >
+                  <GalleryHorizontal size={14} />
+                </Button>
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-400 hover:text-red-600 hover:bg-transparent h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    confirmDelete(item.id);
+                  }}
+                  title="Delete Item"
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </motion.div>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -866,10 +873,9 @@ export default function EducationSection({
                   </div>
 
                   {/* Image display for non-admins */}
-                  {!isAdmin &&
-                    currentEducation &&
+                  {currentEducation &&
                     currentEducation.images &&
-                    currentEducation.images.length > 0 && (
+                    currentEducation.images.length > 1 && (
                       <div className="mt-4">
                         <h4 className="text-md font-semibold mb-2">
                           Associated Images:
@@ -896,14 +902,6 @@ export default function EducationSection({
                           ))}
                         </div>
                       </div>
-                    )}
-                  {!isAdmin &&
-                    currentEducation &&
-                    (!currentEducation.images ||
-                      currentEducation.images.length === 0) && (
-                      <p className="text-sm text-gray-500 mt-2">
-                        No associated images.
-                      </p>
                     )}
 
                   {isAdmin && (

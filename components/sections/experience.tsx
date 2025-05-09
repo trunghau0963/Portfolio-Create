@@ -961,113 +961,112 @@ export default function ExperienceSection({
                     </div>
                   )}
 
-                  {/* Project Images Section */}
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-semibold">Project Images</h3>
-                      {isAdmin && (
-                        <CldUploadWidget
-                          uploadPreset="portfolio_unsigned"
-                          options={{
-                            sources: ["local", "url"],
-                            multiple: true,
-                            folder: "experience_details",
-                          }}
-                          onSuccess={(results) => handleUploadedExperienceDetailImage(currentExperience.id, results)}
-                          onUpload={() => setIsAddingImage(true)}
-                          onError={(error) => {
-                            const errorMessage =
-                              typeof error === "object" &&
-                              error !== null &&
-                              "message" in error
-                                ? String(error.message)
-                                : typeof error === "string"
-                                ? error
-                                : "Unknown upload error";
-                            toast.error(`Upload failed: ${errorMessage}`);
-                            setIsAddingImage(false);
-                          }}
-                        >
-                          {({ open }) => (
-                            <motion.div
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-1"
-                                onClick={() => open && open()}
-                                disabled={isAddingImage}
-                              >
-                                {isAddingImage ? (
-                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                                ) : (
-                                  <ImagePlus size={14} />
-                                )}
-                                {isAddingImage ? "Uploading..." : "Add Images"}
-                              </Button>
-                            </motion.div>
-                          )}
-                        </CldUploadWidget>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <AnimatePresence>
-                        {currentExperience.detailImages.map((image, index) => (
-                          <motion.div
-                            key={image.id}
-                            className="relative group aspect-video"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.3 }}
-                            whileHover={{ scale: 1.03 }}
+                  {/* Project Images Section - Conditionally render the entire block */}
+                  {currentExperience && 
+                   currentExperience.detailImages && 
+                   currentExperience.detailImages.length > 1 && (
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-semibold">Project Images</h3>
+                        {isAdmin && (
+                          <CldUploadWidget
+                            uploadPreset="portfolio_unsigned"
+                            options={{
+                              sources: ["local", "url"],
+                              multiple: true,
+                              folder: "experience_details",
+                            }}
+                            onSuccess={(results) => handleUploadedExperienceDetailImage(currentExperience.id, results)}
+                            onUpload={() => setIsAddingImage(true)}
+                            onError={(error) => {
+                              const errorMessage =
+                                typeof error === "object" &&
+                                error !== null &&
+                                "message" in error
+                                  ? String(error.message)
+                                  : typeof error === "string"
+                                  ? error
+                                  : "Unknown upload error";
+                              toast.error(`Upload failed: ${errorMessage}`);
+                              setIsAddingImage(false);
+                            }}
                           >
-                            <Image
-                              src={image.src || "https://picsum.photos/600/400"}
-                              alt={
-                                image.alt ||
-                                `${currentExperience.positionTitle} detail ${
-                                  index + 1
-                                }`
-                              }
-                              width={600}
-                              height={400}
-                              className="w-full h-full object-cover rounded-md shadow-md"
-                            />
-                            {isAdmin && (
+                            {({ open }) => (
                               <motion.div
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                               >
                                 <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
-                                  onClick={() => deleteDetailImage(String(image.id))}
-                                  disabled={isDeletingDetailImageId === String(image.id)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex items-center gap-1"
+                                  onClick={() => open && open()}
+                                  disabled={isAddingImage}
                                 >
-                                  {isDeletingDetailImageId === String(image.id) ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  {isAddingImage ? (
+                                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
                                   ) : (
-                                    <X size={14} />
+                                    <ImagePlus size={14} />
                                   )}
-                                  <span className="sr-only">Remove image</span>
+                                  {isAddingImage ? "Uploading..." : "Add Images"}
                                 </Button>
                               </motion.div>
                             )}
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                      {currentExperience.detailImages.length === 0 && (
-                        <div className="col-span-2 text-center py-8 border border-dashed rounded-md text-gray-400">
-                          No project images available
-                        </div>
-                      )}
+                          </CldUploadWidget>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <AnimatePresence>
+                          {currentExperience.detailImages.map((image, index) => (
+                            <motion.div
+                              key={image.id}
+                              className="relative group aspect-video"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              transition={{ duration: 0.3 }}
+                              whileHover={{ scale: 1.03 }}
+                            >
+                              <Image
+                                src={image.src || "https://picsum.photos/600/400"}
+                                alt={
+                                  image.alt ||
+                                  `${currentExperience.positionTitle} detail ${
+                                    index + 1
+                                  }`
+                                }
+                                width={600}
+                                height={400}
+                                className="w-full h-full object-cover rounded-md shadow-md"
+                              />
+                              {isAdmin && (
+                                <motion.div
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
+                                    onClick={() => deleteDetailImage(String(image.id))}
+                                    disabled={isDeletingDetailImageId === String(image.id)}
+                                  >
+                                    {isDeletingDetailImageId === String(image.id) ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <X size={14} />
+                                    )}
+                                    <span className="sr-only">Remove image</span>
+                                  </Button>
+                                </motion.div>
+                              )}
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Save Button for Admin */}
                   {isAdmin && (
