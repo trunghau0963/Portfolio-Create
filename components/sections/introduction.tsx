@@ -169,14 +169,14 @@ export default function IntroductionSection({
           {/* Main Image Block Column */}
           <div className="lg:col-span-1">
             <AnimatedSection variant="zoomIn" delay={0.7}>
-              <div className="mt-4 relative w-full aspect-[8/9] overflow-hidden rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+              <div className="mt-4 relative w-4/5 mx-auto aspect-[3/4] overflow-hidden rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
                 {mainImageBlock ? (
                   <EditableImage
                     key={mainImageBlock.id}
                     src={mainImageBlock.src || "/images/placeholder-introduction.png"}
                     alt={mainImageBlock.alt || "Introduction portrait"}
-                    width={400}
-                    height={450}
+                    width={300}
+                    height={400}
                     className="w-full h-full object-cover"
                     onImageUploaded={(imageData) =>
                       handleUploadedImageSave(
@@ -209,7 +209,7 @@ export default function IntroductionSection({
           </div>
         </div>
 
-        <AnimatedSection variant="fadeInUp" delay={0.7} className="mt-12">
+        <AnimatedSection variant="fadeInUp" delay={0.7} className="mt-6">
           <ResumeManager />
         </AnimatedSection>
       </div>
