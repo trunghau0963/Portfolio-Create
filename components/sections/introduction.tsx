@@ -25,6 +25,7 @@ import {
   ImageBlock as PrismaImageBlock,
 } from "../../lib/generated/prisma";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 interface IntroductionSectionProps {
   section: PrismaSection & {
@@ -71,31 +72,37 @@ export default function IntroductionSection({
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to save text block");
       }
+      toast.success("Text block saved!");
       onDataChange();
     } catch (error) {
       console.error("Error in handleSaveTextBlock:", error);
-      throw error;
+      toast.error(`Failed to save text: ${(error as Error).message}`);
     }
   };
 
-  const handleSaveImageBlock = async (
+  const handleUploadedImageSave = async (
     blockId: string,
-    data: { src?: string; alt?: string }
+    imageData: { public_id: string; secure_url: string }
   ) => {
     try {
+      const payload = {
+        src: imageData.secure_url,
+        imagePublicId: imageData.public_id,
+      };
       const res = await fetch(`/api/imageblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to save image block");
       }
+      toast.success("Image block saved!");
       onDataChange();
     } catch (error) {
-      console.error("Error in handleSaveImageBlock:", error);
-      throw error;
+      console.error("Error in handleUploadedImageSave:", error);
+      toast.error(`Failed to save image: ${(error as Error).message}`);
     }
   };
 
@@ -165,22 +172,33 @@ export default function IntroductionSection({
                     <EditableImage
                       key={mainImageBlock.id}
                       src={mainImageBlock.src || ""}
-                      alt={mainImageBlock.alt || "Introduction image"}
+                      alt={mainImageBlock.alt || "Introduction portrait"}
                       width={400}
-                      height={300}
-                      // onSave={handleSaveImageBlock}
-                      // isAdmin={isAdmin}
+                      height={450}
                       className="w-full h-auto object-cover rounded-md shadow-md hover:shadow-lg transition-shadow duration-300"
+                      onImageUploaded={(imageData) =>
+                        handleUploadedImageSave(
+                          String(mainImageBlock.id),
+                          imageData
+                        )
+                      }
+                      uploadPreset="portfolio_unsigned"
                     />
                   ) : (
-                    <div className="w-full h-[300px] bg-gray-200 rounded-md flex items-center justify-center">
-                      <span className="text-gray-400 text-sm">
-                        No image available
-                      </span>
-                    </div>
+                    isAdmin && (
+                      <div className="w-full h-[300px] bg-gray-200 rounded-md flex flex-col items-center justify-center text-center p-4">
+                        <p className="text-gray-500 text-sm mb-2">
+                          No portrait image set for this intro section.
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          (Admins can add an ImageBlock via Section Manager or
+                          directly in DB)
+                        </p>
+                      </div>
+                    )
                   )}
                   {mainImageBlock?.caption && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
                       {mainImageBlock.caption}
                     </p>
                   )}

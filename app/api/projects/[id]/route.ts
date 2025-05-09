@@ -1,6 +1,30 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
+// Helper to delete Cloudinary image
+async function deleteCloudinaryImage(publicId: string) {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.destroy(publicId, (error, result) => {
+      if (error) {
+        console.error(`Cloudinary delete error for ${publicId}:`, error);
+        reject(error);
+      } else {
+        console.log(`Cloudinary delete result for ${publicId}:`, result);
+        resolve(result);
+      }
+    });
+  });
+}
 
 interface RouteParams {
   id: string;
@@ -14,58 +38,96 @@ export async function PUT(
   const { id } = params;
   try {
     const body = await request.json();
-
-    // Explicitly list fields that can be updated for safety
-    // Add other fields from ProjectItem model as needed
+    // Destructure all potential fields from body
     const {
       title,
       description1,
       description2,
       imageSrc,
-      imageAlt, // Include if added to schema, otherwise remove
+      imagePublicId,
       layout,
       projectNumber,
       companyName,
       liveLink,
       sourceLink,
-      categoryIds, // Array of category IDs to connect/set
+      categoryIds,
     } = body;
 
-    // Type for updateData - adjust based on actual schema (nullable/required)
+    // Type for updateData - Explicitly define allowed fields
     type ProjectUpdateData = {
       title?: string;
       description1?: string;
-      description2?: string;
+      description2?: string | null; // Allow null for optional fields
       imageSrc?: string;
-      imageAlt?: string; // Include if added to schema
+      imagePublicId?: string;
       layout?: string;
-      projectNumber?: string;
-      companyName?: string;
-      liveLink?: string;
-      sourceLink?: string;
+      projectNumber?: string | null;
+      companyName?: string | null;
+      liveLink?: string | null;
+      sourceLink?: string | null;
       categoryIds?: string[];
     };
 
     const updateData: ProjectUpdateData = {};
 
+    // Assign values only if they are defined in the body
     if (title !== undefined) updateData.title = String(title);
     if (description1 !== undefined)
       updateData.description1 = String(description1);
     if (description2 !== undefined)
-      updateData.description2 = String(description2);
+      updateData.description2 =
+        description2 === null ? null : String(description2);
     if (imageSrc !== undefined) updateData.imageSrc = String(imageSrc);
-    // if (imageAlt !== undefined) updateData.imageAlt = String(imageAlt); // Include if added to schema
+    if (imagePublicId !== undefined)
+      updateData.imagePublicId = String(imagePublicId);
     if (layout !== undefined && (layout === "layout1" || layout === "layout2"))
       updateData.layout = layout;
     if (projectNumber !== undefined)
-      updateData.projectNumber = String(projectNumber);
-    if (companyName !== undefined) updateData.companyName = String(companyName);
-    if (liveLink !== undefined) updateData.liveLink = String(liveLink);
-    if (sourceLink !== undefined) updateData.sourceLink = String(sourceLink);
-    if (categoryIds !== undefined && Array.isArray(categoryIds)) {
+      updateData.projectNumber =
+        projectNumber === null ? null : String(projectNumber);
+    if (companyName !== undefined)
+      updateData.companyName =
+        companyName === null ? null : String(companyName);
+    if (liveLink !== undefined)
+      updateData.liveLink = liveLink === null ? null : String(liveLink);
+    if (sourceLink !== undefined)
+      updateData.sourceLink = sourceLink === null ? null : String(sourceLink);
+
+    // Validate and assign categoryIds
+    if (categoryIds !== undefined) {
+      if (!Array.isArray(categoryIds)) {
+        return NextResponse.json(
+          { message: "categoryIds must be an array." },
+          { status: 400 }
+        );
+      }
+      // Filter out non-string category IDs
       updateData.categoryIds = categoryIds.filter(
         (catId) => typeof catId === "string"
       );
+    }
+
+    // Handle image update logic
+    let oldPublicId: string | null = null;
+    if (updateData.imageSrc || updateData.imagePublicId) {
+      const existingProject = await prisma.projectItem.findUnique({
+        where: { id: String(id) },
+        select: { imagePublicId: true },
+      });
+      if (existingProject?.imagePublicId) {
+        oldPublicId = existingProject.imagePublicId;
+      }
+      // Ensure imagePublicId is provided if imageSrc is changing
+      if (updateData.imageSrc && updateData.imagePublicId === undefined) {
+        return NextResponse.json(
+          { message: "imagePublicId is required when updating imageSrc." },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Prevent accidental clearing if not provided
+      delete updateData.imageSrc;
+      delete updateData.imagePublicId;
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -77,8 +139,20 @@ export async function PUT(
 
     const updatedProject = await prisma.projectItem.update({
       where: { id: String(id) },
-      data: updateData, // Prisma handles partial updates
+      data: updateData,
     });
+
+    // Delete old image from Cloudinary if necessary
+    if (oldPublicId && oldPublicId !== updatedProject.imagePublicId) {
+      try {
+        await deleteCloudinaryImage(oldPublicId);
+      } catch (cloudinaryError) {
+        console.error(
+          `Failed to delete old Cloudinary image ${oldPublicId}:`,
+          cloudinaryError
+        );
+      }
+    }
 
     return NextResponse.json(updatedProject);
   } catch (error) {
@@ -127,9 +201,48 @@ export async function DELETE(
 ) {
   const { id } = params;
   try {
+    // 1. Find project to get imagePublicId
+    const projectToDelete = await prisma.projectItem.findUnique({
+      where: { id: String(id) },
+      select: { imagePublicId: true, categoryIds: true }, // Also get categoryIds
+    });
+
+    // 2. Remove project ID from associated Categories
+    if (projectToDelete?.categoryIds?.length) {
+      for (const categoryId of projectToDelete.categoryIds) {
+        await prisma.category.updateMany({
+          where: { id: categoryId },
+          data: {
+            projectIds: {
+              set: (
+                await prisma.category.findUnique({
+                  where: { id: categoryId },
+                  select: { projectIds: true },
+                })
+              )?.projectIds.filter((pId) => pId !== id),
+            },
+          },
+        });
+      }
+    }
+
+    // 3. Delete project from DB
     await prisma.projectItem.delete({
       where: { id: String(id) },
     });
+
+    // 4. Delete image from Cloudinary
+    if (projectToDelete?.imagePublicId) {
+      try {
+        await deleteCloudinaryImage(projectToDelete.imagePublicId);
+      } catch (cloudinaryError) {
+        console.error(
+          `Failed to delete Cloudinary image ${projectToDelete.imagePublicId}:`,
+          cloudinaryError
+        );
+      }
+    }
+
     return NextResponse.json(
       { message: `Project item ${id} deleted successfully.` },
       { status: 200 }

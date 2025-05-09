@@ -54,6 +54,10 @@ import {
   EducationItem as PrismaEducationItem,
   EducationImage as PrismaEducationImage,
 } from "../../lib/generated/prisma";
+import {
+  CldUploadWidget,
+  type CloudinaryUploadWidgetResults,
+} from "next-cloudinary";
 
 // Local UI EducationItem type
 interface EducationItem {
@@ -157,70 +161,6 @@ function SortableEducationItem({
         )}
       </div>
     </motion.div>
-  );
-}
-
-// Image Upload Component
-function ImageUploadArea({
-  onImageSelected,
-}: {
-  onImageSelected: (file: File) => void;
-}) {
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDraggingOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDraggingOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDraggingOver(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.type.startsWith("image/")) {
-        onImageSelected(file);
-      }
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      onImageSelected(e.target.files[0]);
-    }
-  };
-
-  return (
-    <div
-      className={`drag-drop-area ${isDraggingOver ? "dragging-over" : ""}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <input
-        type="file"
-        id="image-upload"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileChange}
-      />
-      <label htmlFor="image-upload" className="cursor-pointer">
-        <div className="flex flex-col items-center">
-          <Upload className="h-10 w-10 text-gray-400 mb-2" />
-          <p className="text-sm text-gray-500">
-            Click to select an image or drag and drop
-          </p>
-          <p className="text-xs text-gray-400 mt-2">
-            (For this demo, we'll use a random image if no file is selected)
-          </p>
-        </div>
-      </label>
-    </div>
   );
 }
 
@@ -476,50 +416,60 @@ export default function EducationSection({
     }
   };
 
-  const addEducationImage = async (file?: File) => {
+  const addEducationImage = async (results: CloudinaryUploadWidgetResults) => {
     if (!currentEducation) return;
-    setIsAddingImage(true);
 
-    let imageSrcForApi = `https://picsum.photos/600/400?random=edu_detail_${Date.now()}`;
-    if (file) {
-      console.warn(
-        "File selected, but using placeholder for API save. Implement actual file upload."
-      );
-    }
+    if (
+      results?.info &&
+      typeof results.info !== "string" &&
+      results.info.public_id
+    ) {
+      const { public_id, secure_url, original_filename } = results.info;
+      setIsAddingImage(true);
 
-    const imageData = {
-      educationItemId: currentEducation.id,
-      src: imageSrcForApi,
-      alt: `Detail image for ${currentEducation.institution}`,
-    };
+      const imageData = {
+        educationItemId: currentEducation.id,
+        src: secure_url,
+        alt:
+          original_filename ||
+          `Detail image for ${currentEducation.institution}`,
+        imagePublicId: public_id,
+      };
 
-    try {
-      const response = await fetch("/api/education-images", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(imageData),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to add education detail image");
+      try {
+        const response = await fetch("/api/education-images", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(imageData),
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.message || "Failed to add education detail image"
+          );
+        }
+        toast.success("Education image added!");
+        if (onDataChange) onDataChange();
+      } catch (error) {
+        console.error("Adding education image failed:", error);
+        toast.error(`Adding image failed: ${(error as Error).message}`);
+      } finally {
+        setIsAddingImage(false);
       }
-      toast.success("Education image added!");
-      if (onDataChange) {
-        onDataChange();
-      } else {
-        console.warn(
-          "addEducationImage: onDataChange not provided, UI might not reflect server state accurately."
-        );
-      }
-    } catch (error) {
-      console.error("Adding education image failed:", error);
-      toast.error(`Adding image failed: ${(error as Error).message}`);
-    } finally {
-      setIsAddingImage(false);
+    } else {
+      toast.error("Cloudinary upload failed or returned invalid data.");
+      console.error("Cloudinary upload error/invalid data:", results);
+      if (isAddingImage) setIsAddingImage(false);
     }
   };
 
   const deleteEducationImage = async (imageId: string) => {
     if (!currentEducation) return;
+    const imageToDelete = currentEducation.images.find(
+      (img) => img.id === imageId
+    );
+    if (!imageToDelete) return;
+
     setIsDeletingImageById(imageId);
 
     try {
@@ -533,13 +483,7 @@ export default function EducationSection({
         );
       }
       toast.success("Education image deleted!");
-      if (onDataChange) {
-        onDataChange();
-      } else {
-        console.warn(
-          "deleteEducationImage: onDataChange not provided, UI might not reflect server state accurately."
-        );
-      }
+      if (onDataChange) onDataChange();
     } catch (error) {
       console.error("Deleting education image failed:", error);
       toast.error(`Deleting image failed: ${(error as Error).message}`);
@@ -778,38 +722,56 @@ export default function EducationSection({
                   )}
 
                   <div>
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex justify-between items-center mb-4">
                       <h3 className="font-semibold">Education Images</h3>
                       {isAdmin && (
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
+                        <CldUploadWidget
+                          uploadPreset="portfolio_unsigned"
+                          options={{
+                            sources: ["local", "url"],
+                            multiple: true,
+                            folder: "education_details",
+                          }}
+                          onSuccess={(results) => addEducationImage(results)}
+                          onUpload={() => setIsAddingImage(true)}
+                          onError={(error) => {
+                            // Check if error is an object with a message property
+                            const errorMessage =
+                              typeof error === "object" &&
+                              error !== null &&
+                              "message" in error
+                                ? String(error.message)
+                                : typeof error === "string"
+                                  ? error
+                                  : "Unknown upload error";
+                            toast.error(`Upload failed: ${errorMessage}`);
+                            setIsAddingImage(false); // Reset loading state on error
+                          }}
                         >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-1"
-                            onClick={() => addEducationImage()}
-                            disabled={isAddingImage}
-                          >
-                            {isAddingImage ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            ) : (
-                              <ImagePlus size={14} />
-                            )}
-                            {isAddingImage ? "Adding..." : "Add Random Image"}
-                          </Button>
-                        </motion.div>
+                          {({ open }) => (
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-1"
+                                onClick={() => open && open()}
+                                disabled={isAddingImage}
+                              >
+                                {isAddingImage ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                ) : (
+                                  <ImagePlus size={14} />
+                                )}
+                                {isAddingImage ? "Uploading..." : "Add Images"}
+                              </Button>
+                            </motion.div>
+                          )}
+                        </CldUploadWidget>
                       )}
                     </div>
-
-                    {isAdmin && (
-                      <div className="mb-4">
-                        <ImageUploadArea
-                          onImageSelected={(file) => addEducationImage(file)}
-                        />
-                      </div>
-                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <AnimatePresence>

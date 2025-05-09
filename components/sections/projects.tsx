@@ -16,6 +16,10 @@ import {
   Tag,
   Plus,
   Loader2,
+  Image as LucideImageIcon,
+  ImagePlus,
+  UploadCloud,
+  Pencil,
 } from "lucide-react";
 import {
   Dialog,
@@ -59,6 +63,10 @@ import {
 import EditableTextAutoResize from "../ui/editable-text-auto-resize";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { Image } from "lucide-react";
+import { CldUploadWidget } from "next-cloudinary";
+import { CloudinaryUploadWidgetResults } from "next-cloudinary";
+import NextImage from "next/image";
 
 // Define a project type for better type safety
 interface Project {
@@ -68,7 +76,8 @@ interface Project {
   companyName?: string;
   description1: string;
   description2?: string;
-  imageSrc: string;
+  imageSrc: string; // This will be Cloudinary URL
+  imagePublicId?: string; // Add this for Cloudinary
   layout: "layout1" | "layout2";
   categories: string[];
   liveLink?: string;
@@ -97,7 +106,7 @@ function SortableProjectItem({
   showImages,
   onEditCategories,
   isAdmin,
-  onSaveProjectImage,
+  onProjectImageUploaded,
   onViewDetails,
 }: {
   project: Project;
@@ -108,10 +117,9 @@ function SortableProjectItem({
   showImages: boolean;
   onEditCategories: (id: string) => void;
   isAdmin: boolean | undefined;
-  onSaveProjectImage: (
+  onProjectImageUploaded: (
     projectId: string,
-    field: "imageSrc",
-    newData: { src?: string; alt?: string }
+    imageData: { public_id: string; secure_url: string }
   ) => Promise<void>;
   onViewDetails: (project: Project) => void;
 }) {
@@ -136,19 +144,21 @@ function SortableProjectItem({
   const isLayout1 = project.layout === "layout1";
   const bgColorClass = index % 2 === 0 ? "bg-red-600" : "bg-black";
 
+  const handleImageUpload = async (imageData: {
+    public_id: string;
+    secure_url: string;
+  }) => {
+    await onProjectImageUploaded(project.id, imageData);
+  };
+
   return (
     <motion.div
       ref={setNodeRef}
       style={style}
-      className={`sortable-item ${isAdmin ? "cursor-pointer" : ""} ${
-        isDragging ? "dragging" : ""
-      }`}
+      className={`sortable-item ${isDragging ? "dragging" : ""}`}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      onClick={() => {
-        if (isAdmin) onViewDetails(project);
-      }}
     >
       <div className={`${bgColorClass} rounded-lg p-6 md:p-12`}>
         {isLayout1 ? (
@@ -191,6 +201,23 @@ function SortableProjectItem({
               </div>
               {isAdmin && (
                 <div className="absolute top-0 right-0 flex items-center space-x-1 sm:space-x-2">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewDetails(project);
+                      }}
+                      title="Edit Project Details"
+                    >
+                      <Pencil size={18} />
+                    </Button>
+                  </motion.div>
                   <motion.div
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -264,19 +291,30 @@ function SortableProjectItem({
                     </p>
                   )}
                 </div>
-                {showImages && project.imageSrc && (
+                {showImages && (
                   <motion.div
                     className="overflow-hidden rounded-lg shadow-md"
-                    whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <EditableImage
-                      src={project.imageSrc}
-                      alt={project.title}
-                      width={400}
-                      height={300}
-                      className="w-full h-auto object-cover"
-                    />
+                    {isAdmin ? (
+                      <EditableImage
+                        src={project.imageSrc || "/placeholder.svg"}
+                        alt={project.title}
+                        width={400}
+                        height={300}
+                        className="w-full h-auto object-cover"
+                        onImageUploaded={handleImageUpload}
+                        uploadPreset="portfolio_unsigned"
+                      />
+                    ) : (
+                      <NextImage
+                        src={project.imageSrc || "/placeholder.svg"}
+                        alt={project.title}
+                        width={400}
+                        height={300}
+                        className="w-full h-auto object-cover"
+                      />
+                    )}
                   </motion.div>
                 )}
               </div>
@@ -304,19 +342,30 @@ function SortableProjectItem({
                     </p>
                   )}
                 </div>
-                {showImages && project.imageSrc && (
+                {showImages && (
                   <motion.div
                     className="overflow-hidden rounded-lg shadow-md"
-                    whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <EditableImage
-                      src={project.imageSrc}
-                      alt={project.title}
-                      width={400}
-                      height={300}
-                      className="w-full h-auto object-cover"
-                    />
+                    {isAdmin ? (
+                      <EditableImage
+                        src={project.imageSrc || "/placeholder.svg"}
+                        alt={project.title}
+                        width={400}
+                        height={300}
+                        className="w-full h-auto object-cover"
+                        onImageUploaded={handleImageUpload}
+                        uploadPreset="portfolio_unsigned"
+                      />
+                    ) : (
+                      <NextImage
+                        src={project.imageSrc || "/placeholder.svg"}
+                        alt={project.title}
+                        width={400}
+                        height={300}
+                        className="w-full h-auto object-cover"
+                      />
+                    )}
                   </motion.div>
                 )}
               </div>
@@ -359,6 +408,23 @@ function SortableProjectItem({
               </div>
               {isAdmin && (
                 <div className="absolute top-0 left-0 flex items-center space-x-1 sm:space-x-2">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:text-gray-200 hover:bg-red-700 p-1 sm:p-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewDetails(project);
+                      }}
+                      title="Edit Project Details"
+                    >
+                      <Pencil size={18} />
+                    </Button>
+                  </motion.div>
                   <motion.div
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -451,7 +517,7 @@ export default function ProjectsSection({
     useState<Project | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  // Dialog State
+  // Dialog State for Project Details (text content only now)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [currentProjectInDialog, setCurrentProjectInDialog] =
     useState<Project | null>(null);
@@ -469,7 +535,7 @@ export default function ProjectsSection({
   const [isChangingLayoutForId, setIsChangingLayoutForId] = useState<
     string | null
   >(null);
-  const [isSavingSectionText, setIsSavingSectionText] = useState(false);
+  const [isSavingProjectText, setIsSavingProjectText] = useState(false);
   // Category loading states
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [isDeletingCategoryId, setIsDeletingCategoryId] = useState<
@@ -490,7 +556,7 @@ export default function ProjectsSection({
     newFontSize?: number,
     newFontFamily?: string
   ) => {
-    setIsSavingSectionText(true);
+    setIsSavingProjectText(true);
     try {
       const payload: {
         content: string;
@@ -519,33 +585,25 @@ export default function ProjectsSection({
         `Failed to save section text block: ${(error as Error).message}`
       );
     } finally {
-      setIsSavingSectionText(false);
+      setIsSavingProjectText(false);
     }
   };
 
-  const handleSaveProjectImage = async (
+  const handleProjectImageUploaded = async (
     projectId: string,
-    field: "imageSrc",
-    newData: { src?: string; alt?: string }
+    imageData: { public_id: string; secure_url: string }
   ) => {
     setIsSavingProject(true);
     try {
-      const updatePayload: { imageSrc?: string; imageAlt?: string } = {};
-      if (newData.src) updatePayload.imageSrc = newData.src;
-      if (newData.alt) updatePayload.imageAlt = newData.alt;
-
-      if (Object.keys(updatePayload).length === 0) {
-        toast.info("No image data to update.");
-        setIsSavingProject(false);
-        return;
-      }
-
+      const updatePayload = {
+        imageSrc: imageData.secure_url,
+        imagePublicId: imageData.public_id,
+      };
       const response = await fetch(`/api/projects/${projectId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatePayload),
       });
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to save project image");
@@ -564,9 +622,15 @@ export default function ProjectsSection({
     if (!currentProjectInDialog) return;
     const projectId = currentProjectInDialog.id;
 
-    setIsSavingProject(true);
+    setIsSavingProjectText(true);
     try {
-      const updatePayload = {
+      const updatePayload: {
+        projectNumber?: string;
+        title?: string;
+        companyName?: string | null;
+        description1?: string;
+        description2?: string | null;
+      } = {
         projectNumber: editedNumber,
         title: editedTitle,
         companyName: editedCompanyName || null,
@@ -592,7 +656,7 @@ export default function ProjectsSection({
       console.error(`Error saving details for project ${projectId}:`, error);
       toast.error(`Failed to save details: ${(error as Error).message}`);
     } finally {
-      setIsSavingProject(false);
+      setIsSavingProjectText(false);
     }
   };
 
@@ -631,6 +695,7 @@ export default function ProjectsSection({
           description1: item.description1 || "",
           description2: item.description2 || undefined,
           imageSrc: item.imageSrc || "",
+          imagePublicId: item.imagePublicId || undefined,
           liveLink: item.liveLink || undefined,
           sourceLink: item.sourceLink || undefined,
           layout:
@@ -704,8 +769,9 @@ export default function ProjectsSection({
       sectionId: section.id,
       title: "NEW PROJECT",
       description1: "Enter project description here.",
-      imageSrc: `https://picsum.photos/400/300?random=new${Date.now()}`,
-      layout: "layout1",
+      imageSrc: "",
+      imagePublicId: null,
+      layout: "layout1" as "layout1" | "layout2",
     };
     try {
       const response = await fetch("/api/projects", {
@@ -717,7 +783,7 @@ export default function ProjectsSection({
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to add new project");
       }
-      toast.success("New project added!");
+      toast.success("New project added! You can now upload an image.");
       if (onDataChange) onDataChange();
     } catch (error) {
       console.error("Adding project failed:", error);
@@ -801,9 +867,6 @@ export default function ProjectsSection({
       toast.success(`Category "${addedCategory.name}" added!`);
       setNewCategoryName("");
       if (onDataChange) onDataChange(); // Re-fetch all data including categories
-      // Optimistic update locally (optional, as onDataChange handles it)
-      // setAllCategoriesWithId(prev => [...prev, addedCategory].sort((a, b) => a.name.localeCompare(b.name)))
-      // setAllCategories(prev => [...prev, addedCategory.name].sort());
     } catch (error) {
       console.error("Error adding global category:", error);
       toast.error(`Adding category failed: ${(error as Error).message}`);
@@ -832,9 +895,6 @@ export default function ProjectsSection({
       }
       toast.success(`Category "${catName}" deleted!`);
       if (onDataChange) onDataChange(); // Re-fetch all data
-      // Optimistic update locally (optional)
-      // setAllCategoriesWithId(prev => prev.filter(c => c.id !== categoryIdToDelete));
-      // setAllCategories(prev => prev.filter(name => name !== catName));
     } catch (error) {
       console.error("Error deleting global category:", error);
       toast.error(`Deleting category failed: ${(error as Error).message}`);
@@ -998,7 +1058,7 @@ export default function ProjectsSection({
                     showImages={showImages}
                     onEditCategories={openProjectSpecificCategoriesDialog}
                     isAdmin={isAdmin}
-                    onSaveProjectImage={handleSaveProjectImage}
+                    onProjectImageUploaded={handleProjectImageUploaded}
                     onViewDetails={viewProjectDetails}
                   />
                 ))}
@@ -1196,7 +1256,7 @@ export default function ProjectsSection({
                     Project Details
                   </DialogTitle>
                   <DialogDescription>
-                    Viewing details for "{currentProjectInDialog.title}".
+                    View details for "{currentProjectInDialog.title}".
                     {isAdmin && " You can edit the fields below."}
                   </DialogDescription>
                 </DialogHeader>
@@ -1211,7 +1271,7 @@ export default function ProjectsSection({
                           value={editedNumber}
                           onChange={(e) => setEditedNumber(e.target.value)}
                           className="mt-1"
-                          disabled={isSavingProject}
+                          disabled={isSavingProjectText}
                         />
                       ) : (
                         <p className="mt-1 font-semibold">
@@ -1227,7 +1287,7 @@ export default function ProjectsSection({
                           value={editedTitle}
                           onChange={(e) => setEditedTitle(e.target.value)}
                           className="mt-1"
-                          disabled={isSavingProject}
+                          disabled={isSavingProjectText}
                         />
                       ) : (
                         <p className="mt-1 font-semibold">
@@ -1245,7 +1305,7 @@ export default function ProjectsSection({
                           value={editedCompanyName}
                           onChange={(e) => setEditedCompanyName(e.target.value)}
                           className="mt-1"
-                          disabled={isSavingProject}
+                          disabled={isSavingProjectText}
                         />
                       ) : (
                         <p className="mt-1">
@@ -1263,7 +1323,7 @@ export default function ProjectsSection({
                             setEditedDescription1(e.target.value)
                           }
                           className="mt-1 min-h-[100px]"
-                          disabled={isSavingProject}
+                          disabled={isSavingProjectText}
                         />
                       ) : (
                         <p className="mt-1 whitespace-pre-line">
@@ -1283,7 +1343,7 @@ export default function ProjectsSection({
                             setEditedDescription2(e.target.value)
                           }
                           className="mt-1 min-h-[60px]"
-                          disabled={isSavingProject}
+                          disabled={isSavingProjectText}
                         />
                       ) : (
                         <p className="mt-1 whitespace-pre-line">
@@ -1298,18 +1358,18 @@ export default function ProjectsSection({
                   {isAdmin && (
                     <Button
                       onClick={handleSaveProjectDetailsFromDialog}
-                      disabled={isSavingProject}
+                      disabled={isSavingProjectText}
                     >
-                      {isSavingProject ? (
+                      {isSavingProjectText ? (
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       ) : null}
-                      {isSavingProject ? "Saving..." : "Save Changes"}
+                      {isSavingProjectText ? "Saving..." : "Save Changes"}
                     </Button>
                   )}
                   <Button
                     variant="outline"
                     onClick={() => setIsDetailDialogOpen(false)}
-                    disabled={isSavingProject}
+                    disabled={isSavingProjectText}
                   >
                     Close
                   </Button>

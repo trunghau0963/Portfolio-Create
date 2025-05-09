@@ -502,34 +502,7 @@ export default function ContactSection({
               </AnimatedSection>
               <AnimatedSection delay={0.5} variant="fadeInLeft">
                 <div className="bg-red-700/30 backdrop-blur-sm rounded-lg p-6 shadow-md">
-                  <div className="mb-4 min-h-[150px]">
-                    {imageBlock1 ? (
-                      <EditableImage
-                        key={imageBlock1.id}
-                        src={imageBlock1.src}
-                        alt={imageBlock1.alt || "Contact image"}
-                        width={400}
-                        height={300}
-                        onSave={(data) =>
-                          handleSaveImageBlock(imageBlock1.id, data)
-                        } // Enable saving
-                        // isAdmin={isAdmin}
-                        className="w-full h-auto object-cover rounded-lg shadow-md"
-                      />
-                    ) : isAdmin ? (
-                      <div className="text-center text-white/50">
-                        Image block 1 missing. Add one?
-                        <Button
-                          size="sm"
-                          variant="link"
-                          onClick={handleAddImageBlock}
-                        >
-                          Add
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-3 mb-6 min-h-[150px]">
                     {sortedContactInfo.map((item) => (
                       <div
                         key={item.id}

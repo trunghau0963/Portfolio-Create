@@ -112,35 +112,29 @@ model TextBlock {
 }
 
 model ImageBlock {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  src       String
-  alt       String?
-  caption   String?
-  order     Int      @default(0)
-  sectionId String   @db.ObjectId
-  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  // Potential fields: width, height, alignment
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  src           String
+  alt           String?
+  caption       String?
+  imagePublicId String? // Cloudinary Public ID
+  order         Int      @default(0)
+  sectionId     String   @db.ObjectId
+  section       Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 // --- Specific Section Content Models ---
 
 model HeroSectionContent {
-  id               String  @id @default(auto()) @map("_id") @db.ObjectId
-  // Hero often has a unique structure, e.g., main title, subtitle, CTA button text/link
-  // Specific fields for Hero, or rely on TextBlocks/ImageBlocks linked to the "hero" Section.
-  // For now, let's assume Hero section uses TextBlocks and ImageBlocks for its main content.
-  // This model can hold fields unique to Hero that don't fit TextBlock/ImageBlock, like portrait settings.
-  portraitImageSrc String? // URL for the portrait image itself
-  portraitAlt      String? @default("Portrait")
-  // showPortrait is in global Setting, but can be overridden here if needed per section later.
-  // portraitPosition String  @default("center") // "left", "center", "right" -> this is UI state, maybe not DB
-
-  sectionId String   @unique @db.ObjectId
-  section   Section  @relation("HeroContentToSection", fields: [sectionId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  portraitImageSrc      String? // Cloudinary URL
+  portraitImagePublicId String? // Cloudinary Public ID
+  portraitAlt           String?  @default("Portrait")
+  sectionId             String   @unique @db.ObjectId
+  section               Section  @relation("HeroContentToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model EducationItem {
@@ -159,7 +153,8 @@ model EducationItem {
 
 model EducationImage {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  src             String
+  src             String // Cloudinary URL
+  imagePublicId   String? // Cloudinary Public ID
   alt             String?
   caption         String?
   order           Int           @default(0)
@@ -181,14 +176,15 @@ model SkillItem {
 }
 
 model SkillImage {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  src       String
-  alt       String?
-  caption   String?
-  order     Int      @default(0)
-  sectionId String   @db.ObjectId
-  section   Section  @relation("SkillImagesToSection", fields: [sectionId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  src           String // Cloudinary URL
+  imagePublicId String? // Cloudinary Public ID
+  alt           String?
+  caption       String?
+  order         Int      @default(0)
+  sectionId     String   @db.ObjectId
+  section       Section  @relation("SkillImagesToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
 }
 
 model ExperienceItem {
@@ -198,7 +194,8 @@ model ExperienceItem {
   period        String // e.g., "Jan 2020 - Dec 2022"
   summary       String? // Short summary for card view
   description   String? // Detailed description for modal/page view
-  imageSrc      String // Main image for the card/listing
+  imageSrc      String // Cloudinary URL for main image
+  imagePublicId String? // Cloudinary Public ID for main image
   order         Int                     @default(0)
   sectionId     String                  @db.ObjectId
   section       Section                 @relation("ExperienceItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
@@ -209,7 +206,8 @@ model ExperienceItem {
 
 model ExperienceDetailImage {
   id               String         @id @default(auto()) @map("_id") @db.ObjectId
-  src              String
+  src              String // Cloudinary URL
+  imagePublicId    String? // Cloudinary Public ID
   alt              String?
   caption          String?
   order            Int            @default(0)
@@ -220,37 +218,38 @@ model ExperienceDetailImage {
 
 model ProjectItem {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  projectNumber String? // "01", "02" - Can be auto-generated based on order
-  title         String // More descriptive than just companyName
-  companyName   String? // Can be part of title or separate
+  projectNumber String?
+  title         String
+  companyName   String?
   description1  String
   description2  String?
-  imageSrc      String // Main project image
-  liveLink      String? // Link to live project
-  sourceLink    String? // Link to source code (GitHub)
-  layout        String   @default("layout1") // "layout1" or "layout2" for frontend styling
+  imageSrc      String // Cloudinary URL
+  imagePublicId String? // Cloudinary Public ID
+  liveLink      String?
+  sourceLink    String?
+  layout        String   @default("layout1")
   order         Int      @default(0)
   sectionId     String   @db.ObjectId
   section       Section  @relation("ProjectItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
-  categoryIds   String[] @db.ObjectId // Store an array of Category IDs
-  // categories     Category[] @relation("ProjectCategories") // Removed implicit relation
+  categoryIds   String[] @db.ObjectId
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
 
 model TestimonialItem {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  clientName String
-  role       String?
-  company    String?
-  content    String
-  rating     Float // e.g., 4.5, 5
-  imageSrc   String? // Client's photo
-  order      Int      @default(0)
-  sectionId  String   @db.ObjectId
-  section    Section  @relation("TestimonialItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  clientName    String
+  role          String?
+  company       String?
+  content       String
+  rating        Float
+  imageSrc      String? // Cloudinary URL
+  imagePublicId String? // Cloudinary Public ID
+  order         Int      @default(0)
+  sectionId     String   @db.ObjectId
+  section       Section  @relation("TestimonialItemsToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model ContactInfoItem {

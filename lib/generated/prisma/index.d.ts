@@ -7766,6 +7766,7 @@ export namespace Prisma {
     src: string | null
     alt: string | null
     caption: string | null
+    imagePublicId: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -7777,6 +7778,7 @@ export namespace Prisma {
     src: string | null
     alt: string | null
     caption: string | null
+    imagePublicId: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -7788,6 +7790,7 @@ export namespace Prisma {
     src: number
     alt: number
     caption: number
+    imagePublicId: number
     order: number
     sectionId: number
     createdAt: number
@@ -7809,6 +7812,7 @@ export namespace Prisma {
     src?: true
     alt?: true
     caption?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -7820,6 +7824,7 @@ export namespace Prisma {
     src?: true
     alt?: true
     caption?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -7831,6 +7836,7 @@ export namespace Prisma {
     src?: true
     alt?: true
     caption?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -7929,6 +7935,7 @@ export namespace Prisma {
     src: string
     alt: string | null
     caption: string | null
+    imagePublicId: string | null
     order: number
     sectionId: string
     createdAt: Date
@@ -7959,6 +7966,7 @@ export namespace Prisma {
     src?: boolean
     alt?: boolean
     caption?: boolean
+    imagePublicId?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
@@ -7973,13 +7981,14 @@ export namespace Prisma {
     src?: boolean
     alt?: boolean
     caption?: boolean
+    imagePublicId?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ImageBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "alt" | "caption" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["imageBlock"]>
+  export type ImageBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "alt" | "caption" | "imagePublicId" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["imageBlock"]>
   export type ImageBlockInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
   }
@@ -7994,6 +8003,7 @@ export namespace Prisma {
       src: string
       alt: string | null
       caption: string | null
+      imagePublicId: string | null
       order: number
       sectionId: string
       createdAt: Date
@@ -8395,6 +8405,7 @@ export namespace Prisma {
     readonly src: FieldRef<"ImageBlock", 'String'>
     readonly alt: FieldRef<"ImageBlock", 'String'>
     readonly caption: FieldRef<"ImageBlock", 'String'>
+    readonly imagePublicId: FieldRef<"ImageBlock", 'String'>
     readonly order: FieldRef<"ImageBlock", 'Int'>
     readonly sectionId: FieldRef<"ImageBlock", 'String'>
     readonly createdAt: FieldRef<"ImageBlock", 'DateTime'>
@@ -8800,6 +8811,7 @@ export namespace Prisma {
   export type HeroSectionContentMinAggregateOutputType = {
     id: string | null
     portraitImageSrc: string | null
+    portraitImagePublicId: string | null
     portraitAlt: string | null
     sectionId: string | null
     createdAt: Date | null
@@ -8809,6 +8821,7 @@ export namespace Prisma {
   export type HeroSectionContentMaxAggregateOutputType = {
     id: string | null
     portraitImageSrc: string | null
+    portraitImagePublicId: string | null
     portraitAlt: string | null
     sectionId: string | null
     createdAt: Date | null
@@ -8818,6 +8831,7 @@ export namespace Prisma {
   export type HeroSectionContentCountAggregateOutputType = {
     id: number
     portraitImageSrc: number
+    portraitImagePublicId: number
     portraitAlt: number
     sectionId: number
     createdAt: number
@@ -8829,6 +8843,7 @@ export namespace Prisma {
   export type HeroSectionContentMinAggregateInputType = {
     id?: true
     portraitImageSrc?: true
+    portraitImagePublicId?: true
     portraitAlt?: true
     sectionId?: true
     createdAt?: true
@@ -8838,6 +8853,7 @@ export namespace Prisma {
   export type HeroSectionContentMaxAggregateInputType = {
     id?: true
     portraitImageSrc?: true
+    portraitImagePublicId?: true
     portraitAlt?: true
     sectionId?: true
     createdAt?: true
@@ -8847,6 +8863,7 @@ export namespace Prisma {
   export type HeroSectionContentCountAggregateInputType = {
     id?: true
     portraitImageSrc?: true
+    portraitImagePublicId?: true
     portraitAlt?: true
     sectionId?: true
     createdAt?: true
@@ -8929,6 +8946,7 @@ export namespace Prisma {
   export type HeroSectionContentGroupByOutputType = {
     id: string
     portraitImageSrc: string | null
+    portraitImagePublicId: string | null
     portraitAlt: string | null
     sectionId: string
     createdAt: Date
@@ -8955,6 +8973,7 @@ export namespace Prisma {
   export type HeroSectionContentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     portraitImageSrc?: boolean
+    portraitImagePublicId?: boolean
     portraitAlt?: boolean
     sectionId?: boolean
     createdAt?: boolean
@@ -8967,13 +8986,14 @@ export namespace Prisma {
   export type HeroSectionContentSelectScalar = {
     id?: boolean
     portraitImageSrc?: boolean
+    portraitImagePublicId?: boolean
     portraitAlt?: boolean
     sectionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type HeroSectionContentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "portraitImageSrc" | "portraitAlt" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["heroSectionContent"]>
+  export type HeroSectionContentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "portraitImageSrc" | "portraitImagePublicId" | "portraitAlt" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["heroSectionContent"]>
   export type HeroSectionContentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
   }
@@ -8986,6 +9006,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       portraitImageSrc: string | null
+      portraitImagePublicId: string | null
       portraitAlt: string | null
       sectionId: string
       createdAt: Date
@@ -9385,6 +9406,7 @@ export namespace Prisma {
   interface HeroSectionContentFieldRefs {
     readonly id: FieldRef<"HeroSectionContent", 'String'>
     readonly portraitImageSrc: FieldRef<"HeroSectionContent", 'String'>
+    readonly portraitImagePublicId: FieldRef<"HeroSectionContent", 'String'>
     readonly portraitAlt: FieldRef<"HeroSectionContent", 'String'>
     readonly sectionId: FieldRef<"HeroSectionContent", 'String'>
     readonly createdAt: FieldRef<"HeroSectionContent", 'DateTime'>
@@ -10887,6 +10909,7 @@ export namespace Prisma {
   export type EducationImageMinAggregateOutputType = {
     id: string | null
     src: string | null
+    imagePublicId: string | null
     alt: string | null
     caption: string | null
     order: number | null
@@ -10897,6 +10920,7 @@ export namespace Prisma {
   export type EducationImageMaxAggregateOutputType = {
     id: string | null
     src: string | null
+    imagePublicId: string | null
     alt: string | null
     caption: string | null
     order: number | null
@@ -10907,6 +10931,7 @@ export namespace Prisma {
   export type EducationImageCountAggregateOutputType = {
     id: number
     src: number
+    imagePublicId: number
     alt: number
     caption: number
     order: number
@@ -10927,6 +10952,7 @@ export namespace Prisma {
   export type EducationImageMinAggregateInputType = {
     id?: true
     src?: true
+    imagePublicId?: true
     alt?: true
     caption?: true
     order?: true
@@ -10937,6 +10963,7 @@ export namespace Prisma {
   export type EducationImageMaxAggregateInputType = {
     id?: true
     src?: true
+    imagePublicId?: true
     alt?: true
     caption?: true
     order?: true
@@ -10947,6 +10974,7 @@ export namespace Prisma {
   export type EducationImageCountAggregateInputType = {
     id?: true
     src?: true
+    imagePublicId?: true
     alt?: true
     caption?: true
     order?: true
@@ -11044,6 +11072,7 @@ export namespace Prisma {
   export type EducationImageGroupByOutputType = {
     id: string
     src: string
+    imagePublicId: string | null
     alt: string | null
     caption: string | null
     order: number
@@ -11073,6 +11102,7 @@ export namespace Prisma {
   export type EducationImageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     src?: boolean
+    imagePublicId?: boolean
     alt?: boolean
     caption?: boolean
     order?: boolean
@@ -11086,6 +11116,7 @@ export namespace Prisma {
   export type EducationImageSelectScalar = {
     id?: boolean
     src?: boolean
+    imagePublicId?: boolean
     alt?: boolean
     caption?: boolean
     order?: boolean
@@ -11093,7 +11124,7 @@ export namespace Prisma {
     createdAt?: boolean
   }
 
-  export type EducationImageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "alt" | "caption" | "order" | "educationItemId" | "createdAt", ExtArgs["result"]["educationImage"]>
+  export type EducationImageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "imagePublicId" | "alt" | "caption" | "order" | "educationItemId" | "createdAt", ExtArgs["result"]["educationImage"]>
   export type EducationImageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     educationItem?: boolean | EducationItemDefaultArgs<ExtArgs>
   }
@@ -11106,6 +11137,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       src: string
+      imagePublicId: string | null
       alt: string | null
       caption: string | null
       order: number
@@ -11506,6 +11538,7 @@ export namespace Prisma {
   interface EducationImageFieldRefs {
     readonly id: FieldRef<"EducationImage", 'String'>
     readonly src: FieldRef<"EducationImage", 'String'>
+    readonly imagePublicId: FieldRef<"EducationImage", 'String'>
     readonly alt: FieldRef<"EducationImage", 'String'>
     readonly caption: FieldRef<"EducationImage", 'String'>
     readonly order: FieldRef<"EducationImage", 'Int'>
@@ -12972,6 +13005,7 @@ export namespace Prisma {
   export type SkillImageMinAggregateOutputType = {
     id: string | null
     src: string | null
+    imagePublicId: string | null
     alt: string | null
     caption: string | null
     order: number | null
@@ -12982,6 +13016,7 @@ export namespace Prisma {
   export type SkillImageMaxAggregateOutputType = {
     id: string | null
     src: string | null
+    imagePublicId: string | null
     alt: string | null
     caption: string | null
     order: number | null
@@ -12992,6 +13027,7 @@ export namespace Prisma {
   export type SkillImageCountAggregateOutputType = {
     id: number
     src: number
+    imagePublicId: number
     alt: number
     caption: number
     order: number
@@ -13012,6 +13048,7 @@ export namespace Prisma {
   export type SkillImageMinAggregateInputType = {
     id?: true
     src?: true
+    imagePublicId?: true
     alt?: true
     caption?: true
     order?: true
@@ -13022,6 +13059,7 @@ export namespace Prisma {
   export type SkillImageMaxAggregateInputType = {
     id?: true
     src?: true
+    imagePublicId?: true
     alt?: true
     caption?: true
     order?: true
@@ -13032,6 +13070,7 @@ export namespace Prisma {
   export type SkillImageCountAggregateInputType = {
     id?: true
     src?: true
+    imagePublicId?: true
     alt?: true
     caption?: true
     order?: true
@@ -13129,6 +13168,7 @@ export namespace Prisma {
   export type SkillImageGroupByOutputType = {
     id: string
     src: string
+    imagePublicId: string | null
     alt: string | null
     caption: string | null
     order: number
@@ -13158,6 +13198,7 @@ export namespace Prisma {
   export type SkillImageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     src?: boolean
+    imagePublicId?: boolean
     alt?: boolean
     caption?: boolean
     order?: boolean
@@ -13171,6 +13212,7 @@ export namespace Prisma {
   export type SkillImageSelectScalar = {
     id?: boolean
     src?: boolean
+    imagePublicId?: boolean
     alt?: boolean
     caption?: boolean
     order?: boolean
@@ -13178,7 +13220,7 @@ export namespace Prisma {
     createdAt?: boolean
   }
 
-  export type SkillImageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "alt" | "caption" | "order" | "sectionId" | "createdAt", ExtArgs["result"]["skillImage"]>
+  export type SkillImageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "imagePublicId" | "alt" | "caption" | "order" | "sectionId" | "createdAt", ExtArgs["result"]["skillImage"]>
   export type SkillImageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
   }
@@ -13191,6 +13233,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       src: string
+      imagePublicId: string | null
       alt: string | null
       caption: string | null
       order: number
@@ -13591,6 +13634,7 @@ export namespace Prisma {
   interface SkillImageFieldRefs {
     readonly id: FieldRef<"SkillImage", 'String'>
     readonly src: FieldRef<"SkillImage", 'String'>
+    readonly imagePublicId: FieldRef<"SkillImage", 'String'>
     readonly alt: FieldRef<"SkillImage", 'String'>
     readonly caption: FieldRef<"SkillImage", 'String'>
     readonly order: FieldRef<"SkillImage", 'Int'>
@@ -14012,6 +14056,7 @@ export namespace Prisma {
     summary: string | null
     description: string | null
     imageSrc: string | null
+    imagePublicId: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -14026,6 +14071,7 @@ export namespace Prisma {
     summary: string | null
     description: string | null
     imageSrc: string | null
+    imagePublicId: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -14040,6 +14086,7 @@ export namespace Prisma {
     summary: number
     description: number
     imageSrc: number
+    imagePublicId: number
     order: number
     sectionId: number
     createdAt: number
@@ -14064,6 +14111,7 @@ export namespace Prisma {
     summary?: true
     description?: true
     imageSrc?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -14078,6 +14126,7 @@ export namespace Prisma {
     summary?: true
     description?: true
     imageSrc?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -14092,6 +14141,7 @@ export namespace Prisma {
     summary?: true
     description?: true
     imageSrc?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -14193,6 +14243,7 @@ export namespace Prisma {
     summary: string | null
     description: string | null
     imageSrc: string
+    imagePublicId: string | null
     order: number
     sectionId: string
     createdAt: Date
@@ -14226,6 +14277,7 @@ export namespace Prisma {
     summary?: boolean
     description?: boolean
     imageSrc?: boolean
+    imagePublicId?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
@@ -14245,13 +14297,14 @@ export namespace Prisma {
     summary?: boolean
     description?: boolean
     imageSrc?: boolean
+    imagePublicId?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ExperienceItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "positionTitle" | "companyName" | "period" | "summary" | "description" | "imageSrc" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["experienceItem"]>
+  export type ExperienceItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "positionTitle" | "companyName" | "period" | "summary" | "description" | "imageSrc" | "imagePublicId" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["experienceItem"]>
   export type ExperienceItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
     detailImages?: boolean | ExperienceItem$detailImagesArgs<ExtArgs>
@@ -14272,6 +14325,7 @@ export namespace Prisma {
       summary: string | null
       description: string | null
       imageSrc: string
+      imagePublicId: string | null
       order: number
       sectionId: string
       createdAt: Date
@@ -14677,6 +14731,7 @@ export namespace Prisma {
     readonly summary: FieldRef<"ExperienceItem", 'String'>
     readonly description: FieldRef<"ExperienceItem", 'String'>
     readonly imageSrc: FieldRef<"ExperienceItem", 'String'>
+    readonly imagePublicId: FieldRef<"ExperienceItem", 'String'>
     readonly order: FieldRef<"ExperienceItem", 'Int'>
     readonly sectionId: FieldRef<"ExperienceItem", 'String'>
     readonly createdAt: FieldRef<"ExperienceItem", 'DateTime'>
@@ -15116,6 +15171,7 @@ export namespace Prisma {
   export type ExperienceDetailImageMinAggregateOutputType = {
     id: string | null
     src: string | null
+    imagePublicId: string | null
     alt: string | null
     caption: string | null
     order: number | null
@@ -15126,6 +15182,7 @@ export namespace Prisma {
   export type ExperienceDetailImageMaxAggregateOutputType = {
     id: string | null
     src: string | null
+    imagePublicId: string | null
     alt: string | null
     caption: string | null
     order: number | null
@@ -15136,6 +15193,7 @@ export namespace Prisma {
   export type ExperienceDetailImageCountAggregateOutputType = {
     id: number
     src: number
+    imagePublicId: number
     alt: number
     caption: number
     order: number
@@ -15156,6 +15214,7 @@ export namespace Prisma {
   export type ExperienceDetailImageMinAggregateInputType = {
     id?: true
     src?: true
+    imagePublicId?: true
     alt?: true
     caption?: true
     order?: true
@@ -15166,6 +15225,7 @@ export namespace Prisma {
   export type ExperienceDetailImageMaxAggregateInputType = {
     id?: true
     src?: true
+    imagePublicId?: true
     alt?: true
     caption?: true
     order?: true
@@ -15176,6 +15236,7 @@ export namespace Prisma {
   export type ExperienceDetailImageCountAggregateInputType = {
     id?: true
     src?: true
+    imagePublicId?: true
     alt?: true
     caption?: true
     order?: true
@@ -15273,6 +15334,7 @@ export namespace Prisma {
   export type ExperienceDetailImageGroupByOutputType = {
     id: string
     src: string
+    imagePublicId: string | null
     alt: string | null
     caption: string | null
     order: number
@@ -15302,6 +15364,7 @@ export namespace Prisma {
   export type ExperienceDetailImageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     src?: boolean
+    imagePublicId?: boolean
     alt?: boolean
     caption?: boolean
     order?: boolean
@@ -15315,6 +15378,7 @@ export namespace Prisma {
   export type ExperienceDetailImageSelectScalar = {
     id?: boolean
     src?: boolean
+    imagePublicId?: boolean
     alt?: boolean
     caption?: boolean
     order?: boolean
@@ -15322,7 +15386,7 @@ export namespace Prisma {
     createdAt?: boolean
   }
 
-  export type ExperienceDetailImageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "alt" | "caption" | "order" | "experienceItemId" | "createdAt", ExtArgs["result"]["experienceDetailImage"]>
+  export type ExperienceDetailImageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "imagePublicId" | "alt" | "caption" | "order" | "experienceItemId" | "createdAt", ExtArgs["result"]["experienceDetailImage"]>
   export type ExperienceDetailImageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     experienceItem?: boolean | ExperienceItemDefaultArgs<ExtArgs>
   }
@@ -15335,6 +15399,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       src: string
+      imagePublicId: string | null
       alt: string | null
       caption: string | null
       order: number
@@ -15735,6 +15800,7 @@ export namespace Prisma {
   interface ExperienceDetailImageFieldRefs {
     readonly id: FieldRef<"ExperienceDetailImage", 'String'>
     readonly src: FieldRef<"ExperienceDetailImage", 'String'>
+    readonly imagePublicId: FieldRef<"ExperienceDetailImage", 'String'>
     readonly alt: FieldRef<"ExperienceDetailImage", 'String'>
     readonly caption: FieldRef<"ExperienceDetailImage", 'String'>
     readonly order: FieldRef<"ExperienceDetailImage", 'Int'>
@@ -16156,6 +16222,7 @@ export namespace Prisma {
     description1: string | null
     description2: string | null
     imageSrc: string | null
+    imagePublicId: string | null
     liveLink: string | null
     sourceLink: string | null
     layout: string | null
@@ -16173,6 +16240,7 @@ export namespace Prisma {
     description1: string | null
     description2: string | null
     imageSrc: string | null
+    imagePublicId: string | null
     liveLink: string | null
     sourceLink: string | null
     layout: string | null
@@ -16190,6 +16258,7 @@ export namespace Prisma {
     description1: number
     description2: number
     imageSrc: number
+    imagePublicId: number
     liveLink: number
     sourceLink: number
     layout: number
@@ -16218,6 +16287,7 @@ export namespace Prisma {
     description1?: true
     description2?: true
     imageSrc?: true
+    imagePublicId?: true
     liveLink?: true
     sourceLink?: true
     layout?: true
@@ -16235,6 +16305,7 @@ export namespace Prisma {
     description1?: true
     description2?: true
     imageSrc?: true
+    imagePublicId?: true
     liveLink?: true
     sourceLink?: true
     layout?: true
@@ -16252,6 +16323,7 @@ export namespace Prisma {
     description1?: true
     description2?: true
     imageSrc?: true
+    imagePublicId?: true
     liveLink?: true
     sourceLink?: true
     layout?: true
@@ -16357,6 +16429,7 @@ export namespace Prisma {
     description1: string
     description2: string | null
     imageSrc: string
+    imagePublicId: string | null
     liveLink: string | null
     sourceLink: string | null
     layout: string
@@ -16394,6 +16467,7 @@ export namespace Prisma {
     description1?: boolean
     description2?: boolean
     imageSrc?: boolean
+    imagePublicId?: boolean
     liveLink?: boolean
     sourceLink?: boolean
     layout?: boolean
@@ -16415,6 +16489,7 @@ export namespace Prisma {
     description1?: boolean
     description2?: boolean
     imageSrc?: boolean
+    imagePublicId?: boolean
     liveLink?: boolean
     sourceLink?: boolean
     layout?: boolean
@@ -16425,7 +16500,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type ProjectItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectNumber" | "title" | "companyName" | "description1" | "description2" | "imageSrc" | "liveLink" | "sourceLink" | "layout" | "order" | "sectionId" | "categoryIds" | "createdAt" | "updatedAt", ExtArgs["result"]["projectItem"]>
+  export type ProjectItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectNumber" | "title" | "companyName" | "description1" | "description2" | "imageSrc" | "imagePublicId" | "liveLink" | "sourceLink" | "layout" | "order" | "sectionId" | "categoryIds" | "createdAt" | "updatedAt", ExtArgs["result"]["projectItem"]>
   export type ProjectItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
   }
@@ -16443,6 +16518,7 @@ export namespace Prisma {
       description1: string
       description2: string | null
       imageSrc: string
+      imagePublicId: string | null
       liveLink: string | null
       sourceLink: string | null
       layout: string
@@ -16851,6 +16927,7 @@ export namespace Prisma {
     readonly description1: FieldRef<"ProjectItem", 'String'>
     readonly description2: FieldRef<"ProjectItem", 'String'>
     readonly imageSrc: FieldRef<"ProjectItem", 'String'>
+    readonly imagePublicId: FieldRef<"ProjectItem", 'String'>
     readonly liveLink: FieldRef<"ProjectItem", 'String'>
     readonly sourceLink: FieldRef<"ProjectItem", 'String'>
     readonly layout: FieldRef<"ProjectItem", 'String'>
@@ -17277,6 +17354,7 @@ export namespace Prisma {
     content: string | null
     rating: number | null
     imageSrc: string | null
+    imagePublicId: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -17291,6 +17369,7 @@ export namespace Prisma {
     content: string | null
     rating: number | null
     imageSrc: string | null
+    imagePublicId: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -17305,6 +17384,7 @@ export namespace Prisma {
     content: number
     rating: number
     imageSrc: number
+    imagePublicId: number
     order: number
     sectionId: number
     createdAt: number
@@ -17331,6 +17411,7 @@ export namespace Prisma {
     content?: true
     rating?: true
     imageSrc?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -17345,6 +17426,7 @@ export namespace Prisma {
     content?: true
     rating?: true
     imageSrc?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -17359,6 +17441,7 @@ export namespace Prisma {
     content?: true
     rating?: true
     imageSrc?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -17460,6 +17543,7 @@ export namespace Prisma {
     content: string
     rating: number
     imageSrc: string | null
+    imagePublicId: string | null
     order: number
     sectionId: string
     createdAt: Date
@@ -17493,6 +17577,7 @@ export namespace Prisma {
     content?: boolean
     rating?: boolean
     imageSrc?: boolean
+    imagePublicId?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
@@ -17510,13 +17595,14 @@ export namespace Prisma {
     content?: boolean
     rating?: boolean
     imageSrc?: boolean
+    imagePublicId?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type TestimonialItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientName" | "role" | "company" | "content" | "rating" | "imageSrc" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["testimonialItem"]>
+  export type TestimonialItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientName" | "role" | "company" | "content" | "rating" | "imageSrc" | "imagePublicId" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["testimonialItem"]>
   export type TestimonialItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
   }
@@ -17534,6 +17620,7 @@ export namespace Prisma {
       content: string
       rating: number
       imageSrc: string | null
+      imagePublicId: string | null
       order: number
       sectionId: string
       createdAt: Date
@@ -17938,6 +18025,7 @@ export namespace Prisma {
     readonly content: FieldRef<"TestimonialItem", 'String'>
     readonly rating: FieldRef<"TestimonialItem", 'Float'>
     readonly imageSrc: FieldRef<"TestimonialItem", 'String'>
+    readonly imagePublicId: FieldRef<"TestimonialItem", 'String'>
     readonly order: FieldRef<"TestimonialItem", 'Int'>
     readonly sectionId: FieldRef<"TestimonialItem", 'String'>
     readonly createdAt: FieldRef<"TestimonialItem", 'DateTime'>
@@ -20531,6 +20619,7 @@ export namespace Prisma {
     src: 'src',
     alt: 'alt',
     caption: 'caption',
+    imagePublicId: 'imagePublicId',
     order: 'order',
     sectionId: 'sectionId',
     createdAt: 'createdAt',
@@ -20543,6 +20632,7 @@ export namespace Prisma {
   export const HeroSectionContentScalarFieldEnum: {
     id: 'id',
     portraitImageSrc: 'portraitImageSrc',
+    portraitImagePublicId: 'portraitImagePublicId',
     portraitAlt: 'portraitAlt',
     sectionId: 'sectionId',
     createdAt: 'createdAt',
@@ -20570,6 +20660,7 @@ export namespace Prisma {
   export const EducationImageScalarFieldEnum: {
     id: 'id',
     src: 'src',
+    imagePublicId: 'imagePublicId',
     alt: 'alt',
     caption: 'caption',
     order: 'order',
@@ -20597,6 +20688,7 @@ export namespace Prisma {
   export const SkillImageScalarFieldEnum: {
     id: 'id',
     src: 'src',
+    imagePublicId: 'imagePublicId',
     alt: 'alt',
     caption: 'caption',
     order: 'order',
@@ -20615,6 +20707,7 @@ export namespace Prisma {
     summary: 'summary',
     description: 'description',
     imageSrc: 'imageSrc',
+    imagePublicId: 'imagePublicId',
     order: 'order',
     sectionId: 'sectionId',
     createdAt: 'createdAt',
@@ -20627,6 +20720,7 @@ export namespace Prisma {
   export const ExperienceDetailImageScalarFieldEnum: {
     id: 'id',
     src: 'src',
+    imagePublicId: 'imagePublicId',
     alt: 'alt',
     caption: 'caption',
     order: 'order',
@@ -20645,6 +20739,7 @@ export namespace Prisma {
     description1: 'description1',
     description2: 'description2',
     imageSrc: 'imageSrc',
+    imagePublicId: 'imagePublicId',
     liveLink: 'liveLink',
     sourceLink: 'sourceLink',
     layout: 'layout',
@@ -20666,6 +20761,7 @@ export namespace Prisma {
     content: 'content',
     rating: 'rating',
     imageSrc: 'imageSrc',
+    imagePublicId: 'imagePublicId',
     order: 'order',
     sectionId: 'sectionId',
     createdAt: 'createdAt',
@@ -21163,6 +21259,7 @@ export namespace Prisma {
     src?: StringFilter<"ImageBlock"> | string
     alt?: StringNullableFilter<"ImageBlock"> | string | null
     caption?: StringNullableFilter<"ImageBlock"> | string | null
+    imagePublicId?: StringNullableFilter<"ImageBlock"> | string | null
     order?: IntFilter<"ImageBlock"> | number
     sectionId?: StringFilter<"ImageBlock"> | string
     createdAt?: DateTimeFilter<"ImageBlock"> | Date | string
@@ -21175,6 +21272,7 @@ export namespace Prisma {
     src?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21190,6 +21288,7 @@ export namespace Prisma {
     src?: StringFilter<"ImageBlock"> | string
     alt?: StringNullableFilter<"ImageBlock"> | string | null
     caption?: StringNullableFilter<"ImageBlock"> | string | null
+    imagePublicId?: StringNullableFilter<"ImageBlock"> | string | null
     order?: IntFilter<"ImageBlock"> | number
     sectionId?: StringFilter<"ImageBlock"> | string
     createdAt?: DateTimeFilter<"ImageBlock"> | Date | string
@@ -21202,6 +21301,7 @@ export namespace Prisma {
     src?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21221,6 +21321,7 @@ export namespace Prisma {
     src?: StringWithAggregatesFilter<"ImageBlock"> | string
     alt?: StringNullableWithAggregatesFilter<"ImageBlock"> | string | null
     caption?: StringNullableWithAggregatesFilter<"ImageBlock"> | string | null
+    imagePublicId?: StringNullableWithAggregatesFilter<"ImageBlock"> | string | null
     order?: IntWithAggregatesFilter<"ImageBlock"> | number
     sectionId?: StringWithAggregatesFilter<"ImageBlock"> | string
     createdAt?: DateTimeWithAggregatesFilter<"ImageBlock"> | Date | string
@@ -21233,6 +21334,7 @@ export namespace Prisma {
     NOT?: HeroSectionContentWhereInput | HeroSectionContentWhereInput[]
     id?: StringFilter<"HeroSectionContent"> | string
     portraitImageSrc?: StringNullableFilter<"HeroSectionContent"> | string | null
+    portraitImagePublicId?: StringNullableFilter<"HeroSectionContent"> | string | null
     portraitAlt?: StringNullableFilter<"HeroSectionContent"> | string | null
     sectionId?: StringFilter<"HeroSectionContent"> | string
     createdAt?: DateTimeFilter<"HeroSectionContent"> | Date | string
@@ -21243,6 +21345,7 @@ export namespace Prisma {
   export type HeroSectionContentOrderByWithRelationInput = {
     id?: SortOrder
     portraitImageSrc?: SortOrder
+    portraitImagePublicId?: SortOrder
     portraitAlt?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21257,6 +21360,7 @@ export namespace Prisma {
     OR?: HeroSectionContentWhereInput[]
     NOT?: HeroSectionContentWhereInput | HeroSectionContentWhereInput[]
     portraitImageSrc?: StringNullableFilter<"HeroSectionContent"> | string | null
+    portraitImagePublicId?: StringNullableFilter<"HeroSectionContent"> | string | null
     portraitAlt?: StringNullableFilter<"HeroSectionContent"> | string | null
     createdAt?: DateTimeFilter<"HeroSectionContent"> | Date | string
     updatedAt?: DateTimeFilter<"HeroSectionContent"> | Date | string
@@ -21266,6 +21370,7 @@ export namespace Prisma {
   export type HeroSectionContentOrderByWithAggregationInput = {
     id?: SortOrder
     portraitImageSrc?: SortOrder
+    portraitImagePublicId?: SortOrder
     portraitAlt?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21281,6 +21386,7 @@ export namespace Prisma {
     NOT?: HeroSectionContentScalarWhereWithAggregatesInput | HeroSectionContentScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"HeroSectionContent"> | string
     portraitImageSrc?: StringNullableWithAggregatesFilter<"HeroSectionContent"> | string | null
+    portraitImagePublicId?: StringNullableWithAggregatesFilter<"HeroSectionContent"> | string | null
     portraitAlt?: StringNullableWithAggregatesFilter<"HeroSectionContent"> | string | null
     sectionId?: StringWithAggregatesFilter<"HeroSectionContent"> | string
     createdAt?: DateTimeWithAggregatesFilter<"HeroSectionContent"> | Date | string
@@ -21373,6 +21479,7 @@ export namespace Prisma {
     NOT?: EducationImageWhereInput | EducationImageWhereInput[]
     id?: StringFilter<"EducationImage"> | string
     src?: StringFilter<"EducationImage"> | string
+    imagePublicId?: StringNullableFilter<"EducationImage"> | string | null
     alt?: StringNullableFilter<"EducationImage"> | string | null
     caption?: StringNullableFilter<"EducationImage"> | string | null
     order?: IntFilter<"EducationImage"> | number
@@ -21384,6 +21491,7 @@ export namespace Prisma {
   export type EducationImageOrderByWithRelationInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -21398,6 +21506,7 @@ export namespace Prisma {
     OR?: EducationImageWhereInput[]
     NOT?: EducationImageWhereInput | EducationImageWhereInput[]
     src?: StringFilter<"EducationImage"> | string
+    imagePublicId?: StringNullableFilter<"EducationImage"> | string | null
     alt?: StringNullableFilter<"EducationImage"> | string | null
     caption?: StringNullableFilter<"EducationImage"> | string | null
     order?: IntFilter<"EducationImage"> | number
@@ -21409,6 +21518,7 @@ export namespace Prisma {
   export type EducationImageOrderByWithAggregationInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -21427,6 +21537,7 @@ export namespace Prisma {
     NOT?: EducationImageScalarWhereWithAggregatesInput | EducationImageScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"EducationImage"> | string
     src?: StringWithAggregatesFilter<"EducationImage"> | string
+    imagePublicId?: StringNullableWithAggregatesFilter<"EducationImage"> | string | null
     alt?: StringNullableWithAggregatesFilter<"EducationImage"> | string | null
     caption?: StringNullableWithAggregatesFilter<"EducationImage"> | string | null
     order?: IntWithAggregatesFilter<"EducationImage"> | number
@@ -21512,6 +21623,7 @@ export namespace Prisma {
     NOT?: SkillImageWhereInput | SkillImageWhereInput[]
     id?: StringFilter<"SkillImage"> | string
     src?: StringFilter<"SkillImage"> | string
+    imagePublicId?: StringNullableFilter<"SkillImage"> | string | null
     alt?: StringNullableFilter<"SkillImage"> | string | null
     caption?: StringNullableFilter<"SkillImage"> | string | null
     order?: IntFilter<"SkillImage"> | number
@@ -21523,6 +21635,7 @@ export namespace Prisma {
   export type SkillImageOrderByWithRelationInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -21537,6 +21650,7 @@ export namespace Prisma {
     OR?: SkillImageWhereInput[]
     NOT?: SkillImageWhereInput | SkillImageWhereInput[]
     src?: StringFilter<"SkillImage"> | string
+    imagePublicId?: StringNullableFilter<"SkillImage"> | string | null
     alt?: StringNullableFilter<"SkillImage"> | string | null
     caption?: StringNullableFilter<"SkillImage"> | string | null
     order?: IntFilter<"SkillImage"> | number
@@ -21548,6 +21662,7 @@ export namespace Prisma {
   export type SkillImageOrderByWithAggregationInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -21566,6 +21681,7 @@ export namespace Prisma {
     NOT?: SkillImageScalarWhereWithAggregatesInput | SkillImageScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"SkillImage"> | string
     src?: StringWithAggregatesFilter<"SkillImage"> | string
+    imagePublicId?: StringNullableWithAggregatesFilter<"SkillImage"> | string | null
     alt?: StringNullableWithAggregatesFilter<"SkillImage"> | string | null
     caption?: StringNullableWithAggregatesFilter<"SkillImage"> | string | null
     order?: IntWithAggregatesFilter<"SkillImage"> | number
@@ -21584,6 +21700,7 @@ export namespace Prisma {
     summary?: StringNullableFilter<"ExperienceItem"> | string | null
     description?: StringNullableFilter<"ExperienceItem"> | string | null
     imageSrc?: StringFilter<"ExperienceItem"> | string
+    imagePublicId?: StringNullableFilter<"ExperienceItem"> | string | null
     order?: IntFilter<"ExperienceItem"> | number
     sectionId?: StringFilter<"ExperienceItem"> | string
     createdAt?: DateTimeFilter<"ExperienceItem"> | Date | string
@@ -21600,6 +21717,7 @@ export namespace Prisma {
     summary?: SortOrder
     description?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21619,6 +21737,7 @@ export namespace Prisma {
     summary?: StringNullableFilter<"ExperienceItem"> | string | null
     description?: StringNullableFilter<"ExperienceItem"> | string | null
     imageSrc?: StringFilter<"ExperienceItem"> | string
+    imagePublicId?: StringNullableFilter<"ExperienceItem"> | string | null
     order?: IntFilter<"ExperienceItem"> | number
     sectionId?: StringFilter<"ExperienceItem"> | string
     createdAt?: DateTimeFilter<"ExperienceItem"> | Date | string
@@ -21635,6 +21754,7 @@ export namespace Prisma {
     summary?: SortOrder
     description?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21657,6 +21777,7 @@ export namespace Prisma {
     summary?: StringNullableWithAggregatesFilter<"ExperienceItem"> | string | null
     description?: StringNullableWithAggregatesFilter<"ExperienceItem"> | string | null
     imageSrc?: StringWithAggregatesFilter<"ExperienceItem"> | string
+    imagePublicId?: StringNullableWithAggregatesFilter<"ExperienceItem"> | string | null
     order?: IntWithAggregatesFilter<"ExperienceItem"> | number
     sectionId?: StringWithAggregatesFilter<"ExperienceItem"> | string
     createdAt?: DateTimeWithAggregatesFilter<"ExperienceItem"> | Date | string
@@ -21669,6 +21790,7 @@ export namespace Prisma {
     NOT?: ExperienceDetailImageWhereInput | ExperienceDetailImageWhereInput[]
     id?: StringFilter<"ExperienceDetailImage"> | string
     src?: StringFilter<"ExperienceDetailImage"> | string
+    imagePublicId?: StringNullableFilter<"ExperienceDetailImage"> | string | null
     alt?: StringNullableFilter<"ExperienceDetailImage"> | string | null
     caption?: StringNullableFilter<"ExperienceDetailImage"> | string | null
     order?: IntFilter<"ExperienceDetailImage"> | number
@@ -21680,6 +21802,7 @@ export namespace Prisma {
   export type ExperienceDetailImageOrderByWithRelationInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -21694,6 +21817,7 @@ export namespace Prisma {
     OR?: ExperienceDetailImageWhereInput[]
     NOT?: ExperienceDetailImageWhereInput | ExperienceDetailImageWhereInput[]
     src?: StringFilter<"ExperienceDetailImage"> | string
+    imagePublicId?: StringNullableFilter<"ExperienceDetailImage"> | string | null
     alt?: StringNullableFilter<"ExperienceDetailImage"> | string | null
     caption?: StringNullableFilter<"ExperienceDetailImage"> | string | null
     order?: IntFilter<"ExperienceDetailImage"> | number
@@ -21705,6 +21829,7 @@ export namespace Prisma {
   export type ExperienceDetailImageOrderByWithAggregationInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -21723,6 +21848,7 @@ export namespace Prisma {
     NOT?: ExperienceDetailImageScalarWhereWithAggregatesInput | ExperienceDetailImageScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"ExperienceDetailImage"> | string
     src?: StringWithAggregatesFilter<"ExperienceDetailImage"> | string
+    imagePublicId?: StringNullableWithAggregatesFilter<"ExperienceDetailImage"> | string | null
     alt?: StringNullableWithAggregatesFilter<"ExperienceDetailImage"> | string | null
     caption?: StringNullableWithAggregatesFilter<"ExperienceDetailImage"> | string | null
     order?: IntWithAggregatesFilter<"ExperienceDetailImage"> | number
@@ -21741,6 +21867,7 @@ export namespace Prisma {
     description1?: StringFilter<"ProjectItem"> | string
     description2?: StringNullableFilter<"ProjectItem"> | string | null
     imageSrc?: StringFilter<"ProjectItem"> | string
+    imagePublicId?: StringNullableFilter<"ProjectItem"> | string | null
     liveLink?: StringNullableFilter<"ProjectItem"> | string | null
     sourceLink?: StringNullableFilter<"ProjectItem"> | string | null
     layout?: StringFilter<"ProjectItem"> | string
@@ -21760,6 +21887,7 @@ export namespace Prisma {
     description1?: SortOrder
     description2?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     liveLink?: SortOrder
     sourceLink?: SortOrder
     layout?: SortOrder
@@ -21782,6 +21910,7 @@ export namespace Prisma {
     description1?: StringFilter<"ProjectItem"> | string
     description2?: StringNullableFilter<"ProjectItem"> | string | null
     imageSrc?: StringFilter<"ProjectItem"> | string
+    imagePublicId?: StringNullableFilter<"ProjectItem"> | string | null
     liveLink?: StringNullableFilter<"ProjectItem"> | string | null
     sourceLink?: StringNullableFilter<"ProjectItem"> | string | null
     layout?: StringFilter<"ProjectItem"> | string
@@ -21801,6 +21930,7 @@ export namespace Prisma {
     description1?: SortOrder
     description2?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     liveLink?: SortOrder
     sourceLink?: SortOrder
     layout?: SortOrder
@@ -21827,6 +21957,7 @@ export namespace Prisma {
     description1?: StringWithAggregatesFilter<"ProjectItem"> | string
     description2?: StringNullableWithAggregatesFilter<"ProjectItem"> | string | null
     imageSrc?: StringWithAggregatesFilter<"ProjectItem"> | string
+    imagePublicId?: StringNullableWithAggregatesFilter<"ProjectItem"> | string | null
     liveLink?: StringNullableWithAggregatesFilter<"ProjectItem"> | string | null
     sourceLink?: StringNullableWithAggregatesFilter<"ProjectItem"> | string | null
     layout?: StringWithAggregatesFilter<"ProjectItem"> | string
@@ -21848,6 +21979,7 @@ export namespace Prisma {
     content?: StringFilter<"TestimonialItem"> | string
     rating?: FloatFilter<"TestimonialItem"> | number
     imageSrc?: StringNullableFilter<"TestimonialItem"> | string | null
+    imagePublicId?: StringNullableFilter<"TestimonialItem"> | string | null
     order?: IntFilter<"TestimonialItem"> | number
     sectionId?: StringFilter<"TestimonialItem"> | string
     createdAt?: DateTimeFilter<"TestimonialItem"> | Date | string
@@ -21863,6 +21995,7 @@ export namespace Prisma {
     content?: SortOrder
     rating?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21881,6 +22014,7 @@ export namespace Prisma {
     content?: StringFilter<"TestimonialItem"> | string
     rating?: FloatFilter<"TestimonialItem"> | number
     imageSrc?: StringNullableFilter<"TestimonialItem"> | string | null
+    imagePublicId?: StringNullableFilter<"TestimonialItem"> | string | null
     order?: IntFilter<"TestimonialItem"> | number
     sectionId?: StringFilter<"TestimonialItem"> | string
     createdAt?: DateTimeFilter<"TestimonialItem"> | Date | string
@@ -21896,6 +22030,7 @@ export namespace Prisma {
     content?: SortOrder
     rating?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21918,6 +22053,7 @@ export namespace Prisma {
     content?: StringWithAggregatesFilter<"TestimonialItem"> | string
     rating?: FloatWithAggregatesFilter<"TestimonialItem"> | number
     imageSrc?: StringNullableWithAggregatesFilter<"TestimonialItem"> | string | null
+    imagePublicId?: StringNullableWithAggregatesFilter<"TestimonialItem"> | string | null
     order?: IntWithAggregatesFilter<"TestimonialItem"> | number
     sectionId?: StringWithAggregatesFilter<"TestimonialItem"> | string
     createdAt?: DateTimeWithAggregatesFilter<"TestimonialItem"> | Date | string
@@ -22475,6 +22611,7 @@ export namespace Prisma {
     src: string
     alt?: string | null
     caption?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -22486,6 +22623,7 @@ export namespace Prisma {
     src: string
     alt?: string | null
     caption?: string | null
+    imagePublicId?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -22496,6 +22634,7 @@ export namespace Prisma {
     src?: StringFieldUpdateOperationsInput | string
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22506,6 +22645,7 @@ export namespace Prisma {
     src?: StringFieldUpdateOperationsInput | string
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22517,6 +22657,7 @@ export namespace Prisma {
     src: string
     alt?: string | null
     caption?: string | null
+    imagePublicId?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -22527,6 +22668,7 @@ export namespace Prisma {
     src?: StringFieldUpdateOperationsInput | string
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22536,6 +22678,7 @@ export namespace Prisma {
     src?: StringFieldUpdateOperationsInput | string
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22545,6 +22688,7 @@ export namespace Prisma {
   export type HeroSectionContentCreateInput = {
     id?: string
     portraitImageSrc?: string | null
+    portraitImagePublicId?: string | null
     portraitAlt?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -22554,6 +22698,7 @@ export namespace Prisma {
   export type HeroSectionContentUncheckedCreateInput = {
     id?: string
     portraitImageSrc?: string | null
+    portraitImagePublicId?: string | null
     portraitAlt?: string | null
     sectionId: string
     createdAt?: Date | string
@@ -22562,6 +22707,7 @@ export namespace Prisma {
 
   export type HeroSectionContentUpdateInput = {
     portraitImageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    portraitImagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     portraitAlt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22570,6 +22716,7 @@ export namespace Prisma {
 
   export type HeroSectionContentUncheckedUpdateInput = {
     portraitImageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    portraitImagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     portraitAlt?: NullableStringFieldUpdateOperationsInput | string | null
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22579,6 +22726,7 @@ export namespace Prisma {
   export type HeroSectionContentCreateManyInput = {
     id?: string
     portraitImageSrc?: string | null
+    portraitImagePublicId?: string | null
     portraitAlt?: string | null
     sectionId: string
     createdAt?: Date | string
@@ -22587,6 +22735,7 @@ export namespace Prisma {
 
   export type HeroSectionContentUpdateManyMutationInput = {
     portraitImageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    portraitImagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     portraitAlt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22594,6 +22743,7 @@ export namespace Prisma {
 
   export type HeroSectionContentUncheckedUpdateManyInput = {
     portraitImageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    portraitImagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     portraitAlt?: NullableStringFieldUpdateOperationsInput | string | null
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22686,6 +22836,7 @@ export namespace Prisma {
   export type EducationImageCreateInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -22696,6 +22847,7 @@ export namespace Prisma {
   export type EducationImageUncheckedCreateInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -22705,6 +22857,7 @@ export namespace Prisma {
 
   export type EducationImageUpdateInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -22714,6 +22867,7 @@ export namespace Prisma {
 
   export type EducationImageUncheckedUpdateInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -22724,6 +22878,7 @@ export namespace Prisma {
   export type EducationImageCreateManyInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -22733,6 +22888,7 @@ export namespace Prisma {
 
   export type EducationImageUpdateManyMutationInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -22741,6 +22897,7 @@ export namespace Prisma {
 
   export type EducationImageUncheckedUpdateManyInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -22823,6 +22980,7 @@ export namespace Prisma {
   export type SkillImageCreateInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -22833,6 +22991,7 @@ export namespace Prisma {
   export type SkillImageUncheckedCreateInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -22842,6 +23001,7 @@ export namespace Prisma {
 
   export type SkillImageUpdateInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -22851,6 +23011,7 @@ export namespace Prisma {
 
   export type SkillImageUncheckedUpdateInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -22861,6 +23022,7 @@ export namespace Prisma {
   export type SkillImageCreateManyInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -22870,6 +23032,7 @@ export namespace Prisma {
 
   export type SkillImageUpdateManyMutationInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -22878,6 +23041,7 @@ export namespace Prisma {
 
   export type SkillImageUncheckedUpdateManyInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -22893,6 +23057,7 @@ export namespace Prisma {
     summary?: string | null
     description?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -22908,6 +23073,7 @@ export namespace Prisma {
     summary?: string | null
     description?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -22922,6 +23088,7 @@ export namespace Prisma {
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22936,6 +23103,7 @@ export namespace Prisma {
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22951,6 +23119,7 @@ export namespace Prisma {
     summary?: string | null
     description?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -22964,6 +23133,7 @@ export namespace Prisma {
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22976,6 +23146,7 @@ export namespace Prisma {
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22985,6 +23156,7 @@ export namespace Prisma {
   export type ExperienceDetailImageCreateInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -22995,6 +23167,7 @@ export namespace Prisma {
   export type ExperienceDetailImageUncheckedCreateInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -23004,6 +23177,7 @@ export namespace Prisma {
 
   export type ExperienceDetailImageUpdateInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -23013,6 +23187,7 @@ export namespace Prisma {
 
   export type ExperienceDetailImageUncheckedUpdateInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -23023,6 +23198,7 @@ export namespace Prisma {
   export type ExperienceDetailImageCreateManyInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -23032,6 +23208,7 @@ export namespace Prisma {
 
   export type ExperienceDetailImageUpdateManyMutationInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -23040,6 +23217,7 @@ export namespace Prisma {
 
   export type ExperienceDetailImageUncheckedUpdateManyInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -23055,6 +23233,7 @@ export namespace Prisma {
     description1: string
     description2?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     liveLink?: string | null
     sourceLink?: string | null
     layout?: string
@@ -23073,6 +23252,7 @@ export namespace Prisma {
     description1: string
     description2?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     liveLink?: string | null
     sourceLink?: string | null
     layout?: string
@@ -23090,6 +23270,7 @@ export namespace Prisma {
     description1?: StringFieldUpdateOperationsInput | string
     description2?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     liveLink?: NullableStringFieldUpdateOperationsInput | string | null
     sourceLink?: NullableStringFieldUpdateOperationsInput | string | null
     layout?: StringFieldUpdateOperationsInput | string
@@ -23107,6 +23288,7 @@ export namespace Prisma {
     description1?: StringFieldUpdateOperationsInput | string
     description2?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     liveLink?: NullableStringFieldUpdateOperationsInput | string | null
     sourceLink?: NullableStringFieldUpdateOperationsInput | string | null
     layout?: StringFieldUpdateOperationsInput | string
@@ -23125,6 +23307,7 @@ export namespace Prisma {
     description1: string
     description2?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     liveLink?: string | null
     sourceLink?: string | null
     layout?: string
@@ -23142,6 +23325,7 @@ export namespace Prisma {
     description1?: StringFieldUpdateOperationsInput | string
     description2?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     liveLink?: NullableStringFieldUpdateOperationsInput | string | null
     sourceLink?: NullableStringFieldUpdateOperationsInput | string | null
     layout?: StringFieldUpdateOperationsInput | string
@@ -23158,6 +23342,7 @@ export namespace Prisma {
     description1?: StringFieldUpdateOperationsInput | string
     description2?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     liveLink?: NullableStringFieldUpdateOperationsInput | string | null
     sourceLink?: NullableStringFieldUpdateOperationsInput | string | null
     layout?: StringFieldUpdateOperationsInput | string
@@ -23176,6 +23361,7 @@ export namespace Prisma {
     content: string
     rating: number
     imageSrc?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23190,6 +23376,7 @@ export namespace Prisma {
     content: string
     rating: number
     imageSrc?: string | null
+    imagePublicId?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -23203,6 +23390,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     rating?: FloatFieldUpdateOperationsInput | number
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23216,6 +23404,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     rating?: FloatFieldUpdateOperationsInput | number
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23230,6 +23419,7 @@ export namespace Prisma {
     content: string
     rating: number
     imageSrc?: string | null
+    imagePublicId?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -23243,6 +23433,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     rating?: FloatFieldUpdateOperationsInput | number
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23255,6 +23446,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     rating?: FloatFieldUpdateOperationsInput | number
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23891,6 +24083,7 @@ export namespace Prisma {
     src?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -23906,6 +24099,7 @@ export namespace Prisma {
     src?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -23917,6 +24111,7 @@ export namespace Prisma {
     src?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -23930,6 +24125,7 @@ export namespace Prisma {
   export type HeroSectionContentCountOrderByAggregateInput = {
     id?: SortOrder
     portraitImageSrc?: SortOrder
+    portraitImagePublicId?: SortOrder
     portraitAlt?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -23939,6 +24135,7 @@ export namespace Prisma {
   export type HeroSectionContentMaxOrderByAggregateInput = {
     id?: SortOrder
     portraitImageSrc?: SortOrder
+    portraitImagePublicId?: SortOrder
     portraitAlt?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -23948,6 +24145,7 @@ export namespace Prisma {
   export type HeroSectionContentMinOrderByAggregateInput = {
     id?: SortOrder
     portraitImageSrc?: SortOrder
+    portraitImagePublicId?: SortOrder
     portraitAlt?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24016,6 +24214,7 @@ export namespace Prisma {
   export type EducationImageCountOrderByAggregateInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -24030,6 +24229,7 @@ export namespace Prisma {
   export type EducationImageMaxOrderByAggregateInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -24040,6 +24240,7 @@ export namespace Prisma {
   export type EducationImageMinOrderByAggregateInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -24097,6 +24298,7 @@ export namespace Prisma {
   export type SkillImageCountOrderByAggregateInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -24111,6 +24313,7 @@ export namespace Prisma {
   export type SkillImageMaxOrderByAggregateInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -24121,6 +24324,7 @@ export namespace Prisma {
   export type SkillImageMinOrderByAggregateInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -24150,6 +24354,7 @@ export namespace Prisma {
     summary?: SortOrder
     description?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24168,6 +24373,7 @@ export namespace Prisma {
     summary?: SortOrder
     description?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24182,6 +24388,7 @@ export namespace Prisma {
     summary?: SortOrder
     description?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24200,6 +24407,7 @@ export namespace Prisma {
   export type ExperienceDetailImageCountOrderByAggregateInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -24214,6 +24422,7 @@ export namespace Prisma {
   export type ExperienceDetailImageMaxOrderByAggregateInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -24224,6 +24433,7 @@ export namespace Prisma {
   export type ExperienceDetailImageMinOrderByAggregateInput = {
     id?: SortOrder
     src?: SortOrder
+    imagePublicId?: SortOrder
     alt?: SortOrder
     caption?: SortOrder
     order?: SortOrder
@@ -24243,6 +24453,7 @@ export namespace Prisma {
     description1?: SortOrder
     description2?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     liveLink?: SortOrder
     sourceLink?: SortOrder
     layout?: SortOrder
@@ -24265,6 +24476,7 @@ export namespace Prisma {
     description1?: SortOrder
     description2?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     liveLink?: SortOrder
     sourceLink?: SortOrder
     layout?: SortOrder
@@ -24282,6 +24494,7 @@ export namespace Prisma {
     description1?: SortOrder
     description2?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     liveLink?: SortOrder
     sourceLink?: SortOrder
     layout?: SortOrder
@@ -24314,6 +24527,7 @@ export namespace Prisma {
     content?: SortOrder
     rating?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24333,6 +24547,7 @@ export namespace Prisma {
     content?: SortOrder
     rating?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24347,6 +24562,7 @@ export namespace Prisma {
     content?: SortOrder
     rating?: SortOrder
     imageSrc?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -25474,6 +25690,7 @@ export namespace Prisma {
     src: string
     alt?: string | null
     caption?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25484,6 +25701,7 @@ export namespace Prisma {
     src: string
     alt?: string | null
     caption?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25501,6 +25719,7 @@ export namespace Prisma {
   export type HeroSectionContentCreateWithoutSectionInput = {
     id?: string
     portraitImageSrc?: string | null
+    portraitImagePublicId?: string | null
     portraitAlt?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25509,6 +25728,7 @@ export namespace Prisma {
   export type HeroSectionContentUncheckedCreateWithoutSectionInput = {
     id?: string
     portraitImageSrc?: string | null
+    portraitImagePublicId?: string | null
     portraitAlt?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25584,6 +25804,7 @@ export namespace Prisma {
   export type SkillImageCreateWithoutSectionInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -25593,6 +25814,7 @@ export namespace Prisma {
   export type SkillImageUncheckedCreateWithoutSectionInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -25616,6 +25838,7 @@ export namespace Prisma {
     summary?: string | null
     description?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25630,6 +25853,7 @@ export namespace Prisma {
     summary?: string | null
     description?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25653,6 +25877,7 @@ export namespace Prisma {
     description1: string
     description2?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     liveLink?: string | null
     sourceLink?: string | null
     layout?: string
@@ -25670,6 +25895,7 @@ export namespace Prisma {
     description1: string
     description2?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     liveLink?: string | null
     sourceLink?: string | null
     layout?: string
@@ -25696,6 +25922,7 @@ export namespace Prisma {
     content: string
     rating: number
     imageSrc?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25709,6 +25936,7 @@ export namespace Prisma {
     content: string
     rating: number
     imageSrc?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25841,6 +26069,7 @@ export namespace Prisma {
     src?: StringFilter<"ImageBlock"> | string
     alt?: StringNullableFilter<"ImageBlock"> | string | null
     caption?: StringNullableFilter<"ImageBlock"> | string | null
+    imagePublicId?: StringNullableFilter<"ImageBlock"> | string | null
     order?: IntFilter<"ImageBlock"> | number
     sectionId?: StringFilter<"ImageBlock"> | string
     createdAt?: DateTimeFilter<"ImageBlock"> | Date | string
@@ -25860,6 +26089,7 @@ export namespace Prisma {
 
   export type HeroSectionContentUpdateWithoutSectionInput = {
     portraitImageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    portraitImagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     portraitAlt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25867,6 +26097,7 @@ export namespace Prisma {
 
   export type HeroSectionContentUncheckedUpdateWithoutSectionInput = {
     portraitImageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    portraitImagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     portraitAlt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25955,6 +26186,7 @@ export namespace Prisma {
     NOT?: SkillImageScalarWhereInput | SkillImageScalarWhereInput[]
     id?: StringFilter<"SkillImage"> | string
     src?: StringFilter<"SkillImage"> | string
+    imagePublicId?: StringNullableFilter<"SkillImage"> | string | null
     alt?: StringNullableFilter<"SkillImage"> | string | null
     caption?: StringNullableFilter<"SkillImage"> | string | null
     order?: IntFilter<"SkillImage"> | number
@@ -25989,6 +26221,7 @@ export namespace Prisma {
     summary?: StringNullableFilter<"ExperienceItem"> | string | null
     description?: StringNullableFilter<"ExperienceItem"> | string | null
     imageSrc?: StringFilter<"ExperienceItem"> | string
+    imagePublicId?: StringNullableFilter<"ExperienceItem"> | string | null
     order?: IntFilter<"ExperienceItem"> | number
     sectionId?: StringFilter<"ExperienceItem"> | string
     createdAt?: DateTimeFilter<"ExperienceItem"> | Date | string
@@ -26022,6 +26255,7 @@ export namespace Prisma {
     description1?: StringFilter<"ProjectItem"> | string
     description2?: StringNullableFilter<"ProjectItem"> | string | null
     imageSrc?: StringFilter<"ProjectItem"> | string
+    imagePublicId?: StringNullableFilter<"ProjectItem"> | string | null
     liveLink?: StringNullableFilter<"ProjectItem"> | string | null
     sourceLink?: StringNullableFilter<"ProjectItem"> | string | null
     layout?: StringFilter<"ProjectItem"> | string
@@ -26059,6 +26293,7 @@ export namespace Prisma {
     content?: StringFilter<"TestimonialItem"> | string
     rating?: FloatFilter<"TestimonialItem"> | number
     imageSrc?: StringNullableFilter<"TestimonialItem"> | string | null
+    imagePublicId?: StringNullableFilter<"TestimonialItem"> | string | null
     order?: IntFilter<"TestimonialItem"> | number
     sectionId?: StringFilter<"TestimonialItem"> | string
     createdAt?: DateTimeFilter<"TestimonialItem"> | Date | string
@@ -26472,6 +26707,7 @@ export namespace Prisma {
   export type EducationImageCreateWithoutEducationItemInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -26481,6 +26717,7 @@ export namespace Prisma {
   export type EducationImageUncheckedCreateWithoutEducationItemInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -26569,6 +26806,7 @@ export namespace Prisma {
     NOT?: EducationImageScalarWhereInput | EducationImageScalarWhereInput[]
     id?: StringFilter<"EducationImage"> | string
     src?: StringFilter<"EducationImage"> | string
+    imagePublicId?: StringNullableFilter<"EducationImage"> | string | null
     alt?: StringNullableFilter<"EducationImage"> | string | null
     caption?: StringNullableFilter<"EducationImage"> | string | null
     order?: IntFilter<"EducationImage"> | number
@@ -26884,6 +27122,7 @@ export namespace Prisma {
   export type ExperienceDetailImageCreateWithoutExperienceItemInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -26893,6 +27132,7 @@ export namespace Prisma {
   export type ExperienceDetailImageUncheckedCreateWithoutExperienceItemInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -26981,6 +27221,7 @@ export namespace Prisma {
     NOT?: ExperienceDetailImageScalarWhereInput | ExperienceDetailImageScalarWhereInput[]
     id?: StringFilter<"ExperienceDetailImage"> | string
     src?: StringFilter<"ExperienceDetailImage"> | string
+    imagePublicId?: StringNullableFilter<"ExperienceDetailImage"> | string | null
     alt?: StringNullableFilter<"ExperienceDetailImage"> | string | null
     caption?: StringNullableFilter<"ExperienceDetailImage"> | string | null
     order?: IntFilter<"ExperienceDetailImage"> | number
@@ -26996,6 +27237,7 @@ export namespace Prisma {
     summary?: string | null
     description?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -27010,6 +27252,7 @@ export namespace Prisma {
     summary?: string | null
     description?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -27039,6 +27282,7 @@ export namespace Prisma {
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27052,6 +27296,7 @@ export namespace Prisma {
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27465,6 +27710,7 @@ export namespace Prisma {
     src: string
     alt?: string | null
     caption?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -27494,6 +27740,7 @@ export namespace Prisma {
   export type SkillImageCreateManySectionInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -27508,6 +27755,7 @@ export namespace Prisma {
     summary?: string | null
     description?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -27521,6 +27769,7 @@ export namespace Prisma {
     description1: string
     description2?: string | null
     imageSrc: string
+    imagePublicId?: string | null
     liveLink?: string | null
     sourceLink?: string | null
     layout?: string
@@ -27538,6 +27787,7 @@ export namespace Prisma {
     content: string
     rating: number
     imageSrc?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -27597,6 +27847,7 @@ export namespace Prisma {
     src?: StringFieldUpdateOperationsInput | string
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27606,6 +27857,7 @@ export namespace Prisma {
     src?: StringFieldUpdateOperationsInput | string
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27615,6 +27867,7 @@ export namespace Prisma {
     src?: StringFieldUpdateOperationsInput | string
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27681,6 +27934,7 @@ export namespace Prisma {
 
   export type SkillImageUpdateWithoutSectionInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -27689,6 +27943,7 @@ export namespace Prisma {
 
   export type SkillImageUncheckedUpdateWithoutSectionInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -27697,6 +27952,7 @@ export namespace Prisma {
 
   export type SkillImageUncheckedUpdateManyWithoutSectionInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -27710,6 +27966,7 @@ export namespace Prisma {
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27723,6 +27980,7 @@ export namespace Prisma {
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27736,6 +27994,7 @@ export namespace Prisma {
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27748,6 +28007,7 @@ export namespace Prisma {
     description1?: StringFieldUpdateOperationsInput | string
     description2?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     liveLink?: NullableStringFieldUpdateOperationsInput | string | null
     sourceLink?: NullableStringFieldUpdateOperationsInput | string | null
     layout?: StringFieldUpdateOperationsInput | string
@@ -27764,6 +28024,7 @@ export namespace Prisma {
     description1?: StringFieldUpdateOperationsInput | string
     description2?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     liveLink?: NullableStringFieldUpdateOperationsInput | string | null
     sourceLink?: NullableStringFieldUpdateOperationsInput | string | null
     layout?: StringFieldUpdateOperationsInput | string
@@ -27780,6 +28041,7 @@ export namespace Prisma {
     description1?: StringFieldUpdateOperationsInput | string
     description2?: NullableStringFieldUpdateOperationsInput | string | null
     imageSrc?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     liveLink?: NullableStringFieldUpdateOperationsInput | string | null
     sourceLink?: NullableStringFieldUpdateOperationsInput | string | null
     layout?: StringFieldUpdateOperationsInput | string
@@ -27796,6 +28058,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     rating?: FloatFieldUpdateOperationsInput | number
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27808,6 +28071,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     rating?: FloatFieldUpdateOperationsInput | number
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27820,6 +28084,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     rating?: FloatFieldUpdateOperationsInput | number
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27891,6 +28156,7 @@ export namespace Prisma {
   export type EducationImageCreateManyEducationItemInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -27899,6 +28165,7 @@ export namespace Prisma {
 
   export type EducationImageUpdateWithoutEducationItemInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -27907,6 +28174,7 @@ export namespace Prisma {
 
   export type EducationImageUncheckedUpdateWithoutEducationItemInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -27915,6 +28183,7 @@ export namespace Prisma {
 
   export type EducationImageUncheckedUpdateManyWithoutEducationItemInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -27924,6 +28193,7 @@ export namespace Prisma {
   export type ExperienceDetailImageCreateManyExperienceItemInput = {
     id?: string
     src: string
+    imagePublicId?: string | null
     alt?: string | null
     caption?: string | null
     order?: number
@@ -27932,6 +28202,7 @@ export namespace Prisma {
 
   export type ExperienceDetailImageUpdateWithoutExperienceItemInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -27940,6 +28211,7 @@ export namespace Prisma {
 
   export type ExperienceDetailImageUncheckedUpdateWithoutExperienceItemInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -27948,6 +28220,7 @@ export namespace Prisma {
 
   export type ExperienceDetailImageUncheckedUpdateManyWithoutExperienceItemInput = {
     src?: StringFieldUpdateOperationsInput | string
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number

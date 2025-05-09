@@ -5,11 +5,14 @@ import prisma from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { sectionId, src, alt, caption } = body;
+    const { sectionId, src, alt, caption, imagePublicId } = body;
 
-    if (!sectionId || !src) {
+    if (!sectionId || !src || !imagePublicId) {
       return NextResponse.json(
-        { message: "Missing required fields: sectionId and src are required." },
+        {
+          message:
+            "Missing required fields: sectionId, src, and imagePublicId are required.",
+        },
         { status: 400 }
       );
     }
@@ -26,6 +29,7 @@ export async function POST(request: Request) {
       data: {
         sectionId: String(sectionId),
         src: String(src),
+        imagePublicId: String(imagePublicId),
         alt: alt ? String(alt) : "Skill image",
         caption: caption ? String(caption) : null,
         order: newOrder,

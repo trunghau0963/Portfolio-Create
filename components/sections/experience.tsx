@@ -15,6 +15,7 @@ import {
   X,
   Upload,
   Loader2,
+  ImagePlus,
 } from "lucide-react";
 import {
   Dialog,
@@ -55,6 +56,11 @@ import {
 } from "../../lib/generated/prisma";
 import EditableTextAutoResize from "../ui/editable-text-auto-resize";
 import { toast } from "sonner";
+import {
+  CldUploadButton,
+  CldUploadWidget,
+  type CloudinaryUploadWidgetResults,
+} from "next-cloudinary";
 
 // Define an experience type
 interface Experience {
@@ -64,72 +70,9 @@ interface Experience {
   summary: string;
   description: string;
   imageSrc: string;
+  imagePublicId?: string;
   detailImages: PrismaExperienceDetailImage[];
   period: string;
-}
-
-// Image Upload Component
-function ImageUploadArea({
-  onImageSelected,
-}: {
-  onImageSelected: (file: File) => void;
-}) {
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDraggingOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDraggingOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDraggingOver(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.type.startsWith("image/")) {
-        onImageSelected(file);
-      }
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      onImageSelected(e.target.files[0]);
-    }
-  };
-
-  return (
-    <div
-      className={`drag-drop-area ${isDraggingOver ? "dragging-over" : ""}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <input
-        type="file"
-        id="experience-image-upload"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileChange}
-      />
-      <label htmlFor="experience-image-upload" className="cursor-pointer">
-        <div className="flex flex-col items-center">
-          <Upload className="h-10 w-10 text-gray-400 mb-2" />
-          <p className="text-sm text-gray-500">
-            Click to select an image or drag and drop
-          </p>
-          <p className="text-xs text-gray-400 mt-2">
-            (For this demo, we'll use a random image if no file is selected)
-          </p>
-        </div>
-      </label>
-    </div>
-  );
 }
 
 // Sortable Experience Item Component
@@ -139,12 +82,17 @@ function SortableExperienceItem({
   onView,
   confirmDelete,
   index,
+  onMainImageUploaded,
 }: {
   experience: Experience;
   isAdmin: boolean | undefined;
   onView: (id: string) => void;
   confirmDelete: (id: string) => void;
   index: number;
+  onMainImageUploaded: (
+    experienceId: string,
+    imageData: { public_id: string; secure_url: string }
+  ) => Promise<void>;
 }) {
   const {
     attributes,
@@ -161,6 +109,13 @@ function SortableExperienceItem({
     opacity: isDragging ? 0.5 : 1,
     position: "relative" as const,
     zIndex: isDragging ? 1 : 0,
+  };
+
+  const handleImageUpload = async (imageData: {
+    public_id: string;
+    secure_url: string;
+  }) => {
+    await onMainImageUploaded(experience.id, imageData);
   };
 
   return (
@@ -197,6 +152,8 @@ function SortableExperienceItem({
             width={400}
             height={300}
             className="w-full h-auto object-cover"
+            onImageUploaded={handleImageUpload}
+            uploadPreset="portfolio_unsigned"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
             <div>
@@ -252,7 +209,7 @@ export default function ExperienceSection({
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
   const introTextBlock = section.textBlocks?.[0];
-  const sectionId = section.slug;
+  const sectionAPId = section.id;
 
   const [experiences, setExperiences] = useState<Experience[]>([]);
 
@@ -276,8 +233,11 @@ export default function ExperienceSection({
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
   const [isAddingImage, setIsAddingImage] = useState(false);
-  const [isDeletingImage, setIsDeletingImage] = useState<number | null>(null);
+  const [isDeletingImage, setIsDeletingImage] = useState<string | null>(null);
   const [isSavingSectionText, setIsSavingSectionText] = useState(false);
+  const [isDeletingDetailImageId, setIsDeletingDetailImageId] = useState<
+    string | null
+  >(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -292,7 +252,7 @@ export default function ExperienceSection({
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
+    if (over && String(active.id) !== String(over.id)) {
       const oldIndex = experiences.findIndex(
         (item) => String(item.id) === String(active.id)
       );
@@ -311,22 +271,21 @@ export default function ExperienceSection({
       // API call for reordering
       setIsReordering(true);
       try {
-        const response = await fetch(
-          `/api/sections/${section.id}/experience/reorder`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderedIds }), // Send the ordered IDs
-          }
-        );
+        const response = await fetch(`/api/experience/reorder`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sectionId: sectionAPId, orderedIds }),
+        });
         if (!response.ok) {
           throw new Error("Failed to reorder experience items");
         }
         toast.success("Experience items reordered!");
         if (onDataChange) onDataChange();
       } catch (error) {
-        console.error("Reordering failed:", error);
-        toast.error(`Reordering failed: ${(error as Error).message}`);
+        console.error("Reordering experience items failed:", error);
+        toast.error(
+          `Reordering experience items failed: ${(error as Error).message}`
+        );
         // Revert optimistic update on error by re-fetching
         if (onDataChange) onDataChange();
       } finally {
@@ -358,7 +317,9 @@ export default function ExperienceSection({
       if (!response.ok) {
         throw new Error("Failed to add new experience item");
       }
-      toast.success("New experience item added!");
+      toast.success(
+        "New experience item added! You can now edit details and upload images."
+      );
       if (onDataChange) onDataChange();
     } catch (error) {
       console.error("Adding experience item failed:", error);
@@ -498,19 +459,22 @@ export default function ExperienceSection({
     }
   };
 
-  const deleteDetailImage = async (index: number) => {
+  const deleteDetailImage = async (imageId: string) => {
     if (!currentExperience) return;
 
-    const imageToDelete = currentExperience.detailImages[index];
+    const imageToDelete = currentExperience.detailImages.find(
+      (image) => image.id === imageId
+    );
     if (!imageToDelete || !imageToDelete.id) {
-      console.error("Image ID not found at index", index);
+      console.error("Image ID not found for deletion:", imageId);
       toast.error("Image ID not found.");
       return;
     }
     const imageIdToDelete = imageToDelete.id;
 
-    setIsDeletingImage(index); // Use index for UI feedback
+    setIsDeletingDetailImageId(imageIdToDelete); // Use state for UI feedback
     try {
+      // API call will handle Cloudinary deletion first
       const response = await fetch(
         `/api/experience-images/${imageIdToDelete}`,
         {
@@ -522,21 +486,14 @@ export default function ExperienceSection({
         throw new Error(errorData.message || "Failed to delete detail image");
       }
       toast.success("Detail image deleted!");
-      if (onDataChange) {
-        onDataChange();
-      } else {
-        // This else block should ideally not be reached if onDataChange is mandatory.
-        console.warn(
-          "ExperienceSection: deleteDetailImage - onDataChange is not defined. UI might not update."
-        );
-      }
+      if (onDataChange) onDataChange();
     } catch (error) {
       console.error("Deleting detail image failed:", error);
       toast.error(`Deleting image failed: ${(error as Error).message}`);
       // Optionally re-fetch on error too
       if (onDataChange) onDataChange();
     } finally {
-      setIsDeletingImage(null);
+      setIsDeletingDetailImageId(null);
     }
   };
 
@@ -576,27 +533,108 @@ export default function ExperienceSection({
     }
   };
 
+  const handleExperienceItemMainImageUpload = async (
+    experienceId: string,
+    imageData: { public_id: string; secure_url: string }
+  ) => {
+    setIsSavingDetails(true);
+    try {
+      const payload = {
+        imageSrc: imageData.secure_url,
+        imagePublicId: imageData.public_id,
+      };
+      const response = await fetch(`/api/experience/${experienceId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || "Failed to update experience image"
+        );
+      }
+      toast.success("Experience image updated!");
+      onDataChange();
+    } catch (error) {
+      console.error(
+        `Error updating image for experience ${experienceId}:`,
+        error
+      );
+      toast.error(`Failed to update image: ${(error as Error).message}`);
+    } finally {
+      setIsSavingDetails(false);
+    }
+  };
+
+  const handleUploadedExperienceDetailImage = async (
+    results: CloudinaryUploadWidgetResults
+  ) => {
+    if (!currentExperience) {
+      toast.error("No current experience selected to add image to.");
+      return;
+    }
+    if (
+      results?.info &&
+      typeof results.info !== "string" &&
+      results.info.public_id
+    ) {
+      const { public_id, secure_url, original_filename } = results.info;
+      setIsAddingImage(true);
+      try {
+        const payload = {
+          experienceItemId: currentExperience.id,
+          src: secure_url,
+          alt: original_filename || "Experience detail image",
+          imagePublicId: public_id,
+        };
+        const response = await fetch("/api/experience-images", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || "Failed to add detail image");
+        }
+        toast.success("Detail image added!");
+        if (onDataChange) onDataChange();
+      } catch (error) {
+        console.error("Error adding detail image:", error);
+        toast.error(`Failed to add detail image: ${(error as Error).message}`);
+      } finally {
+        setIsAddingImage(false);
+      }
+    } else {
+      toast.error(
+        "Cloudinary upload failed or returned invalid data for detail image."
+      );
+      console.error("Cloudinary upload error/invalid data:", results);
+      // Ensure loading state is reset even if Cloudinary data is bad
+      if (isAddingImage) setIsAddingImage(false);
+    }
+  };
+
   useEffect(() => {
     const mappedExperiences: Experience[] =
-      section.experienceItems?.map((item): Experience => {
-        return {
-          id: String(item.id),
-          positionTitle: item.positionTitle || "",
-          company: item.companyName || "",
-          period: item.period || "",
-          summary: item.summary || "",
-          description: item.description || "",
-          imageSrc: item.imageSrc || "",
-          detailImages: item.detailImages || [],
-        };
-      }) || [];
+      section.experienceItems?.map((item) => ({
+        id: String(item.id),
+        positionTitle: item.positionTitle || "Position",
+        company: item.companyName || "Company",
+        summary: item.summary || "Summary",
+        description: item.description || "Description",
+        imageSrc: item.imageSrc || "",
+        imagePublicId: item.imagePublicId || undefined,
+        detailImages: item.detailImages || [],
+        period: item.period || "",
+      })) || [];
     setExperiences(mappedExperiences);
   }, [section.experienceItems]);
 
   return (
     <AnimatedSection variant="fadeInUp">
       <section
-        id={sectionId}
+        id={section.slug}
         className="shadow-sm bg-red-600 dark:shadow-gray-900 dark:shadow-sm py-16 md:py-20 lg:py-24"
       >
         <div className="max-w-6xl mx-auto px-4">
@@ -612,10 +650,9 @@ export default function ExperienceSection({
                 key={introTextBlock.id}
                 blockId={introTextBlock.id}
                 initialText={introTextBlock.content}
-                initialFontSize={introTextBlock.fontSize || undefined}
-                initialFontFamily={introTextBlock.fontFamily || undefined}
+                initialFontSize={introTextBlock.fontSize || 16}
+                initialFontFamily={introTextBlock.fontFamily || "font-sans"}
                 className="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto"
-                as="p"
                 onCommitText={handleSaveSectionTextBlock}
               />
             )}
@@ -645,6 +682,7 @@ export default function ExperienceSection({
                     onView={viewExperienceDetails}
                     confirmDelete={confirmDelete}
                     index={index}
+                    onMainImageUploaded={handleExperienceItemMainImageUpload}
                   />
                 ))}
               </div>
@@ -852,40 +890,55 @@ export default function ExperienceSection({
 
                   {/* Detail Images */}
                   <div>
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex justify-between items-center mb-4">
                       <h3 className="font-semibold">Project Images</h3>
                       {isAdmin && (
-                        <div className="flex gap-2">
-                          <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex items-center gap-1"
-                              onClick={() => addDetailImage()}
-                              disabled={isAddingImage}
+                        <CldUploadWidget
+                          uploadPreset="portfolio_unsigned"
+                          options={{
+                            sources: ["local", "url"],
+                            multiple: true,
+                            folder: "experience_details",
+                          }}
+                          onSuccess={handleUploadedExperienceDetailImage}
+                          onUpload={() => setIsAddingImage(true)}
+                          onError={(error) => {
+                            const errorMessage =
+                              typeof error === "object" &&
+                              error !== null &&
+                              "message" in error
+                                ? String(error.message)
+                                : typeof error === "string"
+                                  ? error
+                                  : "Unknown upload error";
+                            toast.error(`Upload failed: ${errorMessage}`);
+                            setIsAddingImage(false);
+                          }}
+                        >
+                          {({ open }) => (
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
                             >
-                              {isAddingImage ? (
-                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                              ) : (
-                                <PlusCircle size={14} />
-                              )}
-                              {isAddingImage ? "Adding..." : "Add Random Image"}
-                            </Button>
-                          </motion.div>
-                        </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-1"
+                                onClick={() => open && open()}
+                                disabled={isAddingImage}
+                              >
+                                {isAddingImage ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                ) : (
+                                  <ImagePlus size={14} />
+                                )}
+                                {isAddingImage ? "Uploading..." : "Add Images"}
+                              </Button>
+                            </motion.div>
+                          )}
+                        </CldUploadWidget>
                       )}
                     </div>
-
-                    {isAdmin && (
-                      <div className="mb-4">
-                        <ImageUploadArea
-                          onImageSelected={(file) => addDetailImage(file)}
-                        />
-                      </div>
-                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <AnimatePresence>
@@ -921,10 +974,15 @@ export default function ExperienceSection({
                                   variant="ghost"
                                   size="icon"
                                   className="text-white bg-red-600/70 hover:bg-red-600 rounded-full p-1"
-                                  onClick={() => deleteDetailImage(index)}
-                                  disabled={isDeletingImage === index}
+                                  onClick={() =>
+                                    deleteDetailImage(String(image.id))
+                                  }
+                                  disabled={
+                                    isDeletingDetailImageId === String(image.id)
+                                  }
                                 >
-                                  {isDeletingImage === index ? (
+                                  {isDeletingDetailImageId ===
+                                  String(image.id) ? (
                                     <Loader2 className="h-3 w-3 animate-spin" />
                                   ) : (
                                     <X size={14} />

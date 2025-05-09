@@ -1,5 +1,29 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
+// Helper to delete Cloudinary image
+async function deleteCloudinaryImage(publicId: string) {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.destroy(publicId, (error, result) => {
+      if (error) {
+        console.error(`Cloudinary delete error for ${publicId}:`, error);
+        reject(error);
+      } else {
+        console.log(`Cloudinary delete result for ${publicId}:`, result);
+        resolve(result);
+      }
+    });
+  });
+}
 
 // PUT /api/experience/[id] - Update an experience item
 export async function PUT(
@@ -16,25 +40,51 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    // Explicitly list fields allowed for update
     const {
       positionTitle,
       companyName,
       period,
       summary,
       description,
-      imageSrc,
-      // detailImages are handled by separate endpoints
-      // order is handled by reorder endpoint
+      imageSrc, // Cloudinary URL
+      imagePublicId, // Cloudinary Public ID
     } = body;
 
     const dataToUpdate: any = {};
-    if (positionTitle !== undefined) dataToUpdate.positionTitle = positionTitle;
-    if (companyName !== undefined) dataToUpdate.companyName = companyName;
-    if (period !== undefined) dataToUpdate.period = period;
-    if (summary !== undefined) dataToUpdate.summary = summary;
-    if (description !== undefined) dataToUpdate.description = description;
-    if (imageSrc !== undefined) dataToUpdate.imageSrc = imageSrc;
+    if (positionTitle !== undefined)
+      dataToUpdate.positionTitle = String(positionTitle);
+    if (companyName !== undefined)
+      dataToUpdate.companyName = String(companyName);
+    if (period !== undefined) dataToUpdate.period = String(period);
+    if (summary !== undefined)
+      dataToUpdate.summary = summary === null ? null : String(summary);
+    if (description !== undefined)
+      dataToUpdate.description =
+        description === null ? null : String(description);
+    if (imageSrc !== undefined) dataToUpdate.imageSrc = String(imageSrc);
+    if (imagePublicId !== undefined)
+      dataToUpdate.imagePublicId = String(imagePublicId);
+
+    // Handle image deletion logic
+    let oldPublicId: string | null = null;
+    if (dataToUpdate.imageSrc || dataToUpdate.imagePublicId) {
+      const existingExp = await prisma.experienceItem.findUnique({
+        where: { id: id },
+        select: { imagePublicId: true },
+      });
+      if (existingExp?.imagePublicId) {
+        oldPublicId = existingExp.imagePublicId;
+      }
+      if (dataToUpdate.imageSrc && dataToUpdate.imagePublicId === undefined) {
+        return NextResponse.json(
+          { message: "imagePublicId is required when updating imageSrc." },
+          { status: 400 }
+        );
+      }
+    } else {
+      delete dataToUpdate.imageSrc;
+      delete dataToUpdate.imagePublicId;
+    }
 
     if (Object.keys(dataToUpdate).length === 0) {
       return NextResponse.json(
@@ -47,6 +97,18 @@ export async function PUT(
       where: { id: id },
       data: dataToUpdate,
     });
+
+    // Delete old Cloudinary image if necessary
+    if (oldPublicId && oldPublicId !== updatedItem.imagePublicId) {
+      try {
+        await deleteCloudinaryImage(oldPublicId);
+      } catch (cloudinaryError) {
+        console.error(
+          `Failed to delete old Cloudinary image ${oldPublicId}:`,
+          cloudinaryError
+        );
+      }
+    }
 
     return NextResponse.json(updatedItem);
   } catch (error: any) {
@@ -81,17 +143,61 @@ export async function DELETE(
   }
 
   try {
-    // Important: Deleting an ExperienceItem might require deleting related
-    // ExperienceDetailImage records first if onDelete: Cascade is not set
-    // or doesn't work as expected with MongoDB relations.
-    // For simplicity here, assume cascade delete works or relations are handled.
-    await prisma.experienceDetailImage.deleteMany({
-      where: { experienceItemId: id },
+    // 1. Find ExperienceItem to get the main image public ID and related detail image IDs/publicIDs
+    const experienceToDelete = await prisma.experienceItem.findUnique({
+      where: { id: id },
+      select: {
+        imagePublicId: true,
+        detailImages: {
+          select: { id: true, imagePublicId: true },
+        },
+      },
     });
 
+    // 2. Delete related ExperienceDetailImages from DB and Cloudinary
+    if (experienceToDelete?.detailImages?.length) {
+      const detailImageIds = experienceToDelete.detailImages.map(
+        (img) => img.id
+      );
+      const detailImagePublicIds = experienceToDelete.detailImages
+        .map((img) => img.imagePublicId)
+        .filter((pid) => !!pid);
+
+      await prisma.experienceDetailImage.deleteMany({
+        where: { id: { in: detailImageIds } },
+      });
+
+      for (const publicId of detailImagePublicIds) {
+        if (publicId) {
+          // Double check just in case
+          try {
+            await deleteCloudinaryImage(publicId);
+          } catch (cloudinaryError) {
+            console.error(
+              `Failed to delete Cloudinary detail image ${publicId} for experience ${id}:`,
+              cloudinaryError
+            );
+          }
+        }
+      }
+    }
+
+    // 3. Delete the ExperienceItem from DB
     await prisma.experienceItem.delete({
       where: { id: id },
     });
+
+    // 4. Delete the main ExperienceItem image from Cloudinary
+    if (experienceToDelete?.imagePublicId) {
+      try {
+        await deleteCloudinaryImage(experienceToDelete.imagePublicId);
+      } catch (cloudinaryError) {
+        console.error(
+          `Failed to delete main Cloudinary image ${experienceToDelete.imagePublicId} for experience ${id}:`,
+          cloudinaryError
+        );
+      }
+    }
 
     return NextResponse.json(
       { message: `Experience item ${id} deleted successfully` },

@@ -1,59 +1,57 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// POST /api/experience-images - Create a new detail image for an experience item
+// POST /api/experience-images - Create a new image for an experience item
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { experienceItemId, src, alt, caption } = body;
+    // Destructure imagePublicId from the body
+    const { experienceItemId, src, alt, imagePublicId } = body;
 
-    if (!experienceItemId || !src) {
+    // Add imagePublicId to the validation
+    if (!experienceItemId || !src || !imagePublicId) {
       return NextResponse.json(
-        { message: "Missing required fields (experienceItemId, src)" },
+        {
+          message:
+            "Missing required fields (experienceItemId, src, imagePublicId)",
+        },
         { status: 400 }
       );
     }
 
-    // Optional: Validate if experience item exists
+    // Verify experienceItemId exists (optional but recommended)
     const experienceItem = await prisma.experienceItem.findUnique({
-      where: { id: experienceItemId },
+      where: { id: String(experienceItemId) },
     });
     if (!experienceItem) {
       return NextResponse.json(
-        { message: `Experience item with ID ${experienceItemId} not found` },
+        { message: `ExperienceItem with id ${experienceItemId} not found.` },
         { status: 404 }
       );
     }
 
-    // Find the current max order for images in this specific experience item
-    const maxOrderResult = await prisma.experienceDetailImage.aggregate({
-      _max: {
-        order: true,
-      },
-      where: {
-        experienceItemId: experienceItemId,
-      },
+    // Determine the next order value
+    const lastImage = await prisma.experienceDetailImage.findFirst({
+      where: { experienceItemId: String(experienceItemId) },
+      orderBy: { order: "desc" },
     });
-    const newOrder = (maxOrderResult._max.order ?? -1) + 1;
+    const newOrder = (lastImage?.order ?? -1) + 1;
 
-    const newDetailImage = await prisma.experienceDetailImage.create({
+    const newExperienceImage = await prisma.experienceDetailImage.create({
       data: {
-        experienceItemId,
-        src,
-        alt: alt || "Experience detail image", // Default alt text
-        caption: caption || null,
+        experienceItemId: String(experienceItemId),
+        src: String(src), // Cloudinary URL
+        alt: alt ? String(alt) : "Experience detail image", // Default alt text
+        imagePublicId: String(imagePublicId), // Save public ID
         order: newOrder,
       },
     });
 
-    return NextResponse.json(newDetailImage, { status: 201 });
+    return NextResponse.json(newExperienceImage, { status: 201 });
   } catch (error) {
-    console.error("Error creating experience detail image:", error);
+    console.error("Error creating experience image:", error);
     return NextResponse.json(
-      {
-        message: "Error creating experience detail image",
-        error: error instanceof Error ? error.message : String(error),
-      },
+      { message: "Internal Server Error", error: (error as Error).message },
       { status: 500 }
     );
   }

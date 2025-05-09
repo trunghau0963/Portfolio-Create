@@ -1,21 +1,38 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, StarHalf, Edit, Trash2, Quote } from "lucide-react";
+import {
+  Star,
+  StarHalf,
+  Edit,
+  Trash2,
+  Quote,
+  Image as LucideImageIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import NextImage from "next/image";
 import type { Testimonial } from "../sections/testimonials";
+import EditableImage from "./editable-image";
 
 interface TestimonialCardProps {
   testimonial: Testimonial;
   onEdit?: () => void;
   onDelete?: () => void;
+  onAvatarUploaded?: (
+    testimonialId: string,
+    imageData: { public_id: string; secure_url: string }
+  ) => Promise<void>;
+  uploadPreset?: string;
+  isAdmin?: boolean;
 }
 
 export default function TestimonialCard({
   testimonial,
   onEdit,
   onDelete,
+  onAvatarUploaded,
+  uploadPreset,
+  isAdmin,
 }: TestimonialCardProps) {
   // Render star rating
   const renderRating = (rating: number) => {
@@ -44,10 +61,19 @@ export default function TestimonialCard({
     return stars;
   };
 
+  const handleAvatarUpload = async (imageData: {
+    public_id: string;
+    secure_url: string;
+  }) => {
+    if (onAvatarUploaded) {
+      await onAvatarUploaded(testimonial.id, imageData);
+    }
+  };
+
   return (
     <div className="bg-gray-50 rounded-lg p-6 md:p-8 shadow-sm relative group opacity-90">
       {/* Admin Controls */}
-      {(onEdit || onDelete) && (
+      {isAdmin && (onEdit || onDelete) && (
         <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
           {onEdit && (
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
@@ -101,14 +127,28 @@ export default function TestimonialCard({
         <div className="md:col-span-4 order-1 md:order-2 flex flex-col items-center md:items-end">
           <div className="flex flex-col items-center md:items-end space-y-3">
             <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow-md">
-              <Image
-                src={testimonial.imageSrc || "/placeholder.svg"}
-                alt={
-                  `Portrait of ${testimonial.clientName}` || "Client portrait"
-                }
-                fill
-                className="object-cover"
-              />
+              {isAdmin && onAvatarUploaded && uploadPreset ? (
+                <EditableImage
+                  src={testimonial.imageSrc || "/placeholder.svg"}
+                  alt={
+                    `Portrait of ${testimonial.clientName}` || "Client portrait"
+                  }
+                  width={80}
+                  height={80}
+                  className="object-cover w-full h-full"
+                  onImageUploaded={handleAvatarUpload}
+                  uploadPreset={uploadPreset}
+                />
+              ) : (
+                <NextImage
+                  src={testimonial.imageSrc || "/placeholder.svg"}
+                  alt={
+                    `Portrait of ${testimonial.clientName}` || "Client portrait"
+                  }
+                  fill
+                  className="object-cover"
+                />
+              )}
             </div>
             <div className="text-center md:text-right">
               <h4 className="font-bold text-gray-900">

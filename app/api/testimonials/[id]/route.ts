@@ -1,6 +1,30 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
+// Helper to delete Cloudinary image
+async function deleteCloudinaryImage(publicId: string) {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.destroy(publicId, (error, result) => {
+      if (error) {
+        console.error(`Cloudinary delete error for ${publicId}:`, error);
+        reject(error);
+      } else {
+        console.log(`Cloudinary delete result for ${publicId}:`, result);
+        resolve(result);
+      }
+    });
+  });
+}
 
 interface RouteContext {
   params: {
@@ -13,8 +37,16 @@ export async function PUT(request: Request, { params }: RouteContext) {
   const { id } = params;
   try {
     const body = await request.json();
-    const { clientName, role, company, content, rating, imageSrc, order } =
-      body;
+    const {
+      clientName,
+      role,
+      company,
+      content,
+      rating,
+      imageSrc,
+      imagePublicId,
+      order,
+    } = body;
 
     const updateData: {
       clientName?: string;
@@ -23,6 +55,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
       content?: string;
       rating?: number;
       imageSrc?: string | null;
+      imagePublicId?: string | null;
       order?: number;
     } = {};
 
@@ -46,7 +79,31 @@ export async function PUT(request: Request, { params }: RouteContext) {
     }
     if (imageSrc !== undefined)
       updateData.imageSrc = imageSrc ? String(imageSrc) : null;
+    if (imagePublicId !== undefined)
+      updateData.imagePublicId = imagePublicId ? String(imagePublicId) : null;
     if (order !== undefined) updateData.order = Number(order);
+
+    let oldPublicId: string | null = null;
+    if (updateData.imageSrc || updateData.imagePublicId !== undefined) {
+      if (updateData.imageSrc || updateData.imagePublicId !== undefined) {
+        const existingTestimonial = await prisma.testimonialItem.findUnique({
+          where: { id: String(id) },
+          select: { imagePublicId: true },
+        });
+        if (existingTestimonial?.imagePublicId) {
+          oldPublicId = existingTestimonial.imagePublicId;
+        }
+        if (updateData.imageSrc && updateData.imagePublicId === undefined) {
+          return NextResponse.json(
+            { message: "imagePublicId is required when updating imageSrc." },
+            { status: 400 }
+          );
+        }
+      }
+    } else {
+      delete updateData.imageSrc;
+      delete updateData.imagePublicId;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
@@ -59,6 +116,17 @@ export async function PUT(request: Request, { params }: RouteContext) {
       where: { id: String(id) },
       data: updateData,
     });
+
+    if (oldPublicId && oldPublicId !== updatedTestimonial.imagePublicId) {
+      try {
+        await deleteCloudinaryImage(oldPublicId);
+      } catch (cloudinaryError) {
+        console.error(
+          `Failed to delete old Cloudinary image ${oldPublicId}:`,
+          cloudinaryError
+        );
+      }
+    }
 
     return NextResponse.json(updatedTestimonial);
   } catch (error) {
@@ -92,9 +160,26 @@ export async function PUT(request: Request, { params }: RouteContext) {
 export async function DELETE(request: Request, { params }: RouteContext) {
   const { id } = params;
   try {
+    const testimonialToDelete = await prisma.testimonialItem.findUnique({
+      where: { id: String(id) },
+      select: { imagePublicId: true },
+    });
+
     await prisma.testimonialItem.delete({
       where: { id: String(id) },
     });
+
+    if (testimonialToDelete?.imagePublicId) {
+      try {
+        await deleteCloudinaryImage(testimonialToDelete.imagePublicId);
+      } catch (cloudinaryError) {
+        console.error(
+          `Failed to delete Cloudinary image ${testimonialToDelete.imagePublicId}:`,
+          cloudinaryError
+        );
+      }
+    }
+
     return NextResponse.json(
       { message: `Testimonial ${id} deleted successfully.` },
       { status: 200 }

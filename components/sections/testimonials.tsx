@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Quote,
   Loader2,
+  ImagePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,11 @@ import {
   TextBlock as PrismaTextBlock,
   TestimonialItem as PrismaTestimonialItem,
 } from "../../lib/generated/prisma";
+import {
+  CldUploadWidget,
+  type CloudinaryUploadWidgetResults,
+} from "next-cloudinary";
+import Image from "next/image";
 
 // Define testimonial type
 export interface Testimonial {
@@ -47,6 +53,7 @@ export interface Testimonial {
   content: string;
   rating: number;
   imageSrc?: string;
+  imagePublicId?: string;
   order?: number;
 }
 
@@ -75,7 +82,6 @@ export default function TestimonialsSection({
   );
   const [editingTestimonial, setEditingTestimonial] =
     useState<Testimonial | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [formClientName, setFormClientName] = useState("");
@@ -83,13 +89,13 @@ export default function TestimonialsSection({
   const [formCompany, setFormCompany] = useState("");
   const [formContent, setFormContent] = useState("");
   const [formRating, setFormRating] = useState(5);
-  const [formImageFile, setFormImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 
   // Loading states
-  const [isSavingTestimonial, setIsSavingTestimonial] = useState(false);
+  const [isSavingTestimonialText, setIsSavingTestimonialText] = useState(false);
+  const [isSavingTestimonialAvatar, setIsSavingTestimonialAvatar] =
+    useState(false);
   const [isDeletingTestimonial, setIsDeletingTestimonial] = useState(false);
   const [isSavingIntro, setIsSavingIntro] = useState(false);
 
@@ -142,6 +148,7 @@ export default function TestimonialsSection({
             content: item.content || "",
             rating: item.rating || 0,
             imageSrc: item.imageSrc || undefined,
+            imagePublicId: item.imagePublicId || undefined,
             order: item.order !== null ? item.order : undefined,
           })
         )
@@ -179,8 +186,6 @@ export default function TestimonialsSection({
     setFormCompany("");
     setFormContent("");
     setFormRating(5);
-    setFormImageFile(null);
-    setPreviewUrl(null);
     setDialogOpen(true);
   };
 
@@ -192,8 +197,6 @@ export default function TestimonialsSection({
     setFormCompany(testimonial.company);
     setFormContent(testimonial.content);
     setFormRating(testimonial.rating);
-    setFormImageFile(null);
-    setPreviewUrl(testimonial.imageSrc || null);
     setDialogOpen(true);
   };
 
@@ -207,7 +210,7 @@ export default function TestimonialsSection({
   const deleteTestimonialAPI = async () => {
     if (testimonialToDelete === null) return;
     setIsDeletingTestimonial(true);
-    try { 
+    try {
       const response = await fetch(`/api/testimonials/${testimonialToDelete}`, {
         method: "DELETE",
       });
@@ -227,79 +230,49 @@ export default function TestimonialsSection({
     }
   };
 
-  // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setFormImageFile(file);
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Use random image from Picsum Photos
-  const useRandomImage = async () => {
-    const randomId = Math.floor(Math.random() * 1000);
-    const imageUrl = `https://picsum.photos/200/200?random=${randomId}`;
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const file = new File([blob], "testimonial-image.jpg", {
-        type: "image/jpeg",
-      });
-      setFormImageFile(file);
-      setPreviewUrl(imageUrl);
-    } catch (error) {
-      console.error("Error fetching random image:", error);
-      toast.error("Failed to fetch random image.");
-    }
-  };
-
-  // Save testimonial (add or edit)
-  const saveTestimonial = async () => {
+  // Save testimonial (add or edit TEXT content only)
+  const saveTestimonialTextData = async () => {
     if (!formClientName || !formContent) {
       toast.error("Client Name and Testimonial content are required.");
       return;
     }
 
-    setIsSavingTestimonial(true);
-    let imageSrcToSave = editingTestimonial?.imageSrc;
-
-    if (previewUrl && previewUrl !== editingTestimonial?.imageSrc) {
-      imageSrcToSave = previewUrl;
-    }
-
-    const testimonialData = {
+    setIsSavingTestimonialText(true);
+    const testimonialData: Partial<PrismaTestimonialItem> & {
+      sectionId?: string;
+    } = {
+      sectionId: editingTestimonial ? undefined : section.id,
       clientName: formClientName,
       role: formRole,
       company: formCompany,
       content: formContent,
       rating: formRating,
-      imageSrc: imageSrcToSave,
-      sectionId: section.id,
-      order: editingTestimonial?.order ?? testimonials.length,
     };
+
+    // Remove null/undefined values unless explicitly allowed by API/Prisma
+    Object.keys(testimonialData).forEach((key) => {
+      const typedKey = key as keyof typeof testimonialData;
+      if (testimonialData[typedKey] === undefined) {
+        delete testimonialData[typedKey];
+      }
+    });
 
     try {
       let response;
+      let url = "/api/testimonials";
+      let method = "POST";
+
       if (editingTestimonial) {
-        response = await fetch(`/api/testimonials/${editingTestimonial.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(testimonialData),
-        });
-      } else {
-        response = await fetch("/api/testimonials", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(testimonialData),
-        });
+        url = `/api/testimonials/${editingTestimonial.id}`;
+        method = "PUT";
+        delete testimonialData.sectionId; // Don't send sectionId on PUT
       }
+
+      response = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(testimonialData),
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -313,7 +286,42 @@ export default function TestimonialsSection({
       console.error("Saving testimonial failed:", error);
       toast.error(`Saving failed: ${(error as Error).message}`);
     } finally {
-      setIsSavingTestimonial(false);
+      setIsSavingTestimonialText(false);
+    }
+  };
+
+  // Handler for when a testimonial avatar is uploaded via EditableImage in TestimonialCard
+  const handleTestimonialAvatarUploaded = async (
+    testimonialId: string,
+    imageData: { public_id: string; secure_url: string }
+  ) => {
+    setIsSavingTestimonialAvatar(true);
+    try {
+      const payload = {
+        imageSrc: imageData.secure_url,
+        imagePublicId: imageData.public_id,
+      };
+      const response = await fetch(`/api/testimonials/${testimonialId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || "Failed to update testimonial avatar"
+        );
+      }
+      toast.success("Testimonial avatar updated!");
+      if (onDataChange) onDataChange();
+    } catch (error) {
+      console.error(
+        `Error updating avatar for testimonial ${testimonialId}:`,
+        error
+      );
+      toast.error(`Avatar update failed: ${(error as Error).message}`);
+    } finally {
+      setIsSavingTestimonialAvatar(false);
     }
   };
 
@@ -405,6 +413,9 @@ export default function TestimonialsSection({
                             ? () => confirmDelete(testimonials[currentIndex].id)
                             : undefined
                         }
+                        isAdmin={isAdmin}
+                        uploadPreset="portfolio_unsigned"
+                        onAvatarUploaded={handleTestimonialAvatarUploaded}
                       />
                     </motion.div>
                   ) : (
@@ -515,7 +526,7 @@ export default function TestimonialsSection({
                   value={formClientName}
                   onChange={(e) => setFormClientName(e.target.value)}
                   placeholder="John Smith"
-                  disabled={isSavingTestimonial}
+                  disabled={isSavingTestimonialText}
                 />
               </div>
               <div className="space-y-2">
@@ -525,7 +536,7 @@ export default function TestimonialsSection({
                   value={formRole}
                   onChange={(e) => setFormRole(e.target.value)}
                   placeholder="CEO"
-                  disabled={isSavingTestimonial}
+                  disabled={isSavingTestimonialText}
                 />
               </div>
             </div>
@@ -537,7 +548,7 @@ export default function TestimonialsSection({
                 value={formCompany}
                 onChange={(e) => setFormCompany(e.target.value)}
                 placeholder="Acme Inc."
-                disabled={isSavingTestimonial}
+                disabled={isSavingTestimonialText}
               />
             </div>
 
@@ -551,7 +562,7 @@ export default function TestimonialsSection({
                 onChange={(e) => setFormContent(e.target.value)}
                 placeholder="What the client said about your work..."
                 className="min-h-[120px]"
-                disabled={isSavingTestimonial}
+                disabled={isSavingTestimonialText}
               />
             </div>
 
@@ -563,10 +574,10 @@ export default function TestimonialsSection({
                     key={`rating-${ratingValue}`}
                     type="button"
                     onClick={() =>
-                      !isSavingTestimonial && setFormRating(ratingValue)
+                      !isSavingTestimonialText && setFormRating(ratingValue)
                     }
                     className="focus:outline-none disabled:opacity-50"
-                    disabled={isSavingTestimonial}
+                    disabled={isSavingTestimonialText}
                   >
                     <Star
                       className={`h-6 w-6 ${
@@ -582,83 +593,32 @@ export default function TestimonialsSection({
                 </span>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label>Client Photo</Label>
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0">
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="w-20 h-20 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center border border-gray-200 dark:border-gray-700">
-                      <Quote className="h-8 w-8 text-gray-400 dark:text-gray-500" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 space-y-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="hidden"
-                    disabled={isSavingTestimonial}
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isSavingTestimonial}
-                    >
-                      Choose File
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={useRandomImage}
-                      disabled={isSavingTestimonial}
-                    >
-                      Use Random Image
-                    </Button>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Upload a professional photo of your client or use a random
-                    placeholder.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
 
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setDialogOpen(false)}
-              disabled={isSavingTestimonial}
+              disabled={isSavingTestimonialText}
             >
               Cancel
             </Button>
             <Button
-              onClick={saveTestimonial}
-              disabled={isSavingTestimonial || !formClientName || !formContent}
+              onClick={saveTestimonialTextData}
+              disabled={
+                isSavingTestimonialText || !formClientName || !formContent
+              }
             >
-              {isSavingTestimonial && (
+              {isSavingTestimonialText && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               {editingTestimonial
-                ? isSavingTestimonial
+                ? isSavingTestimonialText
                   ? "Saving..."
                   : "Save Changes"
-                : isSavingTestimonial
-                ? "Adding..."
-                : "Add Testimonial"}
+                : isSavingTestimonialText
+                  ? "Adding..."
+                  : "Add Testimonial"}
             </Button>
           </DialogFooter>
         </DialogContent>

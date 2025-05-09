@@ -1,61 +1,54 @@
 "use client";
 
 import { useSettings } from "@/context/settings-context";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 
-// Map font setting value to actual CSS class (e.g., Tailwind class)
-const getFontClass = (fontFamilySetting?: string): string => {
-  switch (fontFamilySetting) {
-    case "font-serif":
-      return "font-serif";
-    case "font-mono":
-      return "font-mono";
-    // New Sans-serif fonts
-    case "font-display":
-      return "font-display";
-    case "font-handwriting":
-      return "font-handwriting";
-    case "font-condensed":
-      return "font-condensed";
-    case "font-rounded":
-      return "font-rounded";
-    case "font-slab-serif":
-      return "font-slab-serif";
-
-    case "font-sans": // Default
-    default:
-      return "font-sans";
-    // Add cases for other fonts if you added them in SectionManager
-    // e.g., case "font-inter": return "font-inter";
-  }
+// Maps the setting value (e.g., 'font-serif') to the corresponding Tailwind utility class
+const fontMapping: { [key: string]: string } = {
+  "font-sans": "font-sans", // Will use var(--font-inter)
+  "font-serif": "font-serif", // Will use var(--font-lora)
+  "font-mono": "font-mono", // Will use var(--font-roboto-mono)
+  "font-display": "font-display", // Will use var(--font-playfair-display)
+  "font-handwriting": "font-handwriting", // Will use var(--font-dancing-script)
+  "font-condensed": "font-condensed", // Will use var(--font-roboto-condensed)
+  "font-rounded": "font-rounded", // Will use var(--font-mplus-rounded)
+  "font-slab-serif": "font-slab-serif", // Will use var(--font-roboto-slab)
+  // Ensure these keys exactly match the 'value' prop of SelectItem in SectionManager
+  // The values (e.g., "font-serif") must match the keys defined in tailwind.config.ts fontFamily
 };
+
+// This should be the KEY used in fontMapping that represents your default font.
+const defaultFontKeyInSettings = "font-sans";
 
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const { settings, isLoading } = useSettings();
 
-  // Determine font class - use default while loading or if setting is null/invalid
-  const fontClass =
-    isLoading || !settings
-      ? "font-sans"
-      : getFontClass(settings.globalFontFamily);
+  useEffect(() => {
+    const targetElement = document.body;
 
-  // Optionally, handle theme class here as well if needed
-  // const themeClass = settings?.theme === 'dark' ? 'dark' : '';
+    // Determine the key for the font setting. Use default if loading or no setting.
+    const currentFontSettingKey = isLoading
+      ? defaultFontKeyInSettings
+      : settings?.globalFontFamily || defaultFontKeyInSettings;
 
-  // We return the children directly; the class will be applied in RootLayout
-  // This component's purpose is mainly to extract the font class using client hooks.
-  // However, modifying body class directly from here is tricky in Next.js App Router.
-  // A better approach is to pass the class back up or apply it to a wrapping div.
+    // Get the Tailwind class for the new font, or default if key is invalid.
+    const newFontClass =
+      fontMapping[currentFontSettingKey] ||
+      fontMapping[defaultFontKeyInSettings];
 
-  // For simplicity now, let's return children wrapped in a div with the font class.
-  // A more robust solution might involve CSS variables set on the root.
-  return <div className={fontClass}>{children}</div>;
+    // Remove all previously managed font classes to prevent conflicts.
+    const AllPossibleFontClasses = Object.values(fontMapping);
+    AllPossibleFontClasses.forEach((cls) => {
+      if (cls && targetElement.classList.contains(cls)) {
+        targetElement.classList.remove(cls);
+      }
+    });
 
-  // --- Alternative (if modifying body from layout.tsx is feasible) ---
-  // useEffect(() => {
-  //   // Apply font class to body
-  //   document.body.classList.remove('font-sans', 'font-serif', 'font-mono'); // Remove old classes
-  //   document.body.classList.add(fontClass);
-  // }, [fontClass]);
-  // return <>{children}</>; // Return children directly if modifying body
+    // Add the new font class if it's valid.
+    if (newFontClass) {
+      targetElement.classList.add(newFontClass);
+    }
+  }, [settings?.globalFontFamily, isLoading]);
+
+  return <>{children}</>; // Children are rendered directly, body class is managed by useEffect
 }

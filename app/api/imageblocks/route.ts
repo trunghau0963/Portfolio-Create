@@ -5,12 +5,15 @@ import prisma from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    // For now, expecting src directly. Real uploads need multipart/form-data handling.
-    const { sectionId, src, alt, caption } = body;
+    // Destructure imagePublicId from body
+    const { sectionId, src, alt, caption, imagePublicId } = body;
 
-    if (!sectionId || !src) {
+    // Update required fields check
+    if (!sectionId || !src || !imagePublicId) {
       return NextResponse.json(
-        { message: "Missing required fields (sectionId, src)" },
+        {
+          message: "Missing required fields (sectionId, src, imagePublicId)",
+        },
         { status: 400 }
       );
     }
@@ -32,12 +35,13 @@ export async function POST(request: Request) {
 
     const newImageBlock = await prisma.imageBlock.create({
       data: {
-        src: src,
-        alt: alt || "",
-        caption: caption || "",
+        src: String(src),
+        imagePublicId: String(imagePublicId),
+        alt: alt ? String(alt) : "",
+        caption: caption ? String(caption) : null,
         order: newOrder,
         section: {
-          connect: { id: sectionId },
+          connect: { id: String(sectionId) },
         },
       },
     });
