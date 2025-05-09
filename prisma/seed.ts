@@ -33,13 +33,13 @@ async function main() {
   console.log("Upserted settings:", settings);
 
   // --- Seed Admin User ---
-  const adminEmail = "admin@portfolio.com";
+  const adminEmail = "admin123@portfolio.co.vercel.app";
   let adminUser = await prisma.user.findUnique({
     where: { email: adminEmail },
   });
 
   if (!adminUser) {
-    const hashedPassword = await bcrypt.hash("admin123", 10);
+    const hashedPassword = await bcrypt.hash("admin123admin123", 10);
     adminUser = await prisma.user.create({
       data: {
         email: adminEmail,

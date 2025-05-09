@@ -36,7 +36,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
       setEmail("")
       setPassword("")
     } else {
-      setError("Invalid credentials. Try admin@portfolio.com / admin123")
+      setError("Invalid credentials. Email or password is incorrect.")
     }
   }
 
@@ -53,7 +53,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@portfolio.com"
+                placeholder="your-email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
@@ -64,7 +64,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="••••••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}

@@ -49,7 +49,7 @@ export default function LoginPage() {
     if (success) {
       router.push("/")
     } else {
-      setError("Invalid credentials. Try admin@portfolio.com / admin123")
+      setError("Invalid credentials. Email or password is incorrect.")
     }
   }
 
@@ -104,7 +104,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@portfolio.com"
+                placeholder="your-email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
@@ -122,7 +122,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="••••••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
