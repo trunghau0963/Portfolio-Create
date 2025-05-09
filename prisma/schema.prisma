@@ -272,6 +272,7 @@ model CustomSectionContentBlock {
   imageSrc  String? // For IMAGE type
   imageAlt  String? // For IMAGE type
   linkUrl   String? // Optional link for text or image
+  imagePublicId String?
   order     Int      @default(0)
   // stylingJson String? // For advanced styling overrides as JSON -> consider carefully, can get complex
   sectionId String   @db.ObjectId

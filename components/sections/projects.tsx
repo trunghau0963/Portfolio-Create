@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import EditableText from "../ui/editable-text";
 import EditableImage from "../ui/editable-image";
 import { Button } from "@/components/ui/button";
@@ -160,7 +160,7 @@ function SortableProjectItem({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
     >
-      <div className={`${bgColorClass} rounded-lg p-6 md:p-12`}>
+      <div className={`${bgColorClass} rounded-lg p-12 md:p-12`}>
         {isLayout1 ? (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
             <div className="md:col-span-5 lg:col-span-4 relative">
@@ -765,13 +765,19 @@ export default function ProjectsSection({
 
   const addNewProject = async () => {
     setIsAddingProject(true);
+
+    // Get the ID of the first category, if available
+    const firstCategoryId =
+      allCategoriesWithId.length > 0 ? allCategoriesWithId[0].id : undefined;
+
     const newProjectPayload = {
       sectionId: section.id,
       title: "NEW PROJECT",
       description1: "Enter project description here.",
-      imageSrc: "",
+      imageSrc: "", // Will be uploaded later
       imagePublicId: null,
       layout: "layout1" as "layout1" | "layout2",
+      categoryIds: firstCategoryId ? [firstCategoryId] : [], // Assign first category or empty array
     };
     try {
       const response = await fetch("/api/projects", {
@@ -958,9 +964,16 @@ export default function ProjectsSection({
     // No need to update allCategories locally if onDataChange re-fetches
   };
 
-  const filteredProjects = selectedCategory
-    ? projects.filter((p) => p.categories.includes(selectedCategory))
-    : projects;
+  const filteredProjects = useMemo(() => {
+    if (selectedCategory === null) {
+      if (isAdmin) {
+        return projects; // Admin selected "All" (represented by null)
+      }
+      return []; // Non-admin, nothing selected or "All" is not an option for them to select to get here
+    }
+    // A specific category is selected by any user
+    return projects.filter((p) => p.categories.includes(selectedCategory));
+  }, [projects, selectedCategory, isAdmin]);
 
   return (
     <AnimatedSection variant="fadeInUp">
@@ -996,7 +1009,7 @@ export default function ProjectsSection({
 
           <div className="flex flex-col sm:flex-row justify-between items-center mb-8 md:mb-12 gap-4">
             <div className="flex items-center space-x-4">
-              {isAdmin && (
+              {/* {isAdmin && (
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="show-images-toggle"
@@ -1016,10 +1029,7 @@ export default function ProjectsSection({
                     Images
                   </Label>
                 </div>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-2">
+              )} */}
               {isAdmin && (
                 <Button
                   onClick={openGlobalCategoryDialog}
@@ -1029,10 +1039,23 @@ export default function ProjectsSection({
                   <Tag className="mr-2 h-4 w-4" /> Manage Categories
                 </Button>
               )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              {/* {isAdmin && (
+                <Button
+                  onClick={openGlobalCategoryDialog}
+                  variant="outline"
+                  className="dark:text-white"
+                >
+                  <Tag className="mr-2 h-4 w-4" /> Manage Categories
+                </Button>
+              )} */}
               <CategoryFilter
                 categories={allCategories}
                 selectedCategory={selectedCategory}
                 onChange={setSelectedCategory}
+                showAllOption={isAdmin}
               />
             </div>
           </div>
@@ -1094,11 +1117,21 @@ export default function ProjectsSection({
             </motion.div>
           )}
 
-          {filteredProjects.length === 0 && selectedCategory && (
+          {filteredProjects.length === 0 && (
             <div className="text-center py-10">
-              <p className="text-gray-500 dark:text-gray-400">
-                No projects found for the category "{selectedCategory}".
-              </p>
+              {selectedCategory === null && !isAdmin ? (
+                <p className="text-gray-500 dark:text-gray-400">
+                  Please select a category to view projects.
+                </p>
+              ) : selectedCategory !== null ? (
+                <p className="text-gray-500 dark:text-gray-400">
+                  No projects found for the category "{selectedCategory}".
+                </p>
+              ) : isAdmin && projects.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400">
+                  No projects have been added to the portfolio yet.
+                </p>
+              ) : null}
             </div>
           )}
         </div>

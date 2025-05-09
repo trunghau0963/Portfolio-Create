@@ -266,16 +266,17 @@ model ContactInfoItem {
 }
 
 model CustomSectionContentBlock {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  type      String // e.g., "HEADING_H1", "HEADING_H2", "PARAGRAPH", "IMAGE", "VIDEO_EMBED"
-  content   String? // For text-based types (text, heading content, video embed code)
-  imageSrc  String? // For IMAGE type
-  imageAlt  String? // For IMAGE type
-  linkUrl   String? // Optional link for text or image
-  order     Int      @default(0)
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  type          String // e.g., "HEADING_H1", "HEADING_H2", "PARAGRAPH", "IMAGE", "VIDEO_EMBED"
+  content       String? // For text-based types (text, heading content, video embed code)
+  imageSrc      String? // For IMAGE type
+  imageAlt      String? // For IMAGE type
+  linkUrl       String? // Optional link for text or image
+  imagePublicId String?
+  order         Int      @default(0)
   // stylingJson String? // For advanced styling overrides as JSON -> consider carefully, can get complex
-  sectionId String   @db.ObjectId
-  section   Section  @relation("CustomSectionContentBlocksToSection", fields: [sectionId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  sectionId     String   @db.ObjectId
+  section       Section  @relation("CustomSectionContentBlocksToSection", fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

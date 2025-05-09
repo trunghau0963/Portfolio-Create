@@ -11,6 +11,7 @@ import {
   CustomSectionContentBlock as PrismaCustomSectionContentBlock,
 } from "../../lib/generated/prisma";
 import AnimatedSection from "../ui/animated-section";
+import { toast } from "sonner";
 
 interface CustomSectionProps {
   section: PrismaSection & {
@@ -42,37 +43,69 @@ export default function CustomSection({
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to save text block");
       }
+      toast.success("Text block saved!");
       if (onDataChange) onDataChange();
-      else console.warn("CustomSection: onDataChange not provided.");
     } catch (error) {
       console.error("Error saving text block:", error);
+      toast.error(`Failed to save text: ${(error as Error).message}`);
     }
   };
 
-  const handleSaveImageBlock = async (
+  const handleSaveIntroImageBlock = async (
     blockId: string,
-    newData: { src?: string; alt?: string }
+    newData: { src?: string; alt?: string; imagePublicId?: string | null }
   ) => {
     try {
       const res = await fetch(`/api/imageblocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newData),
-      }); 
+      });
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to save image block");
+        throw new Error(errorData.message || "Failed to save intro image block");
       }
+      toast.success("Intro image saved!");
       if (onDataChange) onDataChange();
-      else console.warn("CustomSection: onDataChange not provided.");
     } catch (error) {
-      console.error("Error saving image block:", error);
+      console.error("Error saving intro image block:", error);
+      toast.error(`Failed to save intro image: ${(error as Error).message}`);
+    }
+  };
+
+  const handleSaveGridContentImage = async (
+    blockContentId: string,
+    imageData: { src: string; imagePublicId?: string; alt?: string }
+  ) => {
+    try {
+      const res = await fetch(`/api/custom-section-content-blocks/${blockContentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageSrc: imageData.src,
+          imageAlt: imageData.alt,
+          imagePublicId: imageData.imagePublicId,
+          type: "IMAGE",
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to save grid image content");
+      }
+      toast.success("Grid image content saved!");
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (error) {
+      console.error("Error saving grid image content:", error);
+      toast.error(`Failed to save grid image: ${(error as Error).message}`);
     }
   };
 
   return (
     <section
-      id={sectionId}
+      id={section.id}
       className="py-16 md:py-20 lg:py-24 bg-gray-100 dark:bg-gray-900"
     >
       <div className="max-w-6xl mx-auto px-4">
@@ -92,7 +125,8 @@ export default function CustomSection({
                   key={block.id}
                   initialText={block.content}
                   as="p"
-                  // isAdmin={isAdmin}
+                  blockId={block.id}
+                  onCommitText={(newContent) => handleSaveTextBlock(block.id, newContent)}
                 />
               ))}
             </div>
@@ -110,16 +144,24 @@ export default function CustomSection({
                   width={600}
                   height={400}
                   className="w-full h-auto object-cover rounded-md shadow-md"
-                  // blockId={block.id}
-                  // onSave={handleSaveImageBlock}
-                  // isAdmin={isAdmin}
+                  onImageUploaded={(cloudinaryData) =>
+                    handleSaveIntroImageBlock(block.id, {
+                      src: cloudinaryData.secure_url,
+                      imagePublicId: cloudinaryData.public_id,
+                      alt: block.alt || "Custom section image",
+                    })
+                  }
+                  uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "portfolio_unsigned"}
                 />
               ))}
             </div>
           </AnimatedSection>
         )}
 
-        <GridLayoutManager sectionId={section.id} />
+        <GridLayoutManager 
+          sectionId={section.id}
+          onGridImageSave={handleSaveGridContentImage}
+        />
       </div>
     </section>
   );

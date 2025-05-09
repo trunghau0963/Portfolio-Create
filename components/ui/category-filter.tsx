@@ -7,24 +7,32 @@ interface CategoryFilterProps {
   categories: string[]
   selectedCategory: string | null
   onChange: (category: string | null) => void
+  showAllOption?: boolean
 }
 
-export default function CategoryFilter({ categories, selectedCategory, onChange }: CategoryFilterProps) {
+export default function CategoryFilter({
+  categories,
+  selectedCategory,
+  onChange,
+  showAllOption = false,
+}: CategoryFilterProps) {
   
   return (
     <div className="flex flex-wrap gap-2 mb-6">
-      <Button
-        variant={selectedCategory === null ? "destructive" : "ghost"} 
-        size="sm"
-        onClick={() => onChange(null)}
-        className={`rounded-full ${
-          selectedCategory === null
-            ? " hover:bg-gray-100"
-            : "border-white/50 text-white hover:bg-white/10"
-        }`}
-      >
-        All
-      </Button>
+      {showAllOption && (
+        <Button
+          variant={selectedCategory === null ? "destructive" : "ghost"} 
+          size="sm"
+          onClick={() => onChange(null)}
+          className={`rounded-full ${
+            selectedCategory === null
+              ? " hover:bg-gray-100"
+              : "border-white/50 text-white hover:bg-white/10"
+          }`}
+        >
+          All
+        </Button>
+      )}
 
       {categories.map((category) => (
         <motion.div

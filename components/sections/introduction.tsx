@@ -129,8 +129,8 @@ export default function IntroductionSection({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           <div className="lg:col-span-6">
-            <AnimatedSection variant="fadeInUp" delay={0.3}>
-              <div className="space-y-6">
+            <AnimatedSection variant="fadeInUp" delay={0.3} className="h-full">
+              <div className="space-y-6 h-full">
                 {mainTextBlocks.map((block) => (
                   <EditableText
                     key={block.id}
@@ -147,9 +147,9 @@ export default function IntroductionSection({
           </div>
 
           <div className="lg:col-span-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <AnimatedSection variant="fadeInUp" delay={0.5}>
-                <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+              <AnimatedSection variant="fadeInUp" delay={0.5} className="h-full">
+                <div className="space-y-6 h-full flex flex-col justify-center">
                   {sideTextBlock && (
                     <EditableText
                       key={sideTextBlock.id}

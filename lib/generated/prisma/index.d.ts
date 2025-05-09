@@ -19502,6 +19502,7 @@ export namespace Prisma {
     imageSrc: string | null
     imageAlt: string | null
     linkUrl: string | null
+    imagePublicId: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -19515,6 +19516,7 @@ export namespace Prisma {
     imageSrc: string | null
     imageAlt: string | null
     linkUrl: string | null
+    imagePublicId: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -19528,6 +19530,7 @@ export namespace Prisma {
     imageSrc: number
     imageAlt: number
     linkUrl: number
+    imagePublicId: number
     order: number
     sectionId: number
     createdAt: number
@@ -19551,6 +19554,7 @@ export namespace Prisma {
     imageSrc?: true
     imageAlt?: true
     linkUrl?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -19564,6 +19568,7 @@ export namespace Prisma {
     imageSrc?: true
     imageAlt?: true
     linkUrl?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -19577,6 +19582,7 @@ export namespace Prisma {
     imageSrc?: true
     imageAlt?: true
     linkUrl?: true
+    imagePublicId?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -19677,6 +19683,7 @@ export namespace Prisma {
     imageSrc: string | null
     imageAlt: string | null
     linkUrl: string | null
+    imagePublicId: string | null
     order: number
     sectionId: string
     createdAt: Date
@@ -19709,6 +19716,7 @@ export namespace Prisma {
     imageSrc?: boolean
     imageAlt?: boolean
     linkUrl?: boolean
+    imagePublicId?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
@@ -19725,13 +19733,14 @@ export namespace Prisma {
     imageSrc?: boolean
     imageAlt?: boolean
     linkUrl?: boolean
+    imagePublicId?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type CustomSectionContentBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "content" | "imageSrc" | "imageAlt" | "linkUrl" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["customSectionContentBlock"]>
+  export type CustomSectionContentBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "content" | "imageSrc" | "imageAlt" | "linkUrl" | "imagePublicId" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["customSectionContentBlock"]>
   export type CustomSectionContentBlockInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
   }
@@ -19748,6 +19757,7 @@ export namespace Prisma {
       imageSrc: string | null
       imageAlt: string | null
       linkUrl: string | null
+      imagePublicId: string | null
       order: number
       sectionId: string
       createdAt: Date
@@ -20151,6 +20161,7 @@ export namespace Prisma {
     readonly imageSrc: FieldRef<"CustomSectionContentBlock", 'String'>
     readonly imageAlt: FieldRef<"CustomSectionContentBlock", 'String'>
     readonly linkUrl: FieldRef<"CustomSectionContentBlock", 'String'>
+    readonly imagePublicId: FieldRef<"CustomSectionContentBlock", 'String'>
     readonly order: FieldRef<"CustomSectionContentBlock", 'Int'>
     readonly sectionId: FieldRef<"CustomSectionContentBlock", 'String'>
     readonly createdAt: FieldRef<"CustomSectionContentBlock", 'DateTime'>
@@ -20793,6 +20804,7 @@ export namespace Prisma {
     imageSrc: 'imageSrc',
     imageAlt: 'imageAlt',
     linkUrl: 'linkUrl',
+    imagePublicId: 'imagePublicId',
     order: 'order',
     sectionId: 'sectionId',
     createdAt: 'createdAt',
@@ -22147,6 +22159,7 @@ export namespace Prisma {
     imageSrc?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     imageAlt?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     linkUrl?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    imagePublicId?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     order?: IntFilter<"CustomSectionContentBlock"> | number
     sectionId?: StringFilter<"CustomSectionContentBlock"> | string
     createdAt?: DateTimeFilter<"CustomSectionContentBlock"> | Date | string
@@ -22161,6 +22174,7 @@ export namespace Prisma {
     imageSrc?: SortOrder
     imageAlt?: SortOrder
     linkUrl?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -22178,6 +22192,7 @@ export namespace Prisma {
     imageSrc?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     imageAlt?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     linkUrl?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    imagePublicId?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     order?: IntFilter<"CustomSectionContentBlock"> | number
     sectionId?: StringFilter<"CustomSectionContentBlock"> | string
     createdAt?: DateTimeFilter<"CustomSectionContentBlock"> | Date | string
@@ -22192,6 +22207,7 @@ export namespace Prisma {
     imageSrc?: SortOrder
     imageAlt?: SortOrder
     linkUrl?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -22213,6 +22229,7 @@ export namespace Prisma {
     imageSrc?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
     imageAlt?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
     linkUrl?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
+    imagePublicId?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
     order?: IntWithAggregatesFilter<"CustomSectionContentBlock"> | number
     sectionId?: StringWithAggregatesFilter<"CustomSectionContentBlock"> | string
     createdAt?: DateTimeWithAggregatesFilter<"CustomSectionContentBlock"> | Date | string
@@ -23539,6 +23556,7 @@ export namespace Prisma {
     imageSrc?: string | null
     imageAlt?: string | null
     linkUrl?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23552,6 +23570,7 @@ export namespace Prisma {
     imageSrc?: string | null
     imageAlt?: string | null
     linkUrl?: string | null
+    imagePublicId?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -23564,6 +23583,7 @@ export namespace Prisma {
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23576,6 +23596,7 @@ export namespace Prisma {
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23589,6 +23610,7 @@ export namespace Prisma {
     imageSrc?: string | null
     imageAlt?: string | null
     linkUrl?: string | null
+    imagePublicId?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -23601,6 +23623,7 @@ export namespace Prisma {
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23612,6 +23635,7 @@ export namespace Prisma {
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24641,6 +24665,7 @@ export namespace Prisma {
     imageSrc?: SortOrder
     imageAlt?: SortOrder
     linkUrl?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24658,6 +24683,7 @@ export namespace Prisma {
     imageSrc?: SortOrder
     imageAlt?: SortOrder
     linkUrl?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24671,6 +24697,7 @@ export namespace Prisma {
     imageSrc?: SortOrder
     imageAlt?: SortOrder
     linkUrl?: SortOrder
+    imagePublicId?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -25989,6 +26016,7 @@ export namespace Prisma {
     imageSrc?: string | null
     imageAlt?: string | null
     linkUrl?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -26001,6 +26029,7 @@ export namespace Prisma {
     imageSrc?: string | null
     imageAlt?: string | null
     linkUrl?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -26357,6 +26386,7 @@ export namespace Prisma {
     imageSrc?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     imageAlt?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     linkUrl?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    imagePublicId?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     order?: IntFilter<"CustomSectionContentBlock"> | number
     sectionId?: StringFilter<"CustomSectionContentBlock"> | string
     createdAt?: DateTimeFilter<"CustomSectionContentBlock"> | Date | string
@@ -27811,6 +27841,7 @@ export namespace Prisma {
     imageSrc?: string | null
     imageAlt?: string | null
     linkUrl?: string | null
+    imagePublicId?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28126,6 +28157,7 @@ export namespace Prisma {
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28137,6 +28169,7 @@ export namespace Prisma {
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28148,6 +28181,7 @@ export namespace Prisma {
     imageSrc?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

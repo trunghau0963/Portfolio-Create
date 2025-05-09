@@ -11,10 +11,10 @@ declare global {
   var mongoose: MongooseCache;
 }
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const DATABASE_URL = process.env.DATABASE_URL;
 
-if (!MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI environment variable");
+if (!DATABASE_URL) {
+  throw new Error("Please define the DATABASE_URL environment variable");
 }
 
 // Use the augmented global type
@@ -29,13 +29,13 @@ async function dbConnect() {
     return cached.conn;
   }
 
-  // Ensure MONGODB_URI is defined before using it
-  if (!cached.promise && MONGODB_URI) {
+  // Ensure DATABASE_URL is defined before using it
+  if (!cached.promise && DATABASE_URL) {
     const opts = {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(DATABASE_URL, opts).then((mongoose) => {
       return mongoose;
     });
   }

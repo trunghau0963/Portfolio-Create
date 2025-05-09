@@ -556,7 +556,7 @@ export default function SkillsSection({
                   {skillImages.map((image) => (
                     <div
                       key={image.id}
-                      className="relative aspect-square bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center p-2"
+                      className="relative group aspect-square bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center p-2"
                     >
                       <Image
                         src={image.src}

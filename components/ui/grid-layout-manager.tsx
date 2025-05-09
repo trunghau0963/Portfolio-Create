@@ -39,6 +39,8 @@ export interface ContentItem {
   fontWeight?: string;
   fontStyle?: string;
   textAlign?: "left" | "center" | "right" | "justify";
+  alt?: string;
+  imagePublicId?: string;
 }
 
 export interface ContentRow {
@@ -52,13 +54,17 @@ interface GridLayoutManagerProps {
   initialTitle?: string;
   initialRows?: ContentRow[];
   onLayoutChange?: (title: string, rows: ContentRow[]) => void;
+  onGridImageSave?: (itemId: string, imageData: { src: string; imagePublicId: string; alt?: string }) => Promise<void>;
 }
+
+const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "portfolio_unsigned"; // Define your preset
 
 export default function GridLayoutManager({
   sectionId,
   initialTitle = "Section Title",
   initialRows = [],
   onLayoutChange,
+  onGridImageSave,
 }: GridLayoutManagerProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
@@ -380,6 +386,35 @@ export default function GridLayoutManager({
         ? "w-full md:w-1/2"
         : "w-full md:w-1/3";
 
+    // Handler for when an image in the grid is successfully uploaded via EditableImage
+    const handleGridItemImageUpload = async (itemId: string, cloudinaryData: { public_id: string; secure_url: string; }) => {
+      if (onGridImageSave) {
+        try {
+          // Call the callback passed from CustomSection (which is handleSaveImageBlock)
+          await onGridImageSave(itemId, { 
+            src: cloudinaryData.secure_url, 
+            imagePublicId: cloudinaryData.public_id, 
+            // alt: item.alt // Alt is managed by the edit dialog for now, or could be passed if EditableImage returns it
+          });
+          
+          // Optimistically update the local state for immediate UI feedback
+          setRows(prevRows => 
+            prevRows.map(row => ({
+              ...row,
+              items: row.items.map(i => 
+                i.id === itemId 
+                  ? { ...i, content: cloudinaryData.secure_url, imagePublicId: cloudinaryData.public_id } 
+                  : i
+              ),
+            }))
+          );
+        } catch (error) {
+          console.error("Error saving grid image item:", error);
+          // Potentially show a toastr error message here
+        }
+      }
+    };
+
     const content = (() => {
       switch (item.type) {
         case "title":
@@ -405,10 +440,12 @@ export default function GridLayoutManager({
             <div className="rounded-lg overflow-hidden">
               <EditableImage
                 src={item.content}
-                alt="Content image"
+                alt={item.alt || "Content image"}
                 width={800}
                 height={400}
                 className="w-full h-auto object-cover"
+                uploadPreset={UPLOAD_PRESET}
+                onImageUploaded={(cloudinaryData) => handleGridItemImageUpload(item.id, cloudinaryData)}
               />
             </div>
           );
@@ -423,16 +460,18 @@ export default function GridLayoutManager({
           {content}
 
           {isAdmin && (
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => openEditItemDialog(rowIndex, itemIndex)}
-                className="h-8 w-8 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800"
-                title="Edit item"
-              >
-                <Edit size={14} />
-              </Button>
+            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+              {item.type !== "image" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => openEditItemDialog(rowIndex, itemIndex)}
+                  className="h-8 w-8 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800"
+                  title="Edit item"
+                >
+                  <Edit size={14} />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
