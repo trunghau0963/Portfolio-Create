@@ -269,10 +269,14 @@ model CustomSectionContentBlock {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   type          String // e.g., "HEADING_H1", "HEADING_H2", "PARAGRAPH", "IMAGE", "VIDEO_EMBED"
   content       String? // For text-based types (text, heading content, video embed code)
-  imageSrc      String? // For IMAGE type
-  imageAlt      String? // For IMAGE type
-  linkUrl       String? // Optional link for text or image
+  imageSrc      String?
+  imageAlt      String?
+  linkUrl       String?
   imagePublicId String?
+  fontSize      Int? // Added: Font size for text-based blocks
+  fontWeight    String? // Added: Font weight (e.g., "normal", "bold")
+  fontStyle     String? // Added: Font style (e.g., "normal", "italic")
+  textAlign     String? // Added: Text alignment (e.g., "left", "center", "right")
   order         Int      @default(0)
   // stylingJson String? // For advanced styling overrides as JSON -> consider carefully, can get complex
   sectionId     String   @db.ObjectId

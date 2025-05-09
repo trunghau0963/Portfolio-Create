@@ -19488,10 +19488,12 @@ export namespace Prisma {
   }
 
   export type CustomSectionContentBlockAvgAggregateOutputType = {
+    fontSize: number | null
     order: number | null
   }
 
   export type CustomSectionContentBlockSumAggregateOutputType = {
+    fontSize: number | null
     order: number | null
   }
 
@@ -19503,6 +19505,10 @@ export namespace Prisma {
     imageAlt: string | null
     linkUrl: string | null
     imagePublicId: string | null
+    fontSize: number | null
+    fontWeight: string | null
+    fontStyle: string | null
+    textAlign: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -19517,6 +19523,10 @@ export namespace Prisma {
     imageAlt: string | null
     linkUrl: string | null
     imagePublicId: string | null
+    fontSize: number | null
+    fontWeight: string | null
+    fontStyle: string | null
+    textAlign: string | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -19531,6 +19541,10 @@ export namespace Prisma {
     imageAlt: number
     linkUrl: number
     imagePublicId: number
+    fontSize: number
+    fontWeight: number
+    fontStyle: number
+    textAlign: number
     order: number
     sectionId: number
     createdAt: number
@@ -19540,10 +19554,12 @@ export namespace Prisma {
 
 
   export type CustomSectionContentBlockAvgAggregateInputType = {
+    fontSize?: true
     order?: true
   }
 
   export type CustomSectionContentBlockSumAggregateInputType = {
+    fontSize?: true
     order?: true
   }
 
@@ -19555,6 +19571,10 @@ export namespace Prisma {
     imageAlt?: true
     linkUrl?: true
     imagePublicId?: true
+    fontSize?: true
+    fontWeight?: true
+    fontStyle?: true
+    textAlign?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -19569,6 +19589,10 @@ export namespace Prisma {
     imageAlt?: true
     linkUrl?: true
     imagePublicId?: true
+    fontSize?: true
+    fontWeight?: true
+    fontStyle?: true
+    textAlign?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -19583,6 +19607,10 @@ export namespace Prisma {
     imageAlt?: true
     linkUrl?: true
     imagePublicId?: true
+    fontSize?: true
+    fontWeight?: true
+    fontStyle?: true
+    textAlign?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -19684,6 +19712,10 @@ export namespace Prisma {
     imageAlt: string | null
     linkUrl: string | null
     imagePublicId: string | null
+    fontSize: number | null
+    fontWeight: string | null
+    fontStyle: string | null
+    textAlign: string | null
     order: number
     sectionId: string
     createdAt: Date
@@ -19717,6 +19749,10 @@ export namespace Prisma {
     imageAlt?: boolean
     linkUrl?: boolean
     imagePublicId?: boolean
+    fontSize?: boolean
+    fontWeight?: boolean
+    fontStyle?: boolean
+    textAlign?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
@@ -19734,13 +19770,17 @@ export namespace Prisma {
     imageAlt?: boolean
     linkUrl?: boolean
     imagePublicId?: boolean
+    fontSize?: boolean
+    fontWeight?: boolean
+    fontStyle?: boolean
+    textAlign?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type CustomSectionContentBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "content" | "imageSrc" | "imageAlt" | "linkUrl" | "imagePublicId" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["customSectionContentBlock"]>
+  export type CustomSectionContentBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "content" | "imageSrc" | "imageAlt" | "linkUrl" | "imagePublicId" | "fontSize" | "fontWeight" | "fontStyle" | "textAlign" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["customSectionContentBlock"]>
   export type CustomSectionContentBlockInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
   }
@@ -19758,6 +19798,10 @@ export namespace Prisma {
       imageAlt: string | null
       linkUrl: string | null
       imagePublicId: string | null
+      fontSize: number | null
+      fontWeight: string | null
+      fontStyle: string | null
+      textAlign: string | null
       order: number
       sectionId: string
       createdAt: Date
@@ -20162,6 +20206,10 @@ export namespace Prisma {
     readonly imageAlt: FieldRef<"CustomSectionContentBlock", 'String'>
     readonly linkUrl: FieldRef<"CustomSectionContentBlock", 'String'>
     readonly imagePublicId: FieldRef<"CustomSectionContentBlock", 'String'>
+    readonly fontSize: FieldRef<"CustomSectionContentBlock", 'Int'>
+    readonly fontWeight: FieldRef<"CustomSectionContentBlock", 'String'>
+    readonly fontStyle: FieldRef<"CustomSectionContentBlock", 'String'>
+    readonly textAlign: FieldRef<"CustomSectionContentBlock", 'String'>
     readonly order: FieldRef<"CustomSectionContentBlock", 'Int'>
     readonly sectionId: FieldRef<"CustomSectionContentBlock", 'String'>
     readonly createdAt: FieldRef<"CustomSectionContentBlock", 'DateTime'>
@@ -20805,6 +20853,10 @@ export namespace Prisma {
     imageAlt: 'imageAlt',
     linkUrl: 'linkUrl',
     imagePublicId: 'imagePublicId',
+    fontSize: 'fontSize',
+    fontWeight: 'fontWeight',
+    fontStyle: 'fontStyle',
+    textAlign: 'textAlign',
     order: 'order',
     sectionId: 'sectionId',
     createdAt: 'createdAt',
@@ -22160,6 +22212,10 @@ export namespace Prisma {
     imageAlt?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     linkUrl?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     imagePublicId?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    fontSize?: IntNullableFilter<"CustomSectionContentBlock"> | number | null
+    fontWeight?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    fontStyle?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    textAlign?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     order?: IntFilter<"CustomSectionContentBlock"> | number
     sectionId?: StringFilter<"CustomSectionContentBlock"> | string
     createdAt?: DateTimeFilter<"CustomSectionContentBlock"> | Date | string
@@ -22175,6 +22231,10 @@ export namespace Prisma {
     imageAlt?: SortOrder
     linkUrl?: SortOrder
     imagePublicId?: SortOrder
+    fontSize?: SortOrder
+    fontWeight?: SortOrder
+    fontStyle?: SortOrder
+    textAlign?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -22193,6 +22253,10 @@ export namespace Prisma {
     imageAlt?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     linkUrl?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     imagePublicId?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    fontSize?: IntNullableFilter<"CustomSectionContentBlock"> | number | null
+    fontWeight?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    fontStyle?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    textAlign?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     order?: IntFilter<"CustomSectionContentBlock"> | number
     sectionId?: StringFilter<"CustomSectionContentBlock"> | string
     createdAt?: DateTimeFilter<"CustomSectionContentBlock"> | Date | string
@@ -22208,6 +22272,10 @@ export namespace Prisma {
     imageAlt?: SortOrder
     linkUrl?: SortOrder
     imagePublicId?: SortOrder
+    fontSize?: SortOrder
+    fontWeight?: SortOrder
+    fontStyle?: SortOrder
+    textAlign?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -22230,6 +22298,10 @@ export namespace Prisma {
     imageAlt?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
     linkUrl?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
     imagePublicId?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
+    fontSize?: IntNullableWithAggregatesFilter<"CustomSectionContentBlock"> | number | null
+    fontWeight?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
+    fontStyle?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
+    textAlign?: StringNullableWithAggregatesFilter<"CustomSectionContentBlock"> | string | null
     order?: IntWithAggregatesFilter<"CustomSectionContentBlock"> | number
     sectionId?: StringWithAggregatesFilter<"CustomSectionContentBlock"> | string
     createdAt?: DateTimeWithAggregatesFilter<"CustomSectionContentBlock"> | Date | string
@@ -23557,6 +23629,10 @@ export namespace Prisma {
     imageAlt?: string | null
     linkUrl?: string | null
     imagePublicId?: string | null
+    fontSize?: number | null
+    fontWeight?: string | null
+    fontStyle?: string | null
+    textAlign?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23571,6 +23647,10 @@ export namespace Prisma {
     imageAlt?: string | null
     linkUrl?: string | null
     imagePublicId?: string | null
+    fontSize?: number | null
+    fontWeight?: string | null
+    fontStyle?: string | null
+    textAlign?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -23584,6 +23664,10 @@ export namespace Prisma {
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontWeight?: NullableStringFieldUpdateOperationsInput | string | null
+    fontStyle?: NullableStringFieldUpdateOperationsInput | string | null
+    textAlign?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23597,6 +23681,10 @@ export namespace Prisma {
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontWeight?: NullableStringFieldUpdateOperationsInput | string | null
+    fontStyle?: NullableStringFieldUpdateOperationsInput | string | null
+    textAlign?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23611,6 +23699,10 @@ export namespace Prisma {
     imageAlt?: string | null
     linkUrl?: string | null
     imagePublicId?: string | null
+    fontSize?: number | null
+    fontWeight?: string | null
+    fontStyle?: string | null
+    textAlign?: string | null
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -23624,6 +23716,10 @@ export namespace Prisma {
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontWeight?: NullableStringFieldUpdateOperationsInput | string | null
+    fontStyle?: NullableStringFieldUpdateOperationsInput | string | null
+    textAlign?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23636,6 +23732,10 @@ export namespace Prisma {
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontWeight?: NullableStringFieldUpdateOperationsInput | string | null
+    fontStyle?: NullableStringFieldUpdateOperationsInput | string | null
+    textAlign?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24666,6 +24766,10 @@ export namespace Prisma {
     imageAlt?: SortOrder
     linkUrl?: SortOrder
     imagePublicId?: SortOrder
+    fontSize?: SortOrder
+    fontWeight?: SortOrder
+    fontStyle?: SortOrder
+    textAlign?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24673,6 +24777,7 @@ export namespace Prisma {
   }
 
   export type CustomSectionContentBlockAvgOrderByAggregateInput = {
+    fontSize?: SortOrder
     order?: SortOrder
   }
 
@@ -24684,6 +24789,10 @@ export namespace Prisma {
     imageAlt?: SortOrder
     linkUrl?: SortOrder
     imagePublicId?: SortOrder
+    fontSize?: SortOrder
+    fontWeight?: SortOrder
+    fontStyle?: SortOrder
+    textAlign?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24698,6 +24807,10 @@ export namespace Prisma {
     imageAlt?: SortOrder
     linkUrl?: SortOrder
     imagePublicId?: SortOrder
+    fontSize?: SortOrder
+    fontWeight?: SortOrder
+    fontStyle?: SortOrder
+    textAlign?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24705,6 +24818,7 @@ export namespace Prisma {
   }
 
   export type CustomSectionContentBlockSumOrderByAggregateInput = {
+    fontSize?: SortOrder
     order?: SortOrder
   }
 
@@ -26017,6 +26131,10 @@ export namespace Prisma {
     imageAlt?: string | null
     linkUrl?: string | null
     imagePublicId?: string | null
+    fontSize?: number | null
+    fontWeight?: string | null
+    fontStyle?: string | null
+    textAlign?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -26030,6 +26148,10 @@ export namespace Prisma {
     imageAlt?: string | null
     linkUrl?: string | null
     imagePublicId?: string | null
+    fontSize?: number | null
+    fontWeight?: string | null
+    fontStyle?: string | null
+    textAlign?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -26387,6 +26509,10 @@ export namespace Prisma {
     imageAlt?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     linkUrl?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     imagePublicId?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    fontSize?: IntNullableFilter<"CustomSectionContentBlock"> | number | null
+    fontWeight?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    fontStyle?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
+    textAlign?: StringNullableFilter<"CustomSectionContentBlock"> | string | null
     order?: IntFilter<"CustomSectionContentBlock"> | number
     sectionId?: StringFilter<"CustomSectionContentBlock"> | string
     createdAt?: DateTimeFilter<"CustomSectionContentBlock"> | Date | string
@@ -27842,6 +27968,10 @@ export namespace Prisma {
     imageAlt?: string | null
     linkUrl?: string | null
     imagePublicId?: string | null
+    fontSize?: number | null
+    fontWeight?: string | null
+    fontStyle?: string | null
+    textAlign?: string | null
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28158,6 +28288,10 @@ export namespace Prisma {
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontWeight?: NullableStringFieldUpdateOperationsInput | string | null
+    fontStyle?: NullableStringFieldUpdateOperationsInput | string | null
+    textAlign?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28170,6 +28304,10 @@ export namespace Prisma {
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontWeight?: NullableStringFieldUpdateOperationsInput | string | null
+    fontStyle?: NullableStringFieldUpdateOperationsInput | string | null
+    textAlign?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28182,6 +28320,10 @@ export namespace Prisma {
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
     linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    fontSize?: NullableIntFieldUpdateOperationsInput | number | null
+    fontWeight?: NullableStringFieldUpdateOperationsInput | string | null
+    fontStyle?: NullableStringFieldUpdateOperationsInput | string | null
+    textAlign?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

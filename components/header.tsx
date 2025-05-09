@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import HeaderResumeButton from "./ui/header-resume-button";
-import type { Section } from "@/app/page";
+import type { Section } from "@/lib/generated/prisma";
 
 interface HeaderProps {
   sections: Section[];
@@ -57,7 +57,7 @@ export default function Header({ sections }: HeaderProps) {
   // Generate navigation links based on visible sections
   const navLinks = sections.map((section) => ({
     href:
-      section.type === "custom" ? `#custom-${section.id}` : `#${section.type}`,
+      section.type === "custom" ? `#${section.id}` : `#${section.type}`,
     label: section.title,
   }));
 

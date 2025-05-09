@@ -227,48 +227,104 @@ export default function GridLayoutManager({
   };
 
   // Add a new item to a row
-  const addItem = () => {
+  const addItem = async () => {
     if (currentRowIndex === null) return;
 
-    const row = rows[currentRowIndex];
+    const targetRow = rows[currentRowIndex];
 
     // Check if we've reached the maximum of 3 items per row
-    if (row.items.length >= 3) {
-      setAddItemDialogOpen(false);
+    if (targetRow.items.length >= 3) {
+      // TODO: Consider showing a toastr message to the user
+      console.warn("Maximum 3 items per row reached.");
+      setAddItemDialogOpen(false); // Close dialog as the action is implicitly cancelled
       return;
     }
 
-    let defaultContent = "";
-    switch (newItemType) {
-      case "title":
-        defaultContent = "New Title";
-        break;
-      case "text":
-        defaultContent = "Add your text here. Click to edit.";
-        break;
-      case "image":
-        defaultContent = `https://picsum.photos/800/400?random=${Math.floor(
-          Math.random() * 1000
-        )}`;
-        break;
-      default:
-        defaultContent = "New content";
+    let itemContentValue = newItemContent;
+    if (!itemContentValue) {
+      switch (newItemType) {
+        case "title":
+          itemContentValue = "New Title";
+          break;
+        case "text":
+          itemContentValue = "Add your text here. Click to edit.";
+          break;
+        case "image":
+          itemContentValue = `https://picsum.photos/800/400?random=${Math.floor(
+            Math.random() * 1000
+          )}`;
+          break;
+        default:
+          itemContentValue = "New content";
+      }
     }
 
-    const newItem: ContentItem = {
-      id: generateId(),
+    const rowPosition = targetRow.position;
+    const itemOrderInRow = targetRow.items.length;
+    const MAX_ITEMS_PER_ROW = 3; // This should ideally be a shared constant or derived
+    const calculatedOrder = rowPosition * MAX_ITEMS_PER_ROW + itemOrderInRow;
+
+    const apiPayload: any = {
+      sectionId: sectionId, // from component props
       type: newItemType,
-      content: newItemContent || defaultContent,
+      content: itemContentValue,
+      order: calculatedOrder,
       fontSize: Number.parseInt(newItemFontSize),
       fontWeight: newItemFontWeight,
       fontStyle: newItemFontStyle,
       textAlign: newItemTextAlign,
     };
 
-    const updatedRows = [...rows];
-    updatedRows[currentRowIndex].items.push(newItem);
-    setRows(updatedRows);
-    setAddItemDialogOpen(false);
+    if (newItemType === "image") {
+      apiPayload.imageSrc = itemContentValue; // For IMAGE type, content is the URL, also set imageSrc
+    }
+
+    try {
+      const response = await fetch("/api/custom-section-content-blocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiPayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message ||
+            `Failed to create content block. Status: ${response.status}`
+        );
+      }
+
+      const createdBlock = await response.json(); // This is the CustomSectionContentBlock from DB
+
+      const newItemForState: ContentItem = {
+        id: createdBlock.id, // Use ID from DB
+        type: createdBlock.type as ContentItemType,
+        content: createdBlock.type === 'IMAGE' ? (createdBlock.imageSrc || '') : (createdBlock.content || ''),
+        fontSize: createdBlock.fontSize,
+        fontWeight: createdBlock.fontWeight,
+        fontStyle: createdBlock.fontStyle,
+        textAlign: createdBlock.textAlign as ContentItem['textAlign'],
+        alt: createdBlock.imageAlt || (newItemType === 'image' ? 'New image' : undefined),
+        imagePublicId: createdBlock.imagePublicId,
+      };
+
+      const updatedRows = [...rows];
+      updatedRows[currentRowIndex].items.push(newItemForState);
+      setRows(updatedRows);
+      setAddItemDialogOpen(false);
+      resetNewItemForm();
+
+      if (onLayoutChange) {
+        onLayoutChange(title, updatedRows);
+      }
+      // TODO: Show success toast if available
+      // toast.success("Content added successfully!");
+    } catch (error) {
+      console.error("Error adding item via API:", error);
+      // TODO: Show error toast if available
+      // toast.error(`Error: ${(error as Error).message}`);
+      // Dialog remains open for user to retry or cancel.
+    }
   };
 
   // Delete an item
@@ -460,8 +516,8 @@ export default function GridLayoutManager({
           {content}
 
           {isAdmin && (
-            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
-              {item.type !== "image" && (
+            <div className="absolute bottom-1 right-16 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+              {/* {item.type !== "image" && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -471,7 +527,7 @@ export default function GridLayoutManager({
                 >
                   <Edit size={14} />
                 </Button>
-              )}
+              )} */}
               <Button
                 variant="ghost"
                 size="icon"

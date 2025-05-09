@@ -86,6 +86,10 @@ export async function PUT(
     if (error instanceof SyntaxError && error.message.includes("JSON")) {
       return NextResponse.json({ message: 'Invalid JSON in request body.', details: error.message }, { status: 400 });
     }
+    // Add specific check for P2023 (Invalid ObjectId format)
+    if (error.code === 'P2023') {
+      return NextResponse.json({ message: `Invalid ID format for content block: '${blockId}'. Expected a valid ObjectId.`, error: error.message }, { status: 400 });
+    }
     // Check for Prisma's record not found error
     if (error.code === 'P2025') { 
       return NextResponse.json({ message: `Content block with ID ${blockId} not found.` }, { status: 404 });
