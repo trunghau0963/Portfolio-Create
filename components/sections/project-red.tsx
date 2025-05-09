@@ -153,6 +153,7 @@ function SortableProjectItem({
                       width={400}
                       height={300}
                       className="w-full h-auto object-cover"
+                      uploadPreset="portfolio"
                     />
                   </motion.div>
                 )}
@@ -226,6 +227,7 @@ function SortableProjectItem({
                         width={400}
                         height={300}
                         className="w-full h-auto object-cover"
+                        uploadPreset="portfolio"
                       />
                     </motion.div>
                   )}
