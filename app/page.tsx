@@ -68,7 +68,7 @@ export default function Home() {
 
   // Function to fetch all page data
   const fetchPageData = async () => {
-    console.log("Refreshing page data...");
+    // console.log("Refreshing page data...");
     try {
       const [sectionsResponse, categoriesResponse] = await Promise.all([
         fetch("/api/sections"),
@@ -104,7 +104,7 @@ export default function Home() {
     fetchPageData();
   }, []); // Empty dependency array means run once on mount
 
-  console.log("Fetched sections on page:", sections);
+  // console.log("Fetched sections on page:", sections);
   // console.log("Fetched categories on page:", allCategoriesFromDB);
 
   const renderSection = (section: Section) => {

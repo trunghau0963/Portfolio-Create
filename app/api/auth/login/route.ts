@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       ? await bcrypt.compare(password, user.password)
       : false;
 
-    console.log("passwordMatches", passwordMatches);
+    // console.log("passwordMatches", passwordMatches);
 
     if (!passwordMatches) {
       return NextResponse.json(
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Login API Error:", error);
+    // console.error("Login API Error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
