@@ -7754,10 +7754,14 @@ export namespace Prisma {
   }
 
   export type ImageBlockAvgAggregateOutputType = {
+    width: number | null
+    height: number | null
     order: number | null
   }
 
   export type ImageBlockSumAggregateOutputType = {
+    width: number | null
+    height: number | null
     order: number | null
   }
 
@@ -7767,6 +7771,8 @@ export namespace Prisma {
     alt: string | null
     caption: string | null
     imagePublicId: string | null
+    width: number | null
+    height: number | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -7779,6 +7785,8 @@ export namespace Prisma {
     alt: string | null
     caption: string | null
     imagePublicId: string | null
+    width: number | null
+    height: number | null
     order: number | null
     sectionId: string | null
     createdAt: Date | null
@@ -7791,6 +7799,8 @@ export namespace Prisma {
     alt: number
     caption: number
     imagePublicId: number
+    width: number
+    height: number
     order: number
     sectionId: number
     createdAt: number
@@ -7800,10 +7810,14 @@ export namespace Prisma {
 
 
   export type ImageBlockAvgAggregateInputType = {
+    width?: true
+    height?: true
     order?: true
   }
 
   export type ImageBlockSumAggregateInputType = {
+    width?: true
+    height?: true
     order?: true
   }
 
@@ -7813,6 +7827,8 @@ export namespace Prisma {
     alt?: true
     caption?: true
     imagePublicId?: true
+    width?: true
+    height?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -7825,6 +7841,8 @@ export namespace Prisma {
     alt?: true
     caption?: true
     imagePublicId?: true
+    width?: true
+    height?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -7837,6 +7855,8 @@ export namespace Prisma {
     alt?: true
     caption?: true
     imagePublicId?: true
+    width?: true
+    height?: true
     order?: true
     sectionId?: true
     createdAt?: true
@@ -7936,6 +7956,8 @@ export namespace Prisma {
     alt: string | null
     caption: string | null
     imagePublicId: string | null
+    width: number
+    height: number
     order: number
     sectionId: string
     createdAt: Date
@@ -7967,6 +7989,8 @@ export namespace Prisma {
     alt?: boolean
     caption?: boolean
     imagePublicId?: boolean
+    width?: boolean
+    height?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
@@ -7982,13 +8006,15 @@ export namespace Prisma {
     alt?: boolean
     caption?: boolean
     imagePublicId?: boolean
+    width?: boolean
+    height?: boolean
     order?: boolean
     sectionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ImageBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "alt" | "caption" | "imagePublicId" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["imageBlock"]>
+  export type ImageBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "src" | "alt" | "caption" | "imagePublicId" | "width" | "height" | "order" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["imageBlock"]>
   export type ImageBlockInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | SectionDefaultArgs<ExtArgs>
   }
@@ -8004,6 +8030,8 @@ export namespace Prisma {
       alt: string | null
       caption: string | null
       imagePublicId: string | null
+      width: number
+      height: number
       order: number
       sectionId: string
       createdAt: Date
@@ -8406,6 +8434,8 @@ export namespace Prisma {
     readonly alt: FieldRef<"ImageBlock", 'String'>
     readonly caption: FieldRef<"ImageBlock", 'String'>
     readonly imagePublicId: FieldRef<"ImageBlock", 'String'>
+    readonly width: FieldRef<"ImageBlock", 'Int'>
+    readonly height: FieldRef<"ImageBlock", 'Int'>
     readonly order: FieldRef<"ImageBlock", 'Int'>
     readonly sectionId: FieldRef<"ImageBlock", 'String'>
     readonly createdAt: FieldRef<"ImageBlock", 'DateTime'>
@@ -20679,6 +20709,8 @@ export namespace Prisma {
     alt: 'alt',
     caption: 'caption',
     imagePublicId: 'imagePublicId',
+    width: 'width',
+    height: 'height',
     order: 'order',
     sectionId: 'sectionId',
     createdAt: 'createdAt',
@@ -21324,6 +21356,8 @@ export namespace Prisma {
     alt?: StringNullableFilter<"ImageBlock"> | string | null
     caption?: StringNullableFilter<"ImageBlock"> | string | null
     imagePublicId?: StringNullableFilter<"ImageBlock"> | string | null
+    width?: IntFilter<"ImageBlock"> | number
+    height?: IntFilter<"ImageBlock"> | number
     order?: IntFilter<"ImageBlock"> | number
     sectionId?: StringFilter<"ImageBlock"> | string
     createdAt?: DateTimeFilter<"ImageBlock"> | Date | string
@@ -21337,6 +21371,8 @@ export namespace Prisma {
     alt?: SortOrder
     caption?: SortOrder
     imagePublicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21353,6 +21389,8 @@ export namespace Prisma {
     alt?: StringNullableFilter<"ImageBlock"> | string | null
     caption?: StringNullableFilter<"ImageBlock"> | string | null
     imagePublicId?: StringNullableFilter<"ImageBlock"> | string | null
+    width?: IntFilter<"ImageBlock"> | number
+    height?: IntFilter<"ImageBlock"> | number
     order?: IntFilter<"ImageBlock"> | number
     sectionId?: StringFilter<"ImageBlock"> | string
     createdAt?: DateTimeFilter<"ImageBlock"> | Date | string
@@ -21366,6 +21404,8 @@ export namespace Prisma {
     alt?: SortOrder
     caption?: SortOrder
     imagePublicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -21386,6 +21426,8 @@ export namespace Prisma {
     alt?: StringNullableWithAggregatesFilter<"ImageBlock"> | string | null
     caption?: StringNullableWithAggregatesFilter<"ImageBlock"> | string | null
     imagePublicId?: StringNullableWithAggregatesFilter<"ImageBlock"> | string | null
+    width?: IntWithAggregatesFilter<"ImageBlock"> | number
+    height?: IntWithAggregatesFilter<"ImageBlock"> | number
     order?: IntWithAggregatesFilter<"ImageBlock"> | number
     sectionId?: StringWithAggregatesFilter<"ImageBlock"> | string
     createdAt?: DateTimeWithAggregatesFilter<"ImageBlock"> | Date | string
@@ -22701,6 +22743,8 @@ export namespace Prisma {
     alt?: string | null
     caption?: string | null
     imagePublicId?: string | null
+    width?: number
+    height?: number
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -22713,6 +22757,8 @@ export namespace Prisma {
     alt?: string | null
     caption?: string | null
     imagePublicId?: string | null
+    width?: number
+    height?: number
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -22724,6 +22770,8 @@ export namespace Prisma {
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22735,6 +22783,8 @@ export namespace Prisma {
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22747,6 +22797,8 @@ export namespace Prisma {
     alt?: string | null
     caption?: string | null
     imagePublicId?: string | null
+    width?: number
+    height?: number
     order?: number
     sectionId: string
     createdAt?: Date | string
@@ -22758,6 +22810,8 @@ export namespace Prisma {
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22768,6 +22822,8 @@ export namespace Prisma {
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
     sectionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24208,6 +24264,8 @@ export namespace Prisma {
     alt?: SortOrder
     caption?: SortOrder
     imagePublicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24215,6 +24273,8 @@ export namespace Prisma {
   }
 
   export type ImageBlockAvgOrderByAggregateInput = {
+    width?: SortOrder
+    height?: SortOrder
     order?: SortOrder
   }
 
@@ -24224,6 +24284,8 @@ export namespace Prisma {
     alt?: SortOrder
     caption?: SortOrder
     imagePublicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24236,6 +24298,8 @@ export namespace Prisma {
     alt?: SortOrder
     caption?: SortOrder
     imagePublicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
     order?: SortOrder
     sectionId?: SortOrder
     createdAt?: SortOrder
@@ -24243,6 +24307,8 @@ export namespace Prisma {
   }
 
   export type ImageBlockSumOrderByAggregateInput = {
+    width?: SortOrder
+    height?: SortOrder
     order?: SortOrder
   }
 
@@ -25832,6 +25898,8 @@ export namespace Prisma {
     alt?: string | null
     caption?: string | null
     imagePublicId?: string | null
+    width?: number
+    height?: number
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25843,6 +25911,8 @@ export namespace Prisma {
     alt?: string | null
     caption?: string | null
     imagePublicId?: string | null
+    width?: number
+    height?: number
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -26221,6 +26291,8 @@ export namespace Prisma {
     alt?: StringNullableFilter<"ImageBlock"> | string | null
     caption?: StringNullableFilter<"ImageBlock"> | string | null
     imagePublicId?: StringNullableFilter<"ImageBlock"> | string | null
+    width?: IntFilter<"ImageBlock"> | number
+    height?: IntFilter<"ImageBlock"> | number
     order?: IntFilter<"ImageBlock"> | number
     sectionId?: StringFilter<"ImageBlock"> | string
     createdAt?: DateTimeFilter<"ImageBlock"> | Date | string
@@ -27867,6 +27939,8 @@ export namespace Prisma {
     alt?: string | null
     caption?: string | null
     imagePublicId?: string | null
+    width?: number
+    height?: number
     order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28009,6 +28083,8 @@ export namespace Prisma {
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28019,6 +28095,8 @@ export namespace Prisma {
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28029,6 +28107,8 @@ export namespace Prisma {
     alt?: NullableStringFieldUpdateOperationsInput | string | null
     caption?: NullableStringFieldUpdateOperationsInput | string | null
     imagePublicId?: NullableStringFieldUpdateOperationsInput | string | null
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

@@ -40,82 +40,41 @@ export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
-  if (!id) {
-    return NextResponse.json(
-      { message: "Missing image block ID" },
-      { status: 400 }
-    );
-  }
   try {
     const body = await request.json();
-    // Destructure potential fields, including imagePublicId
-    const { src, alt, caption, imagePublicId } = body;
+    const { width, height, src, imagePublicId } = body;
 
-    // Build update data object selectively
-    const updateData: Partial<
-      Pick<ImageBlock, "src" | "alt" | "caption" | "imagePublicId">
-    > = {};
+    // Validate the request body
+    if (width !== undefined && (typeof width !== "number" || width <= 0)) {
+      return new NextResponse("Invalid width value", { status: 400 });
+    }
+    if (height !== undefined && (typeof height !== "number" || height <= 0)) {
+      return new NextResponse("Invalid height value", { status: 400 });
+    }
+
+    // Prepare update data
+    const updateData: {
+      width?: number;
+      height?: number;
+      src?: string;
+      imagePublicId?: string;
+    } = {};
+    
+    if (width !== undefined) updateData.width = width;
+    if (height !== undefined) updateData.height = height;
     if (src !== undefined) updateData.src = src;
-    if (alt !== undefined) updateData.alt = alt;
-    if (caption !== undefined) updateData.caption = caption;
-    // Only update publicId if src is also being updated (or if explicitly provided)
     if (imagePublicId !== undefined) updateData.imagePublicId = imagePublicId;
 
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        {
-          message:
-            "No valid fields provided for update (src, alt, caption, imagePublicId)",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Handle potential deletion of old image if src/publicId is updated
-    let oldPublicId: string | null = null;
-    if (updateData.src || updateData.imagePublicId) {
-      const existingImage = await prisma.imageBlock.findUnique({
-        where: { id: id },
-        select: { imagePublicId: true },
-      });
-      if (existingImage?.imagePublicId) {
-        oldPublicId = existingImage.imagePublicId;
-      }
-    }
-
-    const updatedItem = await prisma.imageBlock.update({
-      where: { id: id },
+    // Update the image block
+    const updatedImageBlock = await prisma.imageBlock.update({
+      where: { id: params.id },
       data: updateData,
     });
 
-    // Delete old Cloudinary image AFTER successful DB update
-    // Only delete if oldPublicId exists and is different from the new one
-    if (oldPublicId && oldPublicId !== updatedItem.imagePublicId) {
-      try {
-        await deleteCloudinaryImage(oldPublicId);
-      } catch (cloudinaryError) {
-        console.error(
-          `Failed to delete old Cloudinary image ${oldPublicId} after updating image block ${id}:`,
-          cloudinaryError
-        );
-        // Log error but continue
-      }
-    }
-
-    return NextResponse.json(updatedItem);
-  } catch (error: any) {
-    console.error(`Error updating image block ${id}:`, error);
-    if (error.code === "P2025") {
-      return NextResponse.json(
-        { message: "Image block not found" },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json(
-      { message: `Error updating image block ${id}`, error: String(error) },
-      { status: 500 }
-    );
+    return NextResponse.json(updatedImageBlock);
+  } catch (error) {
+    console.error("[IMAGE_BLOCK_UPDATE]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
 

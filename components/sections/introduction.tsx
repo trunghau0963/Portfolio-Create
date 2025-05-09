@@ -6,9 +6,9 @@ import AnimatedSection from "../ui/animated-section";
 import ResumeManager from "../ui/resume-manager";
 import EditableTextAutoResize from "../ui/editable-text-auto-resize";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Trash2, Pencil, ImagePlus } from "lucide-react";
+import { PlusCircle, Trash2, Pencil, ImagePlus, Settings } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,10 @@ import { toast } from "sonner";
 interface IntroductionSectionProps {
   section: PrismaSection & {
     textBlocks: PrismaTextBlock[];
-    imageBlocks: PrismaImageBlock[];
+    imageBlocks: (PrismaImageBlock & {
+      width: number;
+      height: number;
+    })[];
   };
   onDataChange: () => void;
 }
@@ -47,6 +50,59 @@ export default function IntroductionSection({
     type: "text" | "image";
     id: string;
   } | null>(null);
+
+  // Add image resize state
+  const [isResizeDialogOpen, setIsResizeDialogOpen] = useState(false);
+  const [imageWidth, setImageWidth] = useState("300");
+  const [imageHeight, setImageHeight] = useState("300");
+  const [imageContainer, setImageContainer] = useState({
+    width: 300,
+    height: 300
+  });
+
+  // Fetch image dimensions when component mounts or when data changes
+  useEffect(() => {
+    if (section.imageBlocks?.[0]) {
+      setImageWidth(section.imageBlocks[0].width.toString());
+      setImageHeight(section.imageBlocks[0].height.toString());
+      setImageContainer({
+        width: section.imageBlocks[0].width,
+        height: section.imageBlocks[0].height
+      });
+    }
+  }, [section.imageBlocks]);
+
+  const handleSaveImageSize = async () => {
+    if (!section.imageBlocks?.[0]) return;
+
+    try {
+      const response = await fetch(`/api/imageblocks/${section.imageBlocks[0].id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          width: Number(imageWidth),
+          height: Number(imageHeight)
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Failed to update image size");
+      }
+
+      // Update container size after successful API call
+      setImageContainer({
+        width: Number(imageWidth),
+        height: Number(imageHeight)
+      });
+      setIsResizeDialogOpen(false);
+      toast.success("Image size updated successfully!");
+      onDataChange(); // Refresh the data
+    } catch (error) {
+      console.error("Error updating image size:", error);
+      toast.error("Failed to update image size");
+    }
+  };
 
   const handleSaveTextBlock = async (
     blockId: string,
@@ -169,50 +225,114 @@ export default function IntroductionSection({
           {/* Main Image Block Column */}
           <div className="lg:col-span-1">
             <AnimatedSection variant="zoomIn" delay={0.7}>
-              <div className="mt-4 relative w-4/5 mx-auto aspect-[3/4] overflow-hidden rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
-                {mainImageBlock ? (
-                  <EditableImage
-                    key={mainImageBlock.id}
-                    src={mainImageBlock.src || "/images/placeholder-introduction.png"}
-                    alt={mainImageBlock.alt || "Introduction portrait"}
-                    width={300}
-                    height={400}
-                    className="w-full h-full object-cover"
-                    onImageUploaded={(imageData) =>
-                      handleUploadedImageSave(
-                        String(mainImageBlock.id),
-                        imageData
-                      )
-                    }
-                    uploadPreset="portfolio_unsigned"
-                  />
-                ) : (
-                  isAdmin && (
-                    <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md flex flex-col items-center justify-center text-center p-4">
-                      <ImagePlus className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2" />
-                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">
-                        No portrait image set.
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
-                        Click to upload or link an Image Block.
-                      </p>
-                    </div>
-                  )
-                )}
-                {mainImageBlock?.caption && (
-                  <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
-                    {mainImageBlock.caption}
-                  </p>
-                )}
+              <div className="relative flex justify-center">
+                <div 
+                  className="mt-4 relative overflow-hidden rounded-md shadow-md hover:shadow-lg transition-shadow duration-300"
+                  style={{
+                    width: Math.min(imageContainer.width, 500), // Limit max width
+                    height: Math.min(imageContainer.height, 500), // Limit max height
+                  }}
+                >
+                  {mainImageBlock ? (
+                    <>
+                      <EditableImage
+                        key={mainImageBlock.id}
+                        src={mainImageBlock.src || "/images/placeholder-introduction.png"}
+                        alt={mainImageBlock.alt || "Introduction portrait"}
+                        width={imageContainer.width}
+                        height={imageContainer.height}
+                        className="w-full h-full object-contain"
+                        onImageUploaded={(imageData) =>
+                          handleUploadedImageSave(
+                            String(mainImageBlock.id),
+                            imageData
+                          )
+                        }
+                        uploadPreset="portfolio_unsigned"
+                      />
+                      {isAdmin && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="absolute bottom-2 right-2 bg-white/80 hover:bg-white/90"
+                          onClick={() => setIsResizeDialogOpen(true)}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    isAdmin && (
+                      <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md flex flex-col items-center justify-center text-center p-4">
+                        <ImagePlus className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2" />
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">
+                          No portrait image set.
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          Click to upload or link an Image Block.
+                        </p>
+                      </div>
+                    )
+                  )}
+                  {mainImageBlock?.caption && (
+                    <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
+                      {mainImageBlock.caption}
+                    </p>
+                  )}
+                </div>
               </div>
             </AnimatedSection>
           </div>
         </div>
 
-        <AnimatedSection variant="fadeInUp" delay={0.7} className="mt-6">
+        <AnimatedSection variant="fadeInUp" delay={0.7} className="mt-12">
           <ResumeManager />
         </AnimatedSection>
       </div>
+
+      {/* Image Resize Dialog */}
+      <Dialog open={isResizeDialogOpen} onOpenChange={setIsResizeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resize Image</DialogTitle>
+            <DialogDescription>
+              Adjust the dimensions of your image
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="width" className="text-right">
+                Width
+              </Label>
+              <Input
+                id="width"
+                type="number"
+                value={imageWidth}
+                onChange={(e) => setImageWidth(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="height" className="text-right">
+                Height
+              </Label>
+              <Input
+                id="height"
+                type="number"
+                value={imageHeight}
+                onChange={(e) => setImageHeight(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResizeDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveImageSize}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
