@@ -127,8 +127,9 @@ export default function IntroductionSection({
           </AnimatedSection>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-          <div className="lg:col-span-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
+          {/* Main Text Block Column */}
+          <div className="lg:col-span-1">
             <AnimatedSection variant="fadeInUp" delay={0.3} className="h-full">
               <div className="space-y-6 h-full">
                 {mainTextBlocks.map((block) => (
@@ -146,65 +147,65 @@ export default function IntroductionSection({
             </AnimatedSection>
           </div>
 
-          <div className="lg:col-span-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
-              <AnimatedSection variant="fadeInUp" delay={0.5} className="h-full">
-                <div className="space-y-6 h-full flex flex-col justify-center">
-                  {sideTextBlock && (
-                    <EditableText
-                      key={sideTextBlock.id}
-                      initialText={sideTextBlock.content || ""}
-                      initialFontSize={sideTextBlock.fontSize || 14}
-                      initialFontFamily={
-                        sideTextBlock.fontFamily || "font-sans"
-                      }
-                      className="text-gray-700 dark:text-gray-300 leading-relaxed"
-                      blockId={sideTextBlock.id}
-                      onCommitText={handleSaveTextBlock}
-                    />
-                  )}
-                </div>
-              </AnimatedSection>
+          {/* Side Text Block Column */}
+          <div className="lg:col-span-1">
+            <AnimatedSection variant="fadeInUp" delay={0.5} className="h-full">
+              <div className="space-y-6 h-full">
+                {sideTextBlock && (
+                  <EditableText
+                    key={sideTextBlock.id}
+                    initialText={sideTextBlock.content || ""}
+                    initialFontSize={sideTextBlock.fontSize || 14}
+                    initialFontFamily={sideTextBlock.fontFamily || "font-sans"}
+                    className="text-gray-700 dark:text-gray-300 leading-relaxed"
+                    blockId={sideTextBlock.id}
+                    onCommitText={handleSaveTextBlock}
+                  />
+                )}
+              </div>
+            </AnimatedSection>
+          </div>
 
-              <AnimatedSection variant="zoomIn" delay={0.7}>
-                <div className="mt-4 relative w-full aspect-[8/9] overflow-hidden rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
-                  {mainImageBlock ? (
-                    <EditableImage
-                      key={mainImageBlock.id}
-                      src={mainImageBlock.src || "/images/placeholder-introduction.png"}
-                      alt={mainImageBlock.alt || "Introduction portrait"}
-                      width={400}
-                      height={450}
-                      className="w-full h-full object-cover"
-                      onImageUploaded={(imageData) =>
-                        handleUploadedImageSave(
-                          String(mainImageBlock.id),
-                          imageData
-                        )
-                      }
-                      uploadPreset="portfolio_unsigned"
-                    />
-                  ) : (
-                    isAdmin && (
-                      <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md flex flex-col items-center justify-center text-center p-4">
-                        <ImagePlus className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2" />
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">
-                          No portrait image set.
-                        </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">
-                          Click to upload or link an Image Block.
-                        </p>
-                      </div>
-                    )
-                  )}
-                  {mainImageBlock?.caption && (
-                    <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
-                      {mainImageBlock.caption}
-                    </p>
-                  )}
-                </div>
-              </AnimatedSection>
-            </div>
+          {/* Main Image Block Column */}
+          <div className="lg:col-span-1">
+            <AnimatedSection variant="zoomIn" delay={0.7}>
+              <div className="mt-4 relative w-full aspect-[8/9] overflow-hidden rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                {mainImageBlock ? (
+                  <EditableImage
+                    key={mainImageBlock.id}
+                    src={mainImageBlock.src || "/images/placeholder-introduction.png"}
+                    alt={mainImageBlock.alt || "Introduction portrait"}
+                    width={400}
+                    height={450}
+                    className="w-full h-full object-cover"
+                    onImageUploaded={(imageData) =>
+                      handleUploadedImageSave(
+                        String(mainImageBlock.id),
+                        imageData
+                      )
+                    }
+                    uploadPreset="portfolio_unsigned"
+                  />
+                ) : (
+                  isAdmin && (
+                    <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md flex flex-col items-center justify-center text-center p-4">
+                      <ImagePlus className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2" />
+                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">
+                        No portrait image set.
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        Click to upload or link an Image Block.
+                      </p>
+                    </div>
+                  )
+                )}
+                {mainImageBlock?.caption && (
+                  <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
+                    {mainImageBlock.caption}
+                  </p>
+                )}
+              </div>
+            </AnimatedSection>
           </div>
         </div>
 
