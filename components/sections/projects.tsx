@@ -293,7 +293,7 @@ function SortableProjectItem({
                 </div>
                 {showImages && (
                   <motion.div
-                    className="overflow-hidden rounded-lg shadow-md"
+                    className="overflow-hidden rounded-lg shadow-md aspect-[4/3]"
                     transition={{ duration: 0.3 }}
                   >
                     {isAdmin ? (
@@ -302,7 +302,7 @@ function SortableProjectItem({
                         alt={project.title}
                         width={400}
                         height={300}
-                        className="w-full h-auto object-cover"
+                        className="w-full h-full object-cover"
                         onImageUploaded={handleImageUpload}
                         uploadPreset="portfolio_unsigned"
                       />
@@ -312,7 +312,7 @@ function SortableProjectItem({
                         alt={project.title}
                         width={400}
                         height={300}
-                        className="w-full h-auto object-cover"
+                        className="w-full h-full object-cover"
                       />
                     )}
                   </motion.div>
@@ -344,7 +344,7 @@ function SortableProjectItem({
                 </div>
                 {showImages && (
                   <motion.div
-                    className="overflow-hidden rounded-lg shadow-md"
+                    className="overflow-hidden rounded-lg shadow-md aspect-[4/3]"
                     transition={{ duration: 0.3 }}
                   >
                     {isAdmin ? (
@@ -353,7 +353,7 @@ function SortableProjectItem({
                         alt={project.title}
                         width={400}
                         height={300}
-                        className="w-full h-auto object-cover"
+                        className="w-full h-full object-cover"
                         onImageUploaded={handleImageUpload}
                         uploadPreset="portfolio_unsigned"
                       />
@@ -363,7 +363,7 @@ function SortableProjectItem({
                         alt={project.title}
                         width={400}
                         height={300}
-                        className="w-full h-auto object-cover"
+                        className="w-full h-full object-cover"
                       />
                     )}
                   </motion.div>

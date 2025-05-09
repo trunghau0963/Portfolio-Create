@@ -147,12 +147,12 @@ function SortableExperienceItem({
 
       {/* Thumbnail with overlay and upload button */}
       <motion.div
-        className="overflow-hidden rounded-lg shadow-md"
+        className="overflow-hidden rounded-lg shadow-md aspect-[4/3]"
         whileHover={{ scale: 1.03 }}
         transition={{ duration: 0.3 }}
       >
         <div
-          className="relative cursor-pointer transition-transform duration-300"
+          className="relative w-full h-full cursor-pointer transition-transform duration-300"
           onClick={() => {
             if (!isAdmin) onView(experience.id);
           }}
@@ -162,7 +162,7 @@ function SortableExperienceItem({
             alt={experience.positionTitle}
             width={400}
             height={300}
-            className="w-full h-auto object-cover"
+            className="w-full h-full object-cover"
             onImageUploaded={handleImageUpload}
             uploadPreset="portfolio_unsigned"
           />
@@ -1017,7 +1017,7 @@ export default function ExperienceSection({
                         {currentExperience.detailImages.map((image, index) => (
                           <motion.div
                             key={image.id}
-                            className="relative group"
+                            className="relative group aspect-video"
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
@@ -1034,7 +1034,7 @@ export default function ExperienceSection({
                               }
                               width={600}
                               height={400}
-                              className="w-full h-auto rounded-md shadow-md"
+                              className="w-full h-full object-cover rounded-md shadow-md"
                             />
                             {isAdmin && (
                               <motion.div

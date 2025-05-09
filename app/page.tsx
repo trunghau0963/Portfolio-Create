@@ -15,100 +15,43 @@ import Header from "@/components/header";
 import SectionManager from "@/components/ui/section-manager";
 import ScrollProgress from "@/components/ui/scroll-progress";
 import ScrollToTop from "@/components/ui/scroll-to-top";
+import { useSections, type AppSection as Section } from "@/context/section-context";
 import { useAuth } from "@/context/auth-context";
 import AdminIndicator from "@/components/admin-indicator";
 import { motion } from "framer-motion";
 import SectionTransition from "@/components/ui/section-transition";
-import {
-  type Section as PrismaSection,
-  type TextBlock as PrismaTextBlock,
-  type HeroSectionContent as PrismaHeroContent,
-  type ImageBlock as PrismaImageBlock,
-  type ContactInfoItem as PrismaContactInfoItem,
-  type CustomSectionContentBlock as PrismaCustomSectionContentBlock,
-  type EducationItem as PrismaEducationItem,
-  type EducationImage as PrismaEducationImage,
-  type SkillItem as PrismaSkillItem,
-  type SkillImage as PrismaSkillImage,
-  type ExperienceItem as PrismaExperienceItem,
-  type ExperienceDetailImage as PrismaExperienceDetailImage,
-  type ProjectItem as PrismaProjectItem,
-  type TestimonialItem as PrismaTestimonialItem,
-  type Category as PrismaCategory,
-} from "@/lib/generated/prisma";
+import { type Category as PrismaCategory } from "@/lib/generated/prisma";
 
-// Extend PrismaSection type to include expected relations
-export type Section = PrismaSection & {
-  textBlocks: PrismaTextBlock[];
-  imageBlocks: PrismaImageBlock[];
-  contactInfoItems: PrismaContactInfoItem[];
-  customSectionContentBlocks: PrismaCustomSectionContentBlock[];
-  heroContent: PrismaHeroContent | null;
-  educationItems?: (PrismaEducationItem & { images: PrismaEducationImage[] })[];
-  skillItems?: PrismaSkillItem[];
-  skillImages?: PrismaSkillImage[];
-  experienceItems?: (PrismaExperienceItem & {
-    detailImages: PrismaExperienceDetailImage[];
-  })[];
-  projectItems?: PrismaProjectItem[];
-  testimonialItems?: PrismaTestimonialItem[];
-};
-
-// This is the main client component for the page
 export default function Home() {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
 
-  const [sections, setSections] = useState<Section[]>([]);
-  const [allCategoriesFromDB, setAllCategoriesFromDB] = useState<
-    PrismaCategory[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { sections, isLoading, error, refetchSections } = useSections();
+  const [allCategoriesFromDB, setAllCategoriesFromDB] = useState<PrismaCategory[]>([]);
 
-  // Function to fetch all page data
-  const fetchPageData = async () => {
-    // console.log("Refreshing page data...");
-    try {
-      const [sectionsResponse, categoriesResponse] = await Promise.all([
-        fetch("/api/sections"),
-        fetch("/api/categories"),
-      ]);
-
-      if (!sectionsResponse.ok) {
-        throw new Error(
-          `HTTP error! status: ${sectionsResponse.status} for sections`
-        );
-      }
-      const sectionsData = await sectionsResponse.json();
-      setSections(sectionsData as Section[]);
-
-      if (!categoriesResponse.ok) {
-        throw new Error(
-          `HTTP error! status: ${categoriesResponse.status} for categories`
-        );
-      }
-      const categoriesData = await categoriesResponse.json();
-      setAllCategoriesFromDB(categoriesData as PrismaCategory[]);
-      setError(null); // Clear error on successful fetch
-    } catch (e) {
-      console.error("Failed to fetch page data:", e);
-      setError(e instanceof Error ? e.message : "An unknown error occurred");
-    } finally {
-      if (loading) setLoading(false);
-    }
-  };
-
-  // Fetch data on initial mount
   useEffect(() => {
-    fetchPageData();
-  }, []); // Empty dependency array means run once on mount
-
-  // console.log("Fetched sections on page:", sections);
-  // console.log("Fetched categories on page:", allCategoriesFromDB);
+    const fetchCategories = async () => {
+      try {
+        const categoriesResponse = await fetch("/api/categories");
+        if (!categoriesResponse.ok) {
+          throw new Error(`HTTP error! status: ${categoriesResponse.status} for categories`);
+        }
+        const categoriesData = await categoriesResponse.json();
+        setAllCategoriesFromDB(categoriesData);
+      } catch (e) {
+        console.error("Failed to fetch categories:", e);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const renderSection = (section: Section) => {
+    const handleDataChange = () => {
+      refetchSections();
+    };
+
     if (!section.visible) return null;
+
     switch (section.type) {
       case "hero":
         return <Hero key={section.id} section={section} />;
@@ -119,7 +62,7 @@ export default function Home() {
             <IntroductionComponent
               key={section.id}
               section={section}
-              onDataChange={fetchPageData}
+              onDataChange={handleDataChange}
             />
           </>
         );
@@ -130,7 +73,7 @@ export default function Home() {
             <Education
               key={section.id}
               section={section}
-              onDataChange={fetchPageData}
+              onDataChange={handleDataChange}
             />
           </>
         );
@@ -141,7 +84,7 @@ export default function Home() {
             <Skills
               key={section.id}
               section={section}
-              onDataChange={fetchPageData}
+              onDataChange={handleDataChange}
             />
           </>
         );
@@ -152,7 +95,7 @@ export default function Home() {
             <Experience
               key={section.id}
               section={section}
-              onDataChange={fetchPageData}
+              onDataChange={handleDataChange}
             />
           </>
         );
@@ -163,7 +106,7 @@ export default function Home() {
             <Projects
               key={section.id}
               section={section}
-              onDataChange={fetchPageData}
+              onDataChange={handleDataChange}
               allCategoriesFromDB={allCategoriesFromDB}
             />
           </>
@@ -175,7 +118,7 @@ export default function Home() {
             <Testimonials
               key={section.id}
               section={section}
-              onDataChange={fetchPageData}
+              onDataChange={handleDataChange}
             />
           </>
         );
@@ -186,7 +129,7 @@ export default function Home() {
             <Contact
               key={section.id}
               section={section}
-              onDataChange={fetchPageData}
+              onDataChange={handleDataChange}
             />
           </>
         );
@@ -197,7 +140,7 @@ export default function Home() {
               id={`custom-${section.slug}-transition`}
               color="black"
             />
-            <CustomSection key={section.id} section={section} />
+            <CustomSection key={section.id} section={section} onDataChange={handleDataChange} />
           </>
         );
       default:
@@ -206,7 +149,7 @@ export default function Home() {
     }
   };
 
-  if (loading) {
+  if (isLoading && sections.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
@@ -233,13 +176,14 @@ export default function Home() {
       <Header sections={sections.filter((s) => s.visible)} />
       {sections
         .filter((s) => s.visible)
+        .sort((a, b) => a.order - b.order)
         .map((section) => (
           <div key={section.id}>{renderSection(section)}</div>
         ))}
       <Footer />
       <ScrollToTop />
       <AdminIndicator />
-      {isAdmin && <SectionManager onDataChange={fetchPageData} />}
+      {isAdmin && <SectionManager />}
     </motion.div>
   );
 }

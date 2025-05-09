@@ -167,15 +167,15 @@ export default function IntroductionSection({
               </AnimatedSection>
 
               <AnimatedSection variant="zoomIn" delay={0.7}>
-                <div className="mt-4">
+                <div className="mt-4 relative w-full aspect-[8/9] overflow-hidden rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
                   {mainImageBlock ? (
                     <EditableImage
                       key={mainImageBlock.id}
-                      src={mainImageBlock.src || ""}
+                      src={mainImageBlock.src || "/images/placeholder-introduction.png"}
                       alt={mainImageBlock.alt || "Introduction portrait"}
                       width={400}
                       height={450}
-                      className="w-full h-auto object-cover rounded-md shadow-md hover:shadow-lg transition-shadow duration-300"
+                      className="w-full h-full object-cover"
                       onImageUploaded={(imageData) =>
                         handleUploadedImageSave(
                           String(mainImageBlock.id),
@@ -186,13 +186,13 @@ export default function IntroductionSection({
                     />
                   ) : (
                     isAdmin && (
-                      <div className="w-full h-[300px] bg-gray-200 rounded-md flex flex-col items-center justify-center text-center p-4">
-                        <p className="text-gray-500 text-sm mb-2">
-                          No portrait image set for this intro section.
+                      <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md flex flex-col items-center justify-center text-center p-4">
+                        <ImagePlus className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-2" />
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">
+                          No portrait image set.
                         </p>
-                        <p className="text-xs text-gray-400">
-                          (Admins can add an ImageBlock via Section Manager or
-                          directly in DB)
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          Click to upload or link an Image Block.
                         </p>
                       </div>
                     )

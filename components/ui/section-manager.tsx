@@ -32,9 +32,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/auth-context";
-import { useSections } from "@/context/section-context";
+import { useSections, type AppSection } from "@/context/section-context";
 import { useSettings } from "@/context/settings-context";
-import { type Section as PrismaSection } from "@/lib/generated/prisma";
 import { toast } from "sonner";
 
 // Define section types
@@ -49,15 +48,12 @@ export type SectionType =
   | "contact"
   | "custom";
 
-interface SectionManagerProps {
-  onDataChange?: () => void; // Optional callback
-}
+interface SectionManagerProps {}
 
-export default function SectionManager({ onDataChange }: SectionManagerProps) {
+export default function SectionManager({}: SectionManagerProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
 
-  // Use SectionContext
   const {
     sections: contextSections,
     updateSection: contextUpdateSection,
@@ -69,109 +65,78 @@ export default function SectionManager({ onDataChange }: SectionManagerProps) {
     retryConnection,
   } = useSections();
 
-  // Use SettingsContext
   const {
     settings,
     updateSettings,
-    isLoading: settingsLoading,
+    isLoading: settingsLoadingContext,
   } = useSettings();
 
-  // State for dialogs and local form inputs
   const [isOpen, setIsOpen] = useState(false);
   const [newSectionDialogOpen, setNewSectionDialogOpen] = useState(false);
   const [editSectionDialogOpen, setEditSectionDialogOpen] = useState(false);
   const [deleteSectionDialogOpen, setDeleteSectionDialogOpen] = useState(false);
 
-  // sectionToEdit and sectionToDelete will now hold PrismaSection or compatible type
-  const [sectionToEdit, setSectionToEdit] = useState<PrismaSection | null>(
-    null
-  );
-  const [sectionToDeleteId, setSectionToDeleteId] = useState<string | null>(
-    null
-  );
+  const [sectionToEdit, setSectionToEdit] = useState<AppSection | null>(null);
+  const [sectionToDeleteId, setSectionToDeleteId] = useState<string | null>(null);
 
-  // New section form state (slug will be needed)
   const [newSectionType, setNewSectionType] = useState<SectionType>("custom");
   const [newSectionTitle, setNewSectionTitle] = useState("");
   const [newSectionSlug, setNewSectionSlug] = useState("");
 
-  // Edit section form state (slug will be needed)
   const [editSectionTitle, setEditSectionTitle] = useState("");
   const [editSectionSlug, setEditSectionSlug] = useState("");
 
-  const [isTogglingVisibility, setIsTogglingVisibility] = useState<
-    string | null
-  >(null);
-
+  const [isTogglingVisibility, setIsTogglingVisibility] = useState<string | null>(null);
   const [isAddingSection, setIsAddingSection] = useState(false);
   const [isUpdatingSection, setIsUpdatingSection] = useState(false);
   const [isDeletingSection, setIsDeletingSection] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
 
-  // State for font selection
   const [selectedFont, setSelectedFont] = useState<string>("");
   const [isSavingFont, setIsSavingFont] = useState(false);
 
-  // Update selectedFont when settings load or change
   useEffect(() => {
     if (settings?.globalFontFamily) {
       setSelectedFont(settings.globalFontFamily);
     }
   }, [settings?.globalFontFamily]);
 
-  // Handler to save global font setting
   const handleFontChange = async (newFont: string) => {
     setSelectedFont(newFont);
     setIsSavingFont(true);
     try {
       await updateSettings({ globalFontFamily: newFont });
-      // Toast is handled within context updateSettings
     } catch (error) {
-      // Error toast handled within context updateSettings, maybe revert local state?
       if (settings?.globalFontFamily) {
-        setSelectedFont(settings.globalFontFamily); // Revert on failure
+        setSelectedFont(settings.globalFontFamily);
       }
     } finally {
       setIsSavingFont(false);
     }
   };
 
-  // Define a more flexible section type for functions until context provides full PrismaSection consistently
-  type SectionForManager = Pick<
-    PrismaSection,
-    "id" | "title" | "type" | "visible" | "order"
-  > & { slug?: string; [key: string]: any };
-
-  // Toggle section visibility using context
-  const toggleSectionVisibility = async (section: SectionForManager) => {
+  const toggleSectionVisibility = async (section: AppSection) => {
     setIsTogglingVisibility(section.id);
     try {
-      // Construct the payload with only necessary and existing fields to avoid type issues with contextUpdateSection
-      const payload: Partial<PrismaSection> & { id: string } = {
+      const payload: Partial<AppSection> & { id: string } = {
         id: section.id,
         visible: !section.visible,
       };
-      await contextUpdateSection(payload as PrismaSection); // Cast if contextUpdateSection expects full PrismaSection
-      toast.success(`Section "${section.title}" visibility updated.`);
-      onDataChange?.(); // Call onDataChange
+      await contextUpdateSection(payload);
     } catch (error) {
-      toast.error("Failed to update section visibility.");
-      console.error("Error toggling visibility:", error);
+      console.error("Error toggling visibility (SectionManager):", error);
     } finally {
       setIsTogglingVisibility(null);
     }
   };
 
-  // Reorder sections
-  const handleReorder = async (newSections: PrismaSection[]) => {
+  const handleReorder = async (newOrderedSections: AppSection[]) => {
     setIsReordering(true);
+    const orderedIds = newOrderedSections.map(s => s.id);
     try {
-      await contextReorderSections(newSections);
-      toast.success("Sections reordered successfully!");
-      onDataChange?.(); // Call onDataChange
+      await contextReorderSections(orderedIds);
     } catch (error) {
-      toast.error("Failed to reorder sections.");
-      console.error("Error reordering sections:", error);
+      console.error("Error reordering sections (SectionManager):", error);
     } finally {
       setIsReordering(false);
     }
@@ -183,18 +148,13 @@ export default function SectionManager({ onDataChange }: SectionManagerProps) {
       const newSections = Array.from(contextSections);
       const sectionToMove = newSections[currentIndex];
       const sectionToSwap = newSections[currentIndex - 1];
-
-      // Swap them in the array copy
       newSections[currentIndex] = sectionToSwap;
       newSections[currentIndex - 1] = sectionToMove;
-
-      // Update order for all sections
       const updatedSectionsWithNewOrder = newSections.map((s, index) => ({
         ...s,
         order: index,
       }));
-
-      handleReorder(updatedSectionsWithNewOrder as PrismaSection[]);
+      handleReorder(updatedSectionsWithNewOrder as AppSection[]);
     }
   };
 
@@ -204,22 +164,16 @@ export default function SectionManager({ onDataChange }: SectionManagerProps) {
       const newSections = Array.from(contextSections);
       const sectionToMove = newSections[currentIndex];
       const sectionToSwap = newSections[currentIndex + 1];
-
-      // Swap them in the array copy
       newSections[currentIndex] = sectionToSwap;
       newSections[currentIndex + 1] = sectionToMove;
-
-      // Update order for all sections
       const updatedSectionsWithNewOrder = newSections.map((s, index) => ({
         ...s,
         order: index,
       }));
-
-      handleReorder(updatedSectionsWithNewOrder as PrismaSection[]);
+      handleReorder(updatedSectionsWithNewOrder as AppSection[]);
     }
   };
 
-  // Add Section using context
   const handleAddSectionForm = async () => {
     if (!newSectionTitle.trim() || !newSectionSlug.trim()) {
       toast.error("Section Title and Slug are required.");
@@ -227,93 +181,60 @@ export default function SectionManager({ onDataChange }: SectionManagerProps) {
     }
     setIsAddingSection(true);
     try {
-      const newOrder =
-        contextSections.length > 0
-          ? Math.max(...contextSections.map((s) => s.order)) + 1
-          : 0;
-
-      // Construct the new section object based on what contextAddSection likely expects
-      // This should align with Prisma schema for creation (excluding id, createdAt, updatedAt)
+      const newOrder = contextSections.length > 0 ? Math.max(...contextSections.map((s) => s.order)) + 1 : 0;
       const newSectionData = {
         title: newSectionTitle.trim(),
         slug: newSectionSlug.trim().toLowerCase().replace(/\s+/g, "-"),
         type: newSectionType,
         visible: true,
         order: newOrder,
-        // textBlocks: [], // Prisma will handle default empty relations
-        // imageBlocks: [],
-        // ... other relations will be empty by default
       };
-
-      // Explicitly type newSectionData if needed, or ensure contextAddSection is flexible
-      // For example: const newSectionData: Omit<PrismaSection, 'id' | 'createdAt' | 'updatedAt'> = { ... }
-
-      await contextAddSection(newSectionData as any); // Changed to as any to bypass linter error temporarily
-
-      toast.success(`Section "${newSectionData.title}" added successfully!`);
+      await contextAddSection(newSectionData as Omit<AppSection, "id" | "createdAt" | "updatedAt" | 'textBlocks' | 'imageBlocks' | 'contactInfoItems' | 'customSectionContentBlocks' | 'heroContent' | 'educationItems' | 'skillItems' | 'skillImages' | 'experienceItems' | 'projectItems' | 'testimonialItems'>);
       setNewSectionDialogOpen(false);
       setNewSectionTitle("");
       setNewSectionSlug("");
-      setNewSectionType("custom"); // Reset to default type
-      onDataChange?.(); // Call onDataChange
+      setNewSectionType("custom");
     } catch (error) {
-      toast.error("Failed to add section.");
-      console.error("Error adding section:", error);
+      console.error("Error adding section (SectionManager):", error);
     } finally {
       setIsAddingSection(false);
     }
   };
 
-  // Open Edit Section Dialog
-  const openEditSection = (section: SectionForManager) => {
-    setSectionToEdit(section as PrismaSection);
+  const openEditSection = (section: AppSection) => {
+    setSectionToEdit(section);
     setEditSectionTitle(section.title);
     setEditSectionSlug(section.slug || "");
     setEditSectionDialogOpen(true);
   };
 
-  // Update Section using context
   const handleUpdateSectionForm = async () => {
     if (!sectionToEdit) {
       toast.error("No section selected for editing.");
       return;
     }
     if (!editSectionTitle.trim()) {
-      // Slug is not editable for now, so only title is checked
       toast.error("Section Title is required.");
       return;
     }
     setIsUpdatingSection(true);
     try {
-      // Construct the updated section object
-      // Include all fields from sectionToEdit and override changed ones
-      // Slug is taken from sectionToEdit.slug as it's not editable in the form currently
-      const updatedSectionData: Partial<PrismaSection> & { id: string } = {
-        ...sectionToEdit, // Spread original section to keep all its properties
+      const updatedSectionData: Partial<AppSection> & { id: string } = {
         id: sectionToEdit.id,
         title: editSectionTitle.trim(),
-        // slug: editSectionSlug.trim(), // If slug were editable
       };
-
-      await contextUpdateSection(updatedSectionData as PrismaSection);
-
-      toast.success(
-        `Section "${updatedSectionData.title}" updated successfully!`
-      );
+      await contextUpdateSection(updatedSectionData);
       setEditSectionDialogOpen(false);
       setSectionToEdit(null);
       setEditSectionTitle("");
       setEditSectionSlug("");
-      onDataChange?.(); // Call onDataChange
     } catch (error) {
-      toast.error("Failed to update section.");
-      console.error("Error updating section:", error);
+      console.error("Error updating section (SectionManager):", error);
     } finally {
       setIsUpdatingSection(false);
     }
   };
 
-  // Delete Section using context
   const handleDeleteSection = async () => {
     if (sectionToDeleteId === null) {
       toast.error("No section selected for deletion.");
@@ -328,7 +249,6 @@ export default function SectionManager({ onDataChange }: SectionManagerProps) {
       toast.success(`Section "${sectionTitle}" deleted successfully!`);
       setDeleteSectionDialogOpen(false);
       setSectionToDeleteId(null);
-      onDataChange?.(); // Call onDataChange
     } catch (error) {
       toast.error("Failed to delete section.");
       console.error("Error deleting section:", error);
@@ -406,7 +326,7 @@ export default function SectionManager({ onDataChange }: SectionManagerProps) {
                 <Select
                   value={selectedFont}
                   onValueChange={handleFontChange}
-                  disabled={settingsLoading || isSavingFont}
+                  disabled={settingsLoadingContext || isSavingFont}
                 >
                   <SelectTrigger id="global-font-select">
                     <SelectValue placeholder="Select font..." />

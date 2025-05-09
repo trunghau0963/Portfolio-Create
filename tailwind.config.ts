@@ -99,17 +99,6 @@ const config = {
       fontFamily: {
         sans: ["var(--font-geist-sans)"], // Assuming Geist Sans is used
         mono: ["var(--font-geist-mono)"], // Assuming Geist Mono is used
-        inter: ["Inter", "sans-serif"],
-        poppins: ["Poppins", "sans-serif"],
-        roboto: ["Roboto", "sans-serif"],
-        lato: ["Lato", "sans-serif"],
-        montserrat: ["Montserrat", "sans-serif"],
-        raleway: ["Raleway", "sans-serif"],
-        oswald: ["Oswald", "sans-serif"],
-        ubuntu: ["Ubuntu", "sans-serif"],
-        playfair: ['"Playfair Display"', "serif"],
-        lora: ["Lora", "serif"],
-        merriweather: ["Merriweather", "serif"],
       },
     },
   },

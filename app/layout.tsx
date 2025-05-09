@@ -17,37 +17,55 @@ import { SectionProvider } from "@/context/section-context";
 import { SettingsProvider } from "@/context/settings-context";
 import { Toaster } from "@/components/ui/sonner";
 import LayoutWrapper from "@/components/layout-wrapper";
+import { ThemeProvider } from "@/components/theme-provider";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const lora = Lora({ subsets: ["latin"], variable: "--font-lora" });
-const robotoMono = RobotoMono({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-roboto-mono",
+const fontSans = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
 });
-const playfairDisplay = PlayfairDisplay({
-  subsets: ["latin"],
-  variable: "--font-playfair-display",
+
+const fontSerif = Lora({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-serif',
 });
-const dancingScript = DancingScript({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-dancing-script",
+
+const fontMono = RobotoMono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-mono',
 });
-const robotoCondensed = RobotoCondensed({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-roboto-condensed",
+
+const fontDisplay = PlayfairDisplay({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-display',
 });
-const mPlusRounded1c = MPlusRounded1c({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-mplus-rounded",
+
+const fontHandwriting = DancingScript({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-handwriting',
 });
-const robotoSlab = RobotoSlab({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-roboto-slab",
+
+const fontCondensed = RobotoCondensed({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-condensed',
+});
+
+const fontRounded = MPlusRounded1c({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-rounded',
+  weight: '400',
+});
+
+const fontSlabSerif = RobotoSlab({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-slab-serif',
 });
 
 export const metadata: Metadata = {
@@ -64,21 +82,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${lora.variable} ${robotoMono.variable} ${
-          playfairDisplay.variable
-        } ${dancingScript.variable} ${robotoCondensed.variable} ${
-          mPlusRounded1c.variable
-        } ${robotoSlab.variable}`}
-      >
+    <html lang="en" suppressHydrationWarning={true} className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} ${fontDisplay.variable} ${fontHandwriting.variable} ${fontCondensed.variable} ${fontRounded.variable} ${fontSlabSerif.variable}`}>
+      <body suppressHydrationWarning={true}>
         <AuthProvider>
           <SectionProvider>
             <SettingsProvider>
-              <LayoutWrapper>
-                <Client>{children}</Client>
-              </LayoutWrapper>
-              <Toaster />
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <LayoutWrapper>
+                  <Client>{children}</Client>
+                </LayoutWrapper>
+                <Toaster richColors position="bottom-right" />
+              </ThemeProvider>
             </SettingsProvider>
           </SectionProvider>
         </AuthProvider>
