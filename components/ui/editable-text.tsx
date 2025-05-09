@@ -19,6 +19,7 @@ interface EditableTextProps {
     newFontSize?: number,
     newFontFamily?: string
   ) => Promise<void>;
+  isLockButton?: boolean;
 }
 
 export default function EditableText({
@@ -29,6 +30,7 @@ export default function EditableText({
   initialFontFamily = "font-sans",
   blockId, // Destructure new prop
   onCommitText, // Destructure new prop
+  isLockButton = false,
 }: EditableTextProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
@@ -99,13 +101,15 @@ export default function EditableText({
       </Component>
       {isAdmin && (
         <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <EditTextButton
-            initialText={text} // Pass current text for editing
-            initialFontSize={fontSize}
-            initialFontFamily={fontFamily}
-            onSave={handleInternalSave} // EditTextButton calls this internal handler
-            isSaving={isSaving} // Pass saving state to EditTextButton for UI feedback
-          />
+          {!isLockButton && (
+            <EditTextButton
+              initialText={text} // Pass current text for editing
+              initialFontSize={fontSize}
+              initialFontFamily={fontFamily}
+              onSave={handleInternalSave} // EditTextButton calls this internal handler
+              isSaving={isSaving} // Pass saving state to EditTextButton for UI feedback
+            />
+          )}
         </div>
       )}
     </div>

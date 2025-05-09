@@ -99,4 +99,49 @@ export async function PUT(
       { status: 500 }
     );
   }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: RouteParams }
+) {
+  const blockId = params.id;
+
+  if (!blockId) {
+    return NextResponse.json({ message: 'Missing content block ID' }, { status: 400 });
+  }
+
+  try {
+    // Delete the content block
+    const deletedBlock = await prisma.customSectionContentBlock.delete({
+      where: { id: blockId },
+    });
+
+    return NextResponse.json({ 
+      message: 'Content block deleted successfully', 
+      deletedId: blockId 
+    });
+  } catch (error: any) {
+    console.error(`Error deleting custom section content block ${blockId}:`, error);
+    
+    // Add specific check for P2023 (Invalid ObjectId format)
+    if (error.code === 'P2023') {
+      return NextResponse.json({ 
+        message: `Invalid ID format for content block: '${blockId}'. Expected a valid ObjectId.`, 
+        error: error.message 
+      }, { status: 400 });
+    }
+    
+    // Check for Prisma's record not found error
+    if (error.code === 'P2025') { 
+      return NextResponse.json({ 
+        message: `Content block with ID ${blockId} not found.` 
+      }, { status: 404 });
+    }
+    
+    return NextResponse.json(
+      { message: 'Failed to delete custom section content block', error: error.message },
+      { status: 500 }
+    );
+  }
 } 

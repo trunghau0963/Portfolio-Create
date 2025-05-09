@@ -24,8 +24,8 @@ export async function PUT(request: Request) {
 
     while (retries < MAX_RETRIES) {
       try {
-        await prisma.$transaction(updatePromises);
-        return NextResponse.json({ message: 'Sections reordered successfully.' }, { status: 200 });
+    await prisma.$transaction(updatePromises);
+    return NextResponse.json({ message: 'Sections reordered successfully.' }, { status: 200 });
       } catch (error: any) {
         lastError = error;
         if (error.code === 'P2034' && retries < MAX_RETRIES - 1) {

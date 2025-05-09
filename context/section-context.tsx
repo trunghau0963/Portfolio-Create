@@ -68,11 +68,19 @@ const safeNewDate = (dateInput: string | number | Date | undefined): Date => {
 };
 
 export function SectionProvider({ children }: { children: ReactNode }) {
-  const [sections, setSections] = useState<AppSection[]>([]); // Use AppSection type
+  const [sections, setSections] = useState<AppSection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] =
-    useState<ConnectionStatus>("unknown");
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("unknown");
+
+  // Thêm hàm utility để cập nhật cache
+  const updateSessionCache = useCallback((data: AppSection[]) => {
+    try {
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.error("Failed to update sections cache:", e);
+    }
+  }, []);
 
   const fetchSections = useCallback(async (useCache = true) => {
     if (useCache) {
@@ -83,8 +91,7 @@ export function SectionProvider({ children }: { children: ReactNode }) {
             ...s,
             createdAt: safeNewDate(s.createdAt),
             updatedAt: safeNewDate(s.updatedAt),
-            // Potentially normalize nested date fields in relations if they exist and are stringified
-          })) as AppSection[]; // Cast to AppSection[]
+          })) as AppSection[];
           setSections(parsedData);
           setIsLoading(false);
           setConnectionStatus("connected");
@@ -101,20 +108,16 @@ export function SectionProvider({ children }: { children: ReactNode }) {
     setConnectionStatus("checking");
 
     try {
-      const dataFromApi = await apiService.getSections(); // This should fetch data matching AppSection structure
+      const dataFromApi = await apiService.getSections();
       const normalizedData = dataFromApi.map((s: any) => ({
         ...s,
         createdAt: safeNewDate(s.createdAt),
         updatedAt: safeNewDate(s.updatedAt),
-        // Ensure all relational data fetched by getSections matches AppSection structure
-      })) as AppSection[]; // Cast to AppSection[]
+      })) as AppSection[];
+      
       setSections(normalizedData);
       setConnectionStatus("connected");
-      try {
-        sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(normalizedData));
-      } catch (e) {
-        console.error("Failed to save sections to sessionStorage:", e);
-      }
+      updateSessionCache(normalizedData);
     } catch (err: any) {
       console.error("Error fetching sections:", err);
       setError(err.message || "Failed to load sections");
@@ -122,22 +125,25 @@ export function SectionProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [updateSessionCache]);
 
   useEffect(() => {
-    fetchSections(true);
+    fetchSections(false); // Always fetch fresh data on initial load
   }, [fetchSections]);
 
   const addSection = async (sectionData: Omit<AppSection, "id" | "createdAt" | "updatedAt" | 'textBlocks' | 'imageBlocks' | 'contactInfoItems' | 'customSectionContentBlocks' | 'heroContent' | 'educationItems' | 'skillItems' | 'skillImages' | 'experienceItems' | 'projectItems' | 'testimonialItems'>): Promise<AppSection | void> => {
     setIsLoading(true);
     try {
-      // apiService.saveSection should accept this partial data for creation
-      const savedSection = await apiService.saveSection(sectionData as any); // Cast as needed by apiService
-      await fetchSections(false); // Refreshes the entire list with all relations
+      const savedSection = await apiService.saveSection(sectionData as any);
+      const updatedSections = await apiService.getSections();
+      const normalizedSections = updatedSections.map(s => ({
+        ...s,
+        createdAt: safeNewDate(s.createdAt),
+        updatedAt: safeNewDate(s.updatedAt)
+      })) as AppSection[];
+      setSections(normalizedSections);
+      updateSessionCache(normalizedSections);
       toast.success(`Section "${savedSection.title}" added!`);
-      // The savedSection from apiService might not have all relations immediately unless API returns them.
-      // fetchSections(false) ensures we get the full structure.
-      // We can find the newly added section from the refetched list if needed, but often not necessary to return it here.
     } catch (err) {
       console.error("Error adding section:", err);
       setError("Failed to add section");
@@ -151,9 +157,15 @@ export function SectionProvider({ children }: { children: ReactNode }) {
   const updateSection = async (sectionData: Partial<AppSection> & { id: string }): Promise<AppSection | void> => {
     setIsLoading(true);
     try {
-      // apiService.saveSection should handle partial updates
-      await apiService.saveSection(sectionData as any); // Cast as needed
-      await fetchSections(false);
+      await apiService.saveSection(sectionData as any);
+      const updatedSections = await apiService.getSections();
+      const normalizedSections = updatedSections.map(s => ({
+        ...s,
+        createdAt: safeNewDate(s.createdAt),
+        updatedAt: safeNewDate(s.updatedAt)
+      })) as AppSection[];
+      setSections(normalizedSections);
+      updateSessionCache(normalizedSections);
       toast.success(`Section "${sectionData.title || 'Section'}" updated!`);
     } catch (err) {
       console.error("Error updating section:", err);
@@ -170,7 +182,14 @@ export function SectionProvider({ children }: { children: ReactNode }) {
     try {
       const result = await apiService.deleteSection(id);
       if (result.success) {
-        await fetchSections(false);
+        const updatedSections = await apiService.getSections();
+        const normalizedSections = updatedSections.map(s => ({
+          ...s,
+          createdAt: safeNewDate(s.createdAt),
+          updatedAt: safeNewDate(s.updatedAt)
+        })) as AppSection[];
+        setSections(normalizedSections);
+        updateSessionCache(normalizedSections);
         toast.success(`Section deleted!`);
       } else {
         throw new Error("Delete operation returned false from API");
@@ -191,8 +210,10 @@ export function SectionProvider({ children }: { children: ReactNode }) {
     const optimisticallyReordered = sections
       .filter(s => reorderedMap.has(s.id))
       .sort((a, b) => (reorderedMap.get(a.id) ?? Infinity) - (reorderedMap.get(b.id) ?? Infinity))
-      .map((section, index) => ({ ...section, order: index }));
-    setSections(optimisticallyReordered as AppSection[]); // Cast to AppSection[]
+      .map((section, index) => ({ ...section, order: index })) as AppSection[];
+    
+    setSections(optimisticallyReordered);
+    updateSessionCache(optimisticallyReordered);
 
     setIsLoading(true);
     try {
@@ -204,15 +225,13 @@ export function SectionProvider({ children }: { children: ReactNode }) {
       if (!response.ok) {
         throw new Error('Failed to reorder sections via API');
       }
-      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(optimisticallyReordered));
       toast.success("Sections reordered!");
-      // No immediate refetch needed due to optimistic update, but ensure API is source of truth over time
     } catch (err) {
       console.error("Error reordering sections:", err);
       setError("Failed to reorder sections");
       toast.error(`Failed to reorder sections: ${(err as Error).message}`);
-      setSections(originalSections as AppSection[]); // Cast to AppSection[]
-      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(originalSections));
+      setSections(originalSections);
+      updateSessionCache(originalSections);
       throw err;
     } finally {
       setIsLoading(false);

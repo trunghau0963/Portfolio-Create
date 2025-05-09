@@ -22,6 +22,7 @@ interface EditableImageProps {
   }) => Promise<void>;
   // Add uploadPreset from Cloudinary dashboard
   uploadPreset: string;
+  isLockButton?: boolean;
 }
 
 export default function EditableImage({
@@ -34,6 +35,7 @@ export default function EditableImage({
   sizes,
   onImageUploaded,
   uploadPreset, // Destructure
+  isLockButton = false,
 }: EditableImageProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
@@ -94,11 +96,13 @@ export default function EditableImage({
       />
       {isAdmin && onImageUploaded && uploadPreset && (
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <EditImageButton
-            onUploadSuccess={handleUploadSuccess}
-            uploadPreset={uploadPreset} // Pass the preset
-            isSaving={isProcessing} // Pass parent's saving state
-          />
+          {!isLockButton && (
+            <EditImageButton
+              onUploadSuccess={handleUploadSuccess}
+              uploadPreset={uploadPreset} // Pass the preset
+              isSaving={isProcessing} // Pass parent's saving state
+            />
+          )}
         </div>
       )}
     </div>

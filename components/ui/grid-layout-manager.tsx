@@ -27,6 +27,7 @@ import { useAuth } from "@/context/auth-context";
 import EditableText from "./editable-text";
 import EditableImage from "./editable-image";
 import AnimatedSection from "./animated-section";
+import { toast } from "sonner";
 
 // Define content item types
 export type ContentItemType = "title" | "text" | "image";
@@ -55,6 +56,7 @@ interface GridLayoutManagerProps {
   initialRows?: ContentRow[];
   onLayoutChange?: (title: string, rows: ContentRow[]) => void;
   onGridImageSave?: (itemId: string, imageData: { src: string; imagePublicId: string; alt?: string }) => Promise<void>;
+  onContentUpdate?: (blockId: string, newContent: string) => Promise<void>;
 }
 
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "portfolio_unsigned"; // Define your preset
@@ -65,15 +67,14 @@ export default function GridLayoutManager({
   initialRows = [],
   onLayoutChange,
   onGridImageSave,
+  onContentUpdate,
 }: GridLayoutManagerProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin;
 
   // State for title and rows
   const [title, setTitle] = useState(initialTitle);
-  const [rows, setRows] = useState<ContentRow[]>(
-    initialRows.length > 0 ? initialRows : []
-  );
+  const [rows, setRows] = useState<ContentRow[]>([]);
 
   // Dialog states
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
@@ -112,40 +113,281 @@ export default function GridLayoutManager({
 
   const initialLoadComplete = useRef(false);
 
-  // Load layout from localStorage on component mount
+  // Utility function to persist a single item
+  const persistCreatedItemUtil = async (
+    itemCreationData: Omit<ContentItem, 'id'>,
+    itemOrderInRow: number,
+    owningRowPosition: number = 0
+  ): Promise<ContentItem | null> => {
+    const MAX_ITEMS_PER_ROW = 3; // Should be a constant or configurable
+    const calculatedOrder = owningRowPosition * MAX_ITEMS_PER_ROW + itemOrderInRow;
+
+    const apiPayload: any = {
+      sectionId: sectionId, // Ensure sectionId is from props and valid
+      type: itemCreationData.type,
+      content: itemCreationData.content,
+      order: calculatedOrder,
+      fontSize: itemCreationData.fontSize,
+      fontWeight: itemCreationData.fontWeight,
+      fontStyle: itemCreationData.fontStyle,
+      textAlign: itemCreationData.textAlign,
+    };
+
+    if (itemCreationData.type === "image") {
+      apiPayload.imageSrc = itemCreationData.content; // For images, content is src
+      apiPayload.imageAlt = itemCreationData.alt || `Default Alt Text for ${itemCreationData.type}`;
+    }
+
+    try {
+      const response = await fetch("/api/custom-section-content-blocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiPayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to persist item via API:", errorData);
+        toast.error(errorData.message || "Server error persisting item.");
+        return null;
+      }
+      const createdBlock = await response.json();
+      return {
+        id: createdBlock.id,
+        type: createdBlock.type as ContentItemType,
+        content: createdBlock.type === 'IMAGE' ? (createdBlock.imageSrc || '') : (createdBlock.content || ''),
+        fontSize: createdBlock.fontSize,
+        fontWeight: createdBlock.fontWeight,
+        fontStyle: createdBlock.fontStyle,
+        textAlign: createdBlock.textAlign as ContentItem['textAlign'],
+        alt: createdBlock.imageAlt || undefined, // Use server's alt or undefined
+        imagePublicId: createdBlock.imagePublicId,
+      };
+    } catch (error) {
+      console.error("Error in persistCreatedItemUtil:", error);
+      toast.error(`Client-side error persisting item: ${(error as Error).message}`);
+      return null;
+    }
+  };
+
+  // Load layout from localStorage or initialize on component mount
   useEffect(() => {
-    if (initialRows.length === 0 && !initialLoadComplete.current) {
-      const savedLayout = localStorage.getItem(`layout-${sectionId}`);
-      if (savedLayout) {
-        try {
-          const { title: savedTitle, rows: savedRows } =
-            JSON.parse(savedLayout);
-          setTitle(savedTitle || initialTitle);
-          setRows(savedRows || []);
-        } catch (error) {
-          console.error("Error parsing saved layout:", error);
+    const initializeLayout = async () => {
+      if (initialLoadComplete.current) return;
+
+      // THÊM KHÓA TẠM THỜI ĐỂ NGĂN KHỞI TẠO ĐỒNG THỜI
+      const initKey = `init-lock-${sectionId}`;
+      // Kiểm tra xem có tiến trình khởi tạo đang chạy không
+      const isInitializing = sessionStorage.getItem(initKey);
+      if (isInitializing === 'true') {
+        console.log(`GridLayoutManager: Another initialization for sectionId ${sectionId} is in progress. Waiting...`);
+        // Đặt một timeout trước khi kiểm tra lại để tránh quá nhiều kiểm tra
+        setTimeout(() => {
+          initialLoadComplete.current = false; // Đảm bảo chúng ta có thể thử lại
+          setRows([]); // Reset rows để kích hoạt useEffect một lần nữa
+        }, 1000);
+        return;
+      }
+      
+      // Đặt khóa để chỉ ra rằng đang khởi tạo
+      sessionStorage.setItem(initKey, 'true');
+      
+      try {
+        // Prefer initialRows from props (DB) if available
+        if (initialRows && initialRows.length > 0) {
+          // console.log("GridLayoutManager: Initialized with initialRows from props.", initialRows);
+          setRows(initialRows.sort((a: ContentRow, b: ContentRow) => a.position - b.position));
+          setTitle(initialTitle); // Use initialTitle from props if rows are also from props
+          initialLoadComplete.current = true;
+          sessionStorage.removeItem(initKey); // Xóa khóa khi hoàn thành
+          return;
         }
-      } else {
-        // Initialize with a default title row if no saved layout
-        const defaultRow: ContentRow = {
-          id: generateId(),
-          items: [
+
+        // If no initialRows from props, try localStorage
+        if (sectionId) {
+          const savedLayout = localStorage.getItem(`layout-${sectionId}`);
+          if (savedLayout) {
+            try {
+              const { title: savedTitle, rows: savedRows } = JSON.parse(savedLayout);
+              if (savedRows && savedRows.length > 0) { // Ensure localStorage actually has rows
+                setTitle(savedTitle || initialTitle);
+                setRows(savedRows.sort((a: ContentRow, b: ContentRow) => a.position - b.position)); // Sort localStorage rows too
+                initialLoadComplete.current = true;
+                sessionStorage.removeItem(initKey); // Xóa khóa khi hoàn thành
+                // console.log("GridLayoutManager: Initialized with localStorage data.");
+                return;
+              }
+            } catch (error) {
+              console.error("Error parsing saved layout from localStorage:", error);
+              localStorage.removeItem(`layout-${sectionId}`);
+            }
+          }
+        }
+
+        // If no initialRows from DB AND no (or empty/invalid) localStorage, create default content
+        // But ONLY if we're absolutely sure this is a completely new section with no content
+        if (sectionId && !initialLoadComplete.current) { 
+          // Add a check to verify if this section already has content in the database
+          try {
+            // Gửi request với timestamp để tránh cache
+            const response = await fetch(`/api/custom-section-content-blocks?sectionId=${sectionId}&_=${Date.now()}`);
+            if (response.ok) {
+              const existingBlocks = await response.json();
+              
+              // If blocks already exist in the database, use them instead of creating defaults
+              if (existingBlocks && existingBlocks.length > 0) {
+                console.log(`GridLayoutManager: Found ${existingBlocks.length} existing blocks for sectionId ${sectionId}`);
+                
+                // Transform the existing blocks into rows
+                const transformedRows = transformBlocksToRows(existingBlocks);
+                setRows(transformedRows);
+                initialLoadComplete.current = true;
+                sessionStorage.removeItem(initKey); // Xóa khóa khi hoàn thành
+                return;
+              }
+            }
+          } catch (error) {
+            console.error("Error checking for existing content blocks:", error);
+          }
+          
+          console.log(`GridLayoutManager: No DB data or valid localStorage for sectionId ${sectionId}. Creating default content.`);
+          
+          // Kiểm tra lại một lần nữa trước khi tạo mặc định để đảm bảo không bị trùng lặp
+          const doubleCheckResponse = await fetch(`/api/custom-section-content-blocks?sectionId=${sectionId}&_=${Date.now()}`);
+          if (doubleCheckResponse.ok) {
+            const doubleCheckBlocks = await doubleCheckResponse.json();
+            if (doubleCheckBlocks && doubleCheckBlocks.length > 0) {
+              console.log(`GridLayoutManager: Double-check found ${doubleCheckBlocks.length} blocks for sectionId ${sectionId}`);
+              const transformedRows = transformBlocksToRows(doubleCheckBlocks);
+              setRows(transformedRows);
+              initialLoadComplete.current = true;
+              sessionStorage.removeItem(initKey); // Xóa khóa khi hoàn thành
+              return;
+            }
+          }
+          
+          setTitle(initialTitle); // Set title from prop
+          const tempRowId = generateId();
+
+          const defaultItemsData: Array<Omit<ContentItem, 'id'>> = [
             {
-              id: generateId(),
               type: "title",
-              content: initialTitle,
-              fontSize: 48,
+              content: "Main Section Title", // More generic default
+              fontSize: 32,
               fontWeight: "bold",
               textAlign: "center",
             },
-          ],
-          position: 0,
-        };
-        setRows([defaultRow]);
+            {
+              type: "title",
+              content: "Optional Subtitle", // More generic default
+              fontSize: 24,
+              fontWeight: "normal",
+              textAlign: "center",
+            },
+          ];
+
+          // Tạo một dấu hiệu trong localStorage để đánh dấu rằng đã bắt đầu khởi tạo
+          localStorage.setItem(`default-items-initializing-${sectionId}`, 'true');
+
+          const persistedItems: ContentItem[] = [];
+          for (let i = 0; i < defaultItemsData.length; i++) {
+            const itemData = defaultItemsData[i];
+            const persisted = await persistCreatedItemUtil(itemData, i, 0);
+            if (persisted) {
+              persistedItems.push(persisted);
+            } else {
+              persistedItems.push({ ...itemData, id: generateId() }); 
+            }
+          }
+          
+          // Đánh dấu là đã hoàn thành khởi tạo
+          localStorage.removeItem(`default-items-initializing-${sectionId}`);
+          
+          if (persistedItems.length > 0) { // Only set rows if we actually have items (persisted or fallback)
+              const defaultRow: ContentRow = {
+                id: tempRowId,
+                items: persistedItems,
+                position: 0,
+              };
+              setRows([defaultRow]);
+              console.log("GridLayoutManager: Default content created and set.", [defaultRow]);
+          } else {
+              setRows([]); // Fallback to empty if even default creation failed badly
+              console.warn("GridLayoutManager: Default content creation failed to produce items.");
+          }
+          initialLoadComplete.current = true;
+        } else if (!initialLoadComplete.current) {
+           setRows([]);
+           setTitle(initialTitle);
+           initialLoadComplete.current = true;
+           console.log("GridLayoutManager: Initialized with empty rows due to missing sectionId or other issues.");
+        }
+      } finally {
+        // Đảm bảo luôn xóa khóa bất kể kết quả là gì
+        sessionStorage.removeItem(initKey);
       }
-      initialLoadComplete.current = true;
+    };
+    
+    // Helper function to transform blocks to rows
+    const transformBlocksToRows = (blocks: any[]): ContentRow[] => {
+      const MAX_ITEMS_PER_ROW = 3;
+      const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
+      const rows: ContentRow[] = [];
+      
+      for (let i = 0; i < sortedBlocks.length; i += MAX_ITEMS_PER_ROW) {
+        const rowItems = sortedBlocks.slice(i, i + MAX_ITEMS_PER_ROW);
+        const contentItems: ContentItem[] = rowItems.map(block => {
+          // Chuẩn hóa type từ database để tương thích với UI
+          let normalizedType: ContentItemType = block.type.toLowerCase() as ContentItemType;
+          
+          // Đảm bảo type là một trong các giá trị hợp lệ
+          if (!["title", "text", "image"].includes(normalizedType)) {
+            normalizedType = "text";
+          }
+          
+          // Kiểm tra nếu là kiểu IMAGE (chữ hoa từ database)
+          const isImageType = block.type.toUpperCase() === "IMAGE";
+          
+          return {
+            id: block.id,
+            type: normalizedType,
+            content: isImageType ? (block.imageSrc || '') : (block.content || ''),
+            fontSize: block.fontSize,
+            fontWeight: block.fontWeight,
+            fontStyle: block.fontStyle,
+            textAlign: block.textAlign as ContentItem['textAlign'],
+            alt: block.imageAlt || undefined,
+            imagePublicId: block.imagePublicId,
+          };
+        });
+        
+        rows.push({
+          id: `row-${Math.floor(i / MAX_ITEMS_PER_ROW)}-${sectionId}`,
+          items: contentItems,
+          position: Math.floor(i / MAX_ITEMS_PER_ROW),
+        });
+      }
+      
+      return rows;
+    };
+
+    // Reworked trigger logic for initializeLayout
+    if (!initialLoadComplete.current) { // Only run if not yet completed
+        if (initialRows && initialRows.length > 0) { // If initialRows from DB are ready, use them
+            initializeLayout();
+        } else if (sectionId) { // If no initialRows, but sectionId is present, proceed (for localStorage/default)
+            initializeLayout();
+        } else if (!sectionId && (!initialRows || initialRows.length === 0)) {
+             // If no sectionId and no initialRows yet, wait or initialize empty
+             // This state might occur if sectionId is loaded async and CustomSection renders GridLayoutManager before sectionId is ready.
+             // Consider a loading state or only calling initializeLayout when sectionId is definitively available if it's essential for defaults.
+             // For now, if it reaches here and hasn't loaded, it will try one more time, 
+             // and if sectionId is still missing, it will init empty.
+            initializeLayout(); 
+        }
     }
-  }, [sectionId, initialRows, initialTitle]);
+
+  }, [sectionId, initialRows, initialTitle]); // Add initialTitle to deps for setting title correctly
 
   // Save layout to localStorage whenever it changes
   useEffect(() => {
@@ -180,13 +422,65 @@ export default function GridLayoutManager({
   };
 
   // Delete a row
-  const deleteRow = (rowId: string) => {
-    const updatedRows = rows
-      .filter((row) => row.id !== rowId)
-      .map((row, index) => ({ ...row, position: index }));
-    setRows(updatedRows);
-    setDeleteRowDialogOpen(false);
-    setRowToDelete(null);
+  const deleteRow = async (rowId: string) => {
+    // Tìm row cần xóa
+    const rowToDeleteIndex = rows.findIndex((row) => row.id === rowId);
+    if (rowToDeleteIndex === -1) {
+      toast.error("Row not found for deletion.");
+      return;
+    }
+    
+    const rowItems = rows[rowToDeleteIndex].items;
+    
+    try {
+      // Xóa tất cả các content block trong row từ database
+      if (rowItems.length > 0) {
+        // Tạo mảng các API calls để xóa các content block
+        const deletePromises = rowItems.map(async (item) => {
+          // Bỏ qua các item có ID tạm (không lưu trong database)
+          if (item.id && !item.id.startsWith('row-')) {
+            try {
+              const response = await fetch(`/api/custom-section-content-blocks/${item.id}`, {
+                method: "DELETE",
+              });
+              
+              if (!response.ok) {
+                const errorData = await response.json();
+                console.error(`Failed to delete content block ${item.id}:`, errorData);
+                // Không ném lỗi để tiếp tục xóa các block khác
+              }
+            } catch (error) {
+              console.error(`Error deleting content block ${item.id}:`, error);
+              // Không ném lỗi để tiếp tục xóa các block khác
+            }
+          }
+        });
+        
+        // Đợi tất cả các API call hoàn thành
+        await Promise.all(deletePromises);
+      }
+      
+      // Sau khi xóa xong từ database, cập nhật state trong UI
+      const updatedRows = rows
+        .filter((row) => row.id !== rowId)
+        .map((row, index) => ({ ...row, position: index }));
+        
+      setRows(updatedRows);
+      toast.success("Row and its content have been deleted successfully!");
+      
+      // Thông báo layout thay đổi
+      if (onLayoutChange) {
+        onLayoutChange(title, updatedRows);
+      }
+      
+    } catch (error) {
+      console.error("Error deleting row:", error);
+      toast.error(`Failed to delete row: ${(error as Error).message}`);
+    } finally {
+      // Đóng dialog dù có lỗi hay không
+      setDeleteRowDialogOpen(false);
+      setRowToDelete(null);
+    }
   };
 
   // Confirm delete row
@@ -264,9 +558,12 @@ export default function GridLayoutManager({
     const MAX_ITEMS_PER_ROW = 3; // This should ideally be a shared constant or derived
     const calculatedOrder = rowPosition * MAX_ITEMS_PER_ROW + itemOrderInRow;
 
+    // Chuyển đổi type từ UI sang định dạng database
+    const databaseType = newItemType === "image" ? "IMAGE" : newItemType.toUpperCase();
+
     const apiPayload: any = {
       sectionId: sectionId, // from component props
-      type: newItemType,
+      type: newItemType.toLowerCase(), // Normalize to lowercase
       content: itemContentValue,
       order: calculatedOrder,
       fontSize: Number.parseInt(newItemFontSize),
@@ -276,7 +573,7 @@ export default function GridLayoutManager({
     };
 
     if (newItemType === "image") {
-      apiPayload.imageSrc = itemContentValue; // For IMAGE type, content is the URL, also set imageSrc
+      apiPayload.imageSrc = itemContentValue; // For image type, content is the URL, also set imageSrc
     }
 
     try {
@@ -328,27 +625,84 @@ export default function GridLayoutManager({
   };
 
   // Delete an item
-  const deleteItem = () => {
-    if (!itemToDelete) return;
+  const deleteItem = async () => {
+    if (!itemToDelete) {
+      toast.error("No item selected for deletion.");
+      return;
+    }
 
-    const updatedRows = rows.map((row) => {
-      if (row.id === itemToDelete.rowId) {
-        return {
-          ...row,
-          items: row.items.filter((item) => item.id !== itemToDelete.itemId),
-        };
+    const { rowId: localRowId, itemId } = itemToDelete; // localRowId is for client-state row
+
+    // Show loading state on button or UI if possible
+    // setIsDeleting(true); // Assuming you have such a state
+
+    try {
+      const response = await fetch(`/api/custom-section-content-blocks/${itemId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to delete item. Status: ${response.status}`);
       }
-      return row;
-    });
 
-    // Remove any empty rows (except the first row)
-    const filteredRows = updatedRows
-      .filter((row, index) => index === 0 || row.items.length > 0)
-      .map((row, index) => ({ ...row, position: index }));
+      // If API call is successful, then update local state
+      const updatedRows = rows.map((row) => {
+        if (row.id === localRowId) {
+          return {
+            ...row,
+            items: row.items.filter((item) => item.id !== itemId),
+          };
+        }
+        return row;
+      });
 
-    setRows(filteredRows);
-    setDeleteItemDialogOpen(false);
-    setItemToDelete(null);
+      // Remove any empty rows (except the first row if it's special, or adjust logic)
+      // This logic might need review: what if user wants an empty row intentionally?
+      // For now, keeping similar logic to before.
+      const filteredRows = updatedRows
+        .filter((row, index) => {
+          // Keep the row if it's not empty OR if it's the only row left (even if empty)
+          // or adjust based on whether a section can exist without any rows/items.
+          // If a section must have at least one row, and one item, this needs more thought.
+          // For now, let's allow a row to become empty. We can prevent deleting the last item of the last row if needed elsewhere.
+          return true; // Simpler: just remove the item, don't auto-delete rows for now via this function. Row deletion is separate.
+        })
+         .map((row, index) => ({ ...row, position: index })); // Re-calculate positions if rows were deleted.
+
+      // More precise update: only filter the specific row
+      let finalRows = rows.map(row => {
+        if (row.id === localRowId) {
+          const newItems = row.items.filter(item => item.id !== itemId);
+          // If this row becomes empty and it's not the only row, or some other condition,
+          // it could be marked for deletion or handled by a separate "delete row" function.
+          // For now, just update its items.
+          return { ...row, items: newItems };
+        }
+        return row;
+      });
+      
+      // Optionally, remove empty rows if that's desired behavior
+      // finalRows = finalRows.filter(row => row.items.length > 0); 
+      // Re-map positions if rows are removed
+      // finalRows = finalRows.map((row, index) => ({ ...row, position: index }));
+
+
+      setRows(finalRows);
+      toast.success("Content item deleted successfully!");
+      
+      if (onLayoutChange) {
+        onLayoutChange(title, finalRows); 
+      }
+
+    } catch (error) {
+      console.error("Error deleting item via API:", error);
+      toast.error(`Delete failed: ${(error as Error).message}`);
+    } finally {
+      // setIsDeleting(false);
+      setDeleteItemDialogOpen(false); // Close dialog regardless of outcome for now
+      setItemToDelete(null);
+    }
   };
 
   // Confirm delete item
@@ -372,25 +726,93 @@ export default function GridLayoutManager({
   };
 
   // Update item
-  const updateItem = () => {
-    if (currentRowIndex === null || currentItemIndex === null || !itemToEdit)
+  const updateItem = async () => {
+    if (currentRowIndex === null || currentItemIndex === null || !itemToEdit) {
+      toast.error("No item selected for editing or item data is missing.");
       return;
+    }
 
-    const updatedRows = [...rows];
-    updatedRows[currentRowIndex].items[currentItemIndex] = {
-      ...itemToEdit,
+    // Chuẩn hóa type cho database (chữ hoa)
+    const databaseType = itemToEdit.type === "image" ? "IMAGE" : itemToEdit.type.toUpperCase();
+
+    const apiPayload: any = {
+      type: itemToEdit.type.toLowerCase(), // Normalize to lowercase
       content: editItemContent,
-      fontSize: Number.parseInt(editItemFontSize),
-      fontWeight: editItemFontWeight,
-      fontStyle: editItemFontStyle,
-      textAlign: editItemTextAlign,
+      // Only include styling if it's not an image type
+      ...(itemToEdit.type !== "image" && {
+        fontSize: Number.parseInt(editItemFontSize),
+        fontWeight: editItemFontWeight,
+        fontStyle: editItemFontStyle,
+        textAlign: editItemTextAlign,
+      }),
+      // If it's an image, we might want to update alt text here if the dialog supports it
+      // For now, imageSrc (content for image type) is handled by EditableImage and onGridImageSave
+      // alt: itemToEdit.type === "image" ? editItemAlt : undefined, // Assuming editItemAlt exists in state
     };
 
-    setRows(updatedRows);
-    setEditItemDialogOpen(false);
-    setItemToEdit(null);
-    setCurrentRowIndex(null);
-    setCurrentItemIndex(null);
+    try {
+      const response = await fetch(
+        `/api/custom-section-content-blocks/${itemToEdit.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(apiPayload),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message ||
+            `Failed to update content block. Status: ${response.status}`
+        );
+      }
+
+      const updatedBlockFromServer = await response.json();
+
+      // Update local state with data from server to ensure consistency
+      const updatedRows = rows.map((row, rIndex) => {
+        if (rIndex === currentRowIndex) {
+          return {
+            ...row,
+            items: row.items.map((item, iIndex) => {
+              if (iIndex === currentItemIndex) {
+                return {
+                  ...item, // Spread existing item properties first
+                  id: updatedBlockFromServer.id, // Ensure ID is from server
+                  type: updatedBlockFromServer.type as ContentItemType,
+                  content: updatedBlockFromServer.type === 'IMAGE' ? (updatedBlockFromServer.imageSrc || '') : (updatedBlockFromServer.content || ''),
+                  fontSize: updatedBlockFromServer.fontSize,
+                  fontWeight: updatedBlockFromServer.fontWeight,
+                  fontStyle: updatedBlockFromServer.fontStyle,
+                  textAlign: updatedBlockFromServer.textAlign as ContentItem['textAlign'],
+                  alt: updatedBlockFromServer.imageAlt || item.alt, // Preserve existing alt or use from server
+                  imagePublicId: updatedBlockFromServer.imagePublicId, // Use from server
+                };
+              }
+              return item;
+            }),
+          };
+        }
+        return row;
+      });
+
+      setRows(updatedRows);
+      toast.success("Content updated successfully!");
+
+      setEditItemDialogOpen(false);
+      setItemToEdit(null);
+      setCurrentRowIndex(null);
+      setCurrentItemIndex(null);
+
+      if (onLayoutChange) {
+        onLayoutChange(title, updatedRows);
+      }
+    } catch (error) {
+      console.error("Error updating item via API:", error);
+      toast.error(`Update failed: ${(error as Error).message}`);
+      // Dialog can remain open for user to retry or cancel, or you can choose to close it.
+    }
   };
 
   // Reset new item form
@@ -403,15 +825,67 @@ export default function GridLayoutManager({
     setNewItemTextAlign("left");
   };
 
-  // Update item content directly
-  const updateItemContent = (
-    rowIndex: number,
-    itemIndex: number,
-    newContent: string
-  ) => {
-    const updatedRows = [...rows];
-    updatedRows[rowIndex].items[itemIndex].content = newContent;
-    setRows(updatedRows);
+  // Update item content directly (e.g., from EditableText)
+  const updateItemContent = async (rowIndex: number, itemIndex: number, newContent: string) => {
+    const itemToUpdate = rows[rowIndex]?.items[itemIndex];
+    if (!itemToUpdate) {
+      toast.error("Item not found for direct content update.");
+      return;
+    }
+
+    // Optimistic UI update
+    const updatedRowsOptimistic = rows.map((row, rIdx) => {
+      if (rIdx === rowIndex) {
+        return {
+          ...row,
+          items: row.items.map((item, iIdx) => {
+            if (iIdx === itemIndex) {
+              return { ...item, content: newContent };
+            }
+            return item;
+          }),
+        };
+      }
+      return row;
+    });
+    setRows(updatedRowsOptimistic);
+
+    try {
+      // Call onContentUpdate if provided
+      if (onContentUpdate) {
+        await onContentUpdate(itemToUpdate.id, newContent);
+      } else {
+        // Fallback to direct API call if onContentUpdate not provided
+        const apiPayload = {
+          content: newContent,
+          type: itemToUpdate.type.toLowerCase(),
+        };
+
+        const response = await fetch(
+          `/api/custom-section-content-blocks/${itemToUpdate.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(apiPayload),
+          }
+        );
+
+        if (!response.ok) {
+          setRows(rows); // Revert optimistic update
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to update content");
+        }
+      }
+
+      // Notify parent of layout change
+      if (onLayoutChange) {
+        onLayoutChange(title, updatedRowsOptimistic);
+      }
+    } catch (error) {
+      console.error("Error saving content directly:", error);
+      toast.error(`Save failed: ${(error as Error).message}`);
+      setRows(rows); // Revert to original state on error
+    }
   };
 
   // Get item style based on type and properties
@@ -480,6 +954,8 @@ export default function GridLayoutManager({
               as="h2"
               className="font-bold tracking-tighter leading-tight"
               initialFontSize={item.fontSize}
+              onCommitText={(newText) => updateItemContent(rowIndex, itemIndex, newText)}
+              isLockButton={true}
             />
           );
         case "text":
@@ -488,7 +964,9 @@ export default function GridLayoutManager({
               initialText={item.content}
               as="p"
               className="mb-0"
-              initialFontSize={item.fontSize}
+              initialFontSize={item.fontSize} 
+              onCommitText={(newText) => updateItemContent(rowIndex, itemIndex, newText)}
+              isLockButton={true}
             />
           );
         case "image":
@@ -516,8 +994,8 @@ export default function GridLayoutManager({
           {content}
 
           {isAdmin && (
-            <div className="absolute bottom-1 right-16 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
-              {/* {item.type !== "image" && (
+            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+              {item.type !== "image" && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -527,7 +1005,7 @@ export default function GridLayoutManager({
                 >
                   <Edit size={14} />
                 </Button>
-              )} */}
+              )}
               <Button
                 variant="ghost"
                 size="icon"

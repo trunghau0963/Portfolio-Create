@@ -1,6 +1,61 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const sectionId = searchParams.get('sectionId');
+    
+    // Tạo response headers để tắt cache
+    const headers = new Headers({
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    });
+    
+    // If sectionId is provided, filter blocks by section
+    if (sectionId) {
+      const blocks = await prisma.customSectionContentBlock.findMany({
+        where: {
+          sectionId: sectionId
+        },
+        orderBy: {
+          order: 'asc'
+        }
+      });
+      
+      return NextResponse.json(blocks, { headers });
+    } 
+    
+    // If no sectionId provided, return all blocks (with pagination if needed)
+    const blocks = await prisma.customSectionContentBlock.findMany({
+      orderBy: {
+        order: 'asc'
+      },
+      // Optional: Add pagination here if this endpoint will return many blocks
+      // take: 100,
+    });
+    
+    return NextResponse.json(blocks, { headers });
+    
+  } catch (error: any) {
+    console.error('Error fetching custom section content blocks:', error);
+    
+    // Add specific error handling for ObjectId format issues
+    if (error.code === 'P2023') {
+      return NextResponse.json({ 
+        message: 'Invalid sectionId format. Expected a valid ObjectId.', 
+        error: error.message 
+      }, { status: 400 });
+    }
+    
+    return NextResponse.json({ 
+      message: 'Failed to fetch custom section content blocks', 
+      error: error.message 
+    }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   let acquiredSectionId: string | undefined; // Added to hold sectionId for use in catch block
   try {
@@ -34,6 +89,25 @@ export async function POST(request: Request) {
         // For now, we'll let Prisma handle deeper validation or potential errors.
     }
 
+    // Kiểm tra xem block này đã tồn tại chưa (dựa trên type và content)
+    // Đây là bước bổ sung để tránh tạo trùng lặp
+    if (content) {
+      const existingBlock = await prisma.customSectionContentBlock.findFirst({
+        where: {
+          sectionId: sectionId,
+          type: type,
+          content: content,
+          ...(fontSize !== undefined && { fontSize: parseInt(String(fontSize), 10) }),
+          ...(fontWeight !== undefined && { fontWeight: String(fontWeight) }),
+        }
+      });
+
+      // Nếu block với cùng nội dung đã tồn tại, trả về block đó thay vì tạo mới
+      if (existingBlock) {
+        console.log(`Found existing block with same content for sectionId ${sectionId}, type ${type}, returning existing instead of creating new`);
+        return NextResponse.json(existingBlock, { status: 200 });
+      }
+    }
 
     const createData: any = {
       section: { connect: { id: sectionId } },
@@ -50,7 +124,6 @@ export async function POST(request: Request) {
     if (fontWeight !== undefined) createData.fontWeight = String(fontWeight);
     if (fontStyle !== undefined) createData.fontStyle = String(fontStyle);
     if (textAlign !== undefined) createData.textAlign = String(textAlign);
-
 
     const newBlock = await prisma.customSectionContentBlock.create({
       data: createData,
