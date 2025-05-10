@@ -26,6 +26,28 @@ Try it now: [https://trunghau-portfolio-create.vercel.app/](https://trunghau-por
 
 ---
 
+## 📸 Screenshots
+
+**Home & Introduction**
+
+![Home and Introduction](public/screenshots/home.png)
+
+**Projects Section**
+
+![Projects Section](public/screenshots/projects.png)
+
+**Section Manager**
+
+![Section Manager](public/screenshots/section-manager.png)
+
+**Experience & Testimonials**
+
+![Experience Section](public/screenshots/experience.png)
+
+![Testimonials Section](public/screenshots/testimonials.png)
+
+---
+
 ## 🛠️ Main Libraries & Technologies
 
 - **Next.js** – React framework for server-side rendering and routing
