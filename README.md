@@ -30,21 +30,21 @@ Try it now: [https://trunghau-portfolio-create.vercel.app/](https://trunghau-por
 
 **Home & Introduction**
 
-![Home and Introduction](public/screenshots/home.png)
+![Home and Introduction](public/screenshots/home.jpg)
 
 **Projects Section**
 
-![Projects Section](public/screenshots/projects.png)
+![Projects Section](public/screenshots/projects.jpg)
 
 **Section Manager**
 
-![Section Manager](public/screenshots/section-manager.png)
+![Section Manager](public/screenshots/section-manager.jpg)
 
 **Experience & Testimonials**
 
-![Experience Section](public/screenshots/experience.png)
+![Experience Section](public/screenshots/experience.jpg)
 
-![Testimonials Section](public/screenshots/testimonials.png)
+![Testimonials Section](public/screenshots/testimonials.jpg)
 
 ---
 
