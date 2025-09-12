@@ -6,10 +6,6 @@ Welcome to the **Portfolio Create** project! This is a modern, full-featured por
 
 Try it now: [https://trunghau-portfolio-create.vercel.app/](https://trunghau-portfolio-create.vercel.app/)
 
-**Admin Login:**
-- Email: `ntthau0963@gmail.com`
-- Password: `Ntth@0963`
-
 ---
 
 ## ✨ Key Features
