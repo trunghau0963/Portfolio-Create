@@ -7,15 +7,14 @@ const Footer: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
             <p className="text-sm text-white/60">
-              &copy; {new Date().getFullYear()} Portfolio. Nguyen Thi Yen Nhi.
+              &copy; {new Date().getFullYear()} Portfolio. Nguyen Tran Trung Hau.
             </p>
           </div>
           
           <div className="flex space-x-6">
-            <a href="#" className="text-white/60 hover:text-white text-sm">LinkedIn</a>
-            <a href="#" className="text-white/60 hover:text-white text-sm">Instagram</a>
-            <a href="#" className="text-white/60 hover:text-white text-sm">Twitter</a>
-            <a href="#" className="text-white/60 hover:text-white text-sm">Behance</a>
+            <a href="https://www.linkedin.com/in/hangu0963/" className="text-white/60 hover:text-white text-sm">LinkedIn</a>
+            <a href="https://dribbble.com/TrungHau0963" className="text-white/60 hover:text-white text-sm">Dribble</a>
+            <a href="https://www.behance.net/nguynhu37" className="text-white/60 hover:text-white text-sm">Behance</a>
           </div>
         </div>
       </div>
