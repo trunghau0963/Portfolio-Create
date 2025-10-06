@@ -969,6 +969,7 @@ export default function ProjectsSection({
       if (isAdmin) {
         return projects; // Admin selected "All" (represented by null)
       }
+      // setSelectedCategory(allCategories.length > 0 ? allCategories[0] : ""); // Non-admin, default to first category if available
       return projects.filter((p) => p.categories.includes(allCategories.length > 0 ? allCategories[0] : "")); // Non-admin, nothing selected or "All" is not an option for them to select to get here
     }
     // A specific category is selected by any user

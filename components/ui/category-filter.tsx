@@ -1,13 +1,13 @@
-"use client"
-import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
-import { Tag } from "lucide-react"
+"use client";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { Tag } from "lucide-react";
 
 interface CategoryFilterProps {
-  categories: string[]
-  selectedCategory: string | null
-  onChange: (category: string | null) => void
-  showAllOption?: boolean
+  categories: string[];
+  selectedCategory: string | null;
+  onChange: (category: string | null) => void;
+  showAllOption?: boolean;
 }
 
 export default function CategoryFilter({
@@ -16,12 +16,16 @@ export default function CategoryFilter({
   onChange,
   showAllOption = false,
 }: CategoryFilterProps) {
-  
+  const effectiveSelected =
+    selectedCategory === null && !showAllOption
+      ? (categories[0] ?? null)
+      : selectedCategory;
+
   return (
     <div className="flex flex-wrap gap-2 mb-6">
       {showAllOption && (
         <Button
-          variant={selectedCategory === null ? "destructive" : "ghost"} 
+          variant={selectedCategory === null ? "destructive" : "ghost"}
           size="sm"
           onClick={() => onChange(null)}
           className={`rounded-full ${
@@ -44,11 +48,11 @@ export default function CategoryFilter({
           whileTap={{ scale: 0.95 }}
         >
           <Button
-            variant={selectedCategory === category ? "destructive" : "ghost"}
+            variant={effectiveSelected === category ? "destructive" : "ghost"}
             size="sm"
             onClick={() => onChange(category)}
             className={`rounded-full flex items-center gap-1  ${
-              selectedCategory === category
+              effectiveSelected === category
                 ? " hover:bg-red-600"
                 : "border-white/50 text-white hover:bg-white/10"
             }`}
@@ -59,5 +63,5 @@ export default function CategoryFilter({
         </motion.div>
       ))}
     </div>
-  )
+  );
 }
