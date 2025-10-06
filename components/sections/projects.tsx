@@ -969,11 +969,11 @@ export default function ProjectsSection({
       if (isAdmin) {
         return projects; // Admin selected "All" (represented by null)
       }
-      return []; // Non-admin, nothing selected or "All" is not an option for them to select to get here
+      return projects.filter((p) => p.categories.includes(allCategories.length > 0 ? allCategories[0] : "")); // Non-admin, nothing selected or "All" is not an option for them to select to get here
     }
     // A specific category is selected by any user
     return projects.filter((p) => p.categories.includes(selectedCategory));
-  }, [projects, selectedCategory, isAdmin]);
+  }, [projects, selectedCategory, isAdmin, allCategories]);
 
   return (
     <AnimatedSection variant="fadeInUp">
