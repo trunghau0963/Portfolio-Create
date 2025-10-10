@@ -115,7 +115,7 @@ export default function Header({ sections }: HeaderProps) {
 
           <ThemeToggle />
 
-          {user ? (
+          {/* {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -154,7 +154,7 @@ export default function Header({ sections }: HeaderProps) {
                 <span className="sr-only">Login</span>
               </Button>
             </Link>
-          )}
+          )} */}
         </motion.div>
 
         {/* Mobile Menu Button */}
