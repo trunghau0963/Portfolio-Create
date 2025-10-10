@@ -233,7 +233,7 @@ export default function Header({ sections }: HeaderProps) {
                 {socialHandle}
               </motion.div>
               <ThemeToggle />
-              {user ? (
+              {/* {user ? (
                 <Button variant="outline" size="sm" onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
@@ -251,7 +251,7 @@ export default function Header({ sections }: HeaderProps) {
                     Login
                   </Button>
                 </Link>
-              )}
+              )} */}
             </div>
           </motion.div>
         )}
